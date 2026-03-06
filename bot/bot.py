@@ -25,8 +25,8 @@ sys.path.insert(0, str(ROOT))
 # --- load .env from project root ---
 load_dotenv(ROOT / ".env")
 
-from app.database import AsyncSessionLocal  # noqa: E402
-from app.models import User  # noqa: E402
+from backend.app.database import AsyncSessionLocal  # noqa: E402
+from backend.app.models import User  # noqa: E402
 
 TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")

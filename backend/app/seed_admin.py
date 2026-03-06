@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from passlib.context import CryptContext
 from sqlalchemy import select
 
-from app.database import AsyncSessionLocal
-from app.models import User
+from backend.app.database import AsyncSessionLocal
+from backend.app.models import User
 
 load_dotenv()
 

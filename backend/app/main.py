@@ -1,15 +1,16 @@
+import backend.app.models
 import os
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException, APIRouter, Depends, Header
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text, select
+from sqlalchemy import select
 from pydantic import BaseModel
 
-from app.database import AsyncSessionLocal
-from app.models import User, Report
-from app.database import engine, Base
-import app.models
+from backend.app.routers.health import router as health_router
+from backend.app.models import User, Report
+from backend.app.database import AsyncSessionLocal, engine, Base
+
 
 load_dotenv()
 
@@ -17,6 +18,7 @@ DEV_MODE = os.getenv("DEV_MODE", "0") == "1"
 DEV_KEY = os.getenv("DEV_KEY")
 
 app = FastAPI()
+app.include_router(health_router)
 
 async def require_dev_key(x_dev_key: str | None = Header(default=None)):
     if not DEV_MODE:
@@ -73,26 +75,21 @@ class AdminUserOut(BaseModel):
     telegram_user_id: int | None
     teacher_name: str | None
 
+class CreateUserIn(BaseModel):
+    login: str
+    role: str  # "ADMIN" or "TEACHER"
+    teacher_name: str | None = None
+
+class BindIn(BaseModel):
+    login: str
+    telegram_user_id: int
 
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
 
-@app.get("/db-ping")
-async def db_ping():
-    async with engine.connect() as conn:
-        result = await conn.execute(text("SELECT 1"))
-        return {"db": "ok", "value": result.scalar_one()}
-
-class CreateUserIn(BaseModel):
-    login: str
-    role: str  # "ADMIN" or "TEACHER"
-    teacher_name: str | None = None
 
 @dev_router.post("/create-user")
 async def dev_create_user(payload: CreateUserIn):
@@ -107,9 +104,7 @@ async def dev_create_user(payload: CreateUserIn):
         return {"ok": True, "id": u.id}
 
 
-class BindIn(BaseModel):
-    login: str
-    telegram_user_id: int
+
 
 
 @dev_router.post("/bind")
