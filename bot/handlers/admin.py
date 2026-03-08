@@ -1,4 +1,9 @@
-from bot.services.api import get_admin_users, admin_bind_user
+from bot.services.api import (
+    get_admin_users,
+    admin_bind_user,
+    admin_create_user,
+    admin_set_role as api_admin_set_role,
+)
 from telegram import Update
 from telegram.ext import ContextTypes
 import httpx
@@ -111,3 +116,98 @@ async def admin_bind_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f'Готово. {data["login"]} привязан к Telegram ID {data["telegram_user_id"]}.'
     )
+
+async def admin_create_user_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin = await require_admin(update, context)
+    if admin is None:
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Использование:\n/admin_create_user <login> <role> [teacher_name]"
+        )
+        return
+
+    login = context.args[0]
+    role = context.args[1].upper()
+    teacher_name = " ".join(context.args[2:]) if len(context.args) > 2 else None
+
+    try:
+        data = await admin_create_user(
+            update.effective_user.id,
+            login,
+            role,
+            teacher_name,
+        )
+
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+
+        if code == 401:
+            await update.message.reply_text("Вы не зарегистрированы в системе.")
+        elif code == 403:
+            await update.message.reply_text("У вас нет прав администратора.")
+        elif code == 409:
+            await update.message.reply_text("Пользователь с таким логином уже существует.")
+        else:
+            await update.message.reply_text(f"Ошибка сервера: {code}")
+        return
+
+    except httpx.HTTPError:
+        await update.message.reply_text("Ошибка связи с сервером.")
+        return
+
+    await update.message.reply_text(
+        f'Пользователь создан.\n'
+        f'ID: {data["id"]}\n'
+        f'Логин: {data["login"]}\n'
+        f'Роль: {data["role"]}'
+    )
+
+
+
+
+
+async def admin_set_role_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        admin = await require_admin(update, context)
+        if admin is None:
+            return
+
+        if len(context.args) != 2:
+            await update.message.reply_text(
+                "Использование:\n/admin_set_role <login> <role>"
+            )
+            return
+
+        login = context.args[0]
+        role = context.args[1].upper()
+
+        try:
+            data = await api_admin_set_role(
+                update.effective_user.id,
+                login,
+                role,
+            )
+
+        except httpx.HTTPStatusError as e:
+            code = e.response.status_code
+
+            if code == 401:
+                await update.message.reply_text("Вы не зарегистрированы в системе.")
+            elif code == 403:
+                await update.message.reply_text("У вас нет прав администратора.")
+            elif code == 404:
+                await update.message.reply_text("Пользователь с таким логином не найден.")
+            else:
+                await update.message.reply_text(f"Ошибка сервера: {code}")
+            return
+
+        except httpx.HTTPError:
+            await update.message.reply_text("Ошибка связи с сервером.")
+            return
+
+        await update.message.reply_text(
+            f'Роль обновлена.\n'
+            f'Логин: {data["login"]}\n'
+            f'Новая роль: {data["role"]}'
+        )

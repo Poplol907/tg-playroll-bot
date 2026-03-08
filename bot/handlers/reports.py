@@ -19,8 +19,8 @@ async def calc_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Вы не зарегистрированы.")
         return
 
-    if user.role != "TEACHER":
-        await update.message.reply_text("Команда /calc доступна только преподавателям.")
+    if user.role not in ["TEACHER", "ADMIN"]:
+        await update.message.reply_text("Команда /calc доступна только преподавателям и администраторам.")
         return
 
     context.user_data["awaiting_calc_text"] = True

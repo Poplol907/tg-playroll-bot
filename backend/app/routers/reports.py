@@ -63,8 +63,8 @@ async def calc_save_text(payload: CalcTextIn, telegram_user_id: int):
 
         if user is None:
             raise HTTPException(status_code=401, detail="unknown telegram user")
-        if user.role != "TEACHER":
-            raise HTTPException(status_code=403, detail="only for teachers")
+        if user.role not in ["TEACHER", "ADMIN"]:
+            raise HTTPException(status_code=403, detail="only for teachers and admins")
 
         lines_out: list[CalcLineOut] = []
         total_sum = 0
@@ -126,8 +126,8 @@ async def reports_last(telegram_user_id: int):
 
         if user is None:
             raise HTTPException(status_code=401, detail="unknown telegram user")
-        if user.role != "TEACHER":
-            raise HTTPException(status_code=403, detail="only for teachers")
+        if user.role not in ["TEACHER", "ADMIN"]:
+            raise HTTPException(status_code=403, detail="only for teachers and admins")
 
         rq = await session.execute(
             select(Report)

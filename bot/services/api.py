@@ -54,3 +54,32 @@ async def get_report_by_id(telegram_user_id: int, report_id: int):
         )
         r.raise_for_status()
         return r.json()
+
+
+async def admin_create_user(admin_telegram_user_id: int, login: str, role: str, teacher_name: str | None = None):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/admin/create-user",
+            params={"telegram_user_id": admin_telegram_user_id},
+            json={
+                "login": login,
+                "role": role,
+                "teacher_name": teacher_name,
+            },
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def admin_set_role(admin_telegram_user_id: int, login: str, role: str):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/admin/set-role",
+            params={"telegram_user_id": admin_telegram_user_id},
+            json={
+                "login": login,
+                "role": role,
+            },
+        )
+        r.raise_for_status()
+        return r.json()

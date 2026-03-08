@@ -13,19 +13,30 @@ from telegram.ext import (
 )
 from bot.handlers.common import (
     start,
+    help_cmd,
     whoami,
-    myid
+    myid,
+    menu_button_handler
 )
+
 from bot.handlers.admin import (
     admin_users_cmd,
-    admin_bind_cmd
+    admin_bind_cmd,
+    admin_create_user_cmd,
+    admin_set_role_cmd,
 )
+
 from bot.handlers.reports import (
     calc_cmd,
     handle_text,
     last_report_cmd,
     report_cmd,
 )
+
+from bot.handlers.teacher import (
+    teacher_home_cmd
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -57,9 +68,15 @@ def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.bot_data["get_user_by_telegram_id"] = get_user_by_telegram_id
 
+    app.bot_data["calc_cmd"] = calc_cmd
+    app.bot_data["last_report_cmd"] = last_report_cmd
+    app.bot_data["admin_users_cmd"] = admin_users_cmd
+    app.bot_data["teacher_home_cmd"] = teacher_home_cmd
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("whoami", whoami))
     app.add_handler(CommandHandler("myid", myid))
+    app.add_handler(CommandHandler("help", help_cmd))
 
     app.add_handler(CommandHandler("calc", calc_cmd))
     app.add_handler(CommandHandler("last", last_report_cmd))
@@ -68,6 +85,16 @@ def main():
 
     app.add_handler(CommandHandler("admin_users", admin_users_cmd))
     app.add_handler(CommandHandler("admin_bind", admin_bind_cmd))
+    app.add_handler(CommandHandler("admin_create_user", admin_create_user_cmd))
+    app.add_handler(CommandHandler("admin_set_role", admin_set_role_cmd))
+
+    app.add_handler(
+        MessageHandler(
+            filters.Regex(
+                "^(Помощь|Профиль|Рассчитать отчёт|Последний отчёт|Пользователи|Привязать Telegram|Меню преподавателя)$"),
+            menu_button_handler,
+        )
+    )
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
