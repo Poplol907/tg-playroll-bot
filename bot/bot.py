@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 
+
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 from sqlalchemy import select
 from telegram.ext import (
@@ -60,6 +62,33 @@ async def get_user_by_telegram_id(telegram_id: int):
         )
         return result.scalar_one_or_none()
 
+async def create_pending_user(telegram_id: int):
+    async with AsyncSessionLocal() as session:
+        login = f"tg_{telegram_id}"
+
+        user = User(
+            login=login,
+            role="PENDING",
+            telegram_user_id=telegram_id,
+            teacher_name=None,
+        )
+        session.add(user)
+
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+
+            result = await session.execute(
+                select(User).where(User.telegram_user_id == telegram_id)
+            )
+            existing = result.scalar_one_or_none()
+            if existing is not None:
+                return existing
+            raise
+
+        await session.refresh(user)
+        return user
 
 def main():
     if not TOKEN or ":" not in TOKEN:
@@ -67,6 +96,7 @@ def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
     app.bot_data["get_user_by_telegram_id"] = get_user_by_telegram_id
+    app.bot_data["create_pending_user"] = create_pending_user
 
     app.bot_data["calc_cmd"] = calc_cmd
     app.bot_data["last_report_cmd"] = last_report_cmd

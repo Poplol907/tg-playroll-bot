@@ -1,6 +1,13 @@
 from telegram import ReplyKeyboardMarkup
 
 
+def build_pending_menu() -> ReplyKeyboardMarkup:
+    keyboard = [
+        ["Помощь", "Профиль"],
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+
 def build_teacher_menu() -> ReplyKeyboardMarkup:
     keyboard = [
         ["Помощь", "Профиль"],
