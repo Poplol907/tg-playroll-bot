@@ -1,27 +1,28 @@
 from telegram import ReplyKeyboardMarkup
 
 
-def build_pending_menu() -> ReplyKeyboardMarkup:
+def build_root_menu() -> ReplyKeyboardMarkup:
     keyboard = [
-        ["Помощь", "Профиль"],
-    ]
-    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
-
-def build_teacher_menu() -> ReplyKeyboardMarkup:
-    keyboard = [
-        ["Помощь", "Профиль"],
-        ["Рассчитать отчёт", "Последний отчёт"],
-        ["Меню преподавателя"],
+        ["Меню админа", "Меню преподавателя"],
+        ["Профиль", "Помощь"],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 
 def build_admin_menu() -> ReplyKeyboardMarkup:
     keyboard = [
-        ["Помощь", "Профиль"],
-        ["Рассчитать отчёт", "Последний отчёт"],
         ["Пользователи", "Привязать Telegram"],
-        ["Меню преподавателя"],
+        ["Назначить роль", "Изменить логин"],
+        ["Назад"],
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+
+def build_teacher_menu() -> ReplyKeyboardMarkup:
+    keyboard = [
+        ["Рассчитать отчёт", "Последний отчёт"],
+        ["Мои отчёты"],
+        ["Профиль", "Помощь"],
+        ["Назад"],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

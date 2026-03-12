@@ -3,6 +3,7 @@ from bot.services.api import (
     admin_bind_user,
     admin_create_user,
     admin_set_role as api_admin_set_role,
+    admin_set_login as api_admin_set_login,
 )
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -211,3 +212,50 @@ async def admin_set_role_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
             f'Логин: {data["login"]}\n'
             f'Новая роль: {data["role"]}'
         )
+
+
+async def admin_set_login_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin = await require_admin(update, context)
+    if admin is None:
+        return
+
+    if len(context.args) != 2:
+        await update.message.reply_text(
+            "Использование:\n/admin_set_login <login> <new_login>"
+        )
+        return
+
+    login = context.args[0]
+    new_login = context.args[1]
+
+    try:
+        data = await api_admin_set_login(
+            update.effective_user.id,
+            login,
+            new_login,
+        )
+
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+
+        if code == 404:
+            await update.message.reply_text("Пользователь не найден.")
+        elif code == 409:
+            await update.message.reply_text("Новый логин уже занят.")
+        elif code == 401:
+            await update.message.reply_text("Вы не зарегистрированы.")
+        elif code == 403:
+            await update.message.reply_text("У вас нет прав администратора.")
+        else:
+            await update.message.reply_text(f"Ошибка сервера: {code}")
+        return
+
+    except httpx.HTTPError:
+        await update.message.reply_text("Ошибка связи с сервером.")
+        return
+
+    await update.message.reply_text(
+        f"Логин обновлён.\n"
+        f"Новый логин: {data['login']}\n"
+        f"Роль: {data['role']}"
+    )

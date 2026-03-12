@@ -32,13 +32,46 @@ async def calc_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Petr Petrov 3 30"
     )
 
+def looks_like_calc_input(text: str) -> bool:
+    for raw in text.splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+
+        parts = raw.split()
+        if len(parts) != 4:
+            continue
+
+        _, _, lessons_s, price_s = parts
+
+        try:
+            int(lessons_s)
+            int(price_s)
+            return True
+        except ValueError:
+            continue
+
+    return False
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_calc_text"):
         return
 
-    context.user_data["awaiting_calc_text"] = False
     text = update.message.text
+
+    if not looks_like_calc_input(text):
+        await update.message.reply_text(
+            "Неверный формат отчёта.\n\n"
+            "Ожидается текст вида:\n"
+            "Имя Фамилия Уроки Цена\n\n"
+            "Пример:\n"
+            "Ivan Ivanov 5 20\n"
+            "Petr Petrov 3 30\n\n"
+            "Если передумали, нажмите «Назад»."
+        )
+        return
+
+    context.user_data["awaiting_calc_text"] = False
     telegram_id = update.effective_user.id
 
     try:
@@ -49,8 +82,13 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if code == 401:
             await update.message.reply_text("Вы не зарегистрированы в системе.")
+        elif code == 400:
+            await update.message.reply_text(
+                "Не удалось распознать ни одной корректной строки отчёта.\n"
+                "Проверь формат: Имя Фамилия Уроки Цена"
+            )
         elif code == 403:
-            await update.message.reply_text("Эта команда доступна только преподавателям.")
+            await update.message.reply_text("Эта команда доступна только преподавателям и администраторам.")
         else:
             await update.message.reply_text(f"Ошибка сервера: {code}")
 

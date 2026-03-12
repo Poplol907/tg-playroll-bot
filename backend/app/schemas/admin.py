@@ -22,3 +22,7 @@ class AdminCreateUserIn(BaseModel):
 class AdminSetRoleIn(BaseModel):
     login: str
     role: str
+
+class AdminSetLoginIn(BaseModel):
+    login: str
+    new_login: str

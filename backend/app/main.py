@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from backend.app.routers.reports import router as reports_router
+from backend.app.routers.users import router as users_router
 from backend.app.routers.dev import get_dev_router
 from backend.app.routers.admin import router as admin_router
 from backend.app.routers.health import router as health_router
@@ -30,7 +31,7 @@ app.include_router(health_router)
 app.include_router(admin_router)
 app.include_router(reports_router)
 
-
+app.include_router(users_router)
 
 
 if DEV_MODE:

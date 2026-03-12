@@ -99,6 +99,8 @@ async def calc_save_text(payload: CalcTextIn, telegram_user_id: int):
                 )
             )
 
+        if not lines_out:
+            raise HTTPException(status_code=400, detail="no valid lines")
         report = Report(
             teacher_user_id=user.id,
             total_sum=total_sum,
@@ -114,6 +116,7 @@ async def calc_save_text(payload: CalcTextIn, telegram_user_id: int):
             sum=total_sum,
             lines=lines_out,
         )
+
 
 
 @router.get("/reports/last", response_model=ReportShortOut)

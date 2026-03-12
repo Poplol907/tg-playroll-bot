@@ -13,12 +13,14 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
 from bot.handlers.common import (
     start,
     help_cmd,
     whoami,
     myid,
-    menu_button_handler
+    menu_button_handler,
+    set_login_cmd,
 )
 
 from bot.handlers.admin import (
@@ -26,7 +28,9 @@ from bot.handlers.admin import (
     admin_bind_cmd,
     admin_create_user_cmd,
     admin_set_role_cmd,
+    admin_set_login_cmd,
 )
+
 
 from bot.handlers.reports import (
     calc_cmd,
@@ -98,6 +102,7 @@ def main():
     app.bot_data["get_user_by_telegram_id"] = get_user_by_telegram_id
     app.bot_data["create_pending_user"] = create_pending_user
 
+
     app.bot_data["calc_cmd"] = calc_cmd
     app.bot_data["last_report_cmd"] = last_report_cmd
     app.bot_data["admin_users_cmd"] = admin_users_cmd
@@ -107,6 +112,7 @@ def main():
     app.add_handler(CommandHandler("whoami", whoami))
     app.add_handler(CommandHandler("myid", myid))
     app.add_handler(CommandHandler("help", help_cmd))
+    app.add_handler(CommandHandler("set_login", set_login_cmd))
 
     app.add_handler(CommandHandler("calc", calc_cmd))
     app.add_handler(CommandHandler("last", last_report_cmd))
@@ -117,11 +123,13 @@ def main():
     app.add_handler(CommandHandler("admin_bind", admin_bind_cmd))
     app.add_handler(CommandHandler("admin_create_user", admin_create_user_cmd))
     app.add_handler(CommandHandler("admin_set_role", admin_set_role_cmd))
+    app.add_handler(CommandHandler("admin_set_login", admin_set_login_cmd))
 
     app.add_handler(
         MessageHandler(
             filters.Regex(
-                "^(Помощь|Профиль|Рассчитать отчёт|Последний отчёт|Пользователи|Привязать Telegram|Меню преподавателя)$"),
+                "^(Меню админа|Меню преподавателя|Профиль|Помощь|Пользователи|Привязать Telegram|Назначить роль|Изменить логин|Рассчитать отчёт|Последний отчёт|Мои отчёты|Назад)$"
+            ),
             menu_button_handler,
         )
     )

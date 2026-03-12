@@ -83,3 +83,29 @@ async def admin_set_role(admin_telegram_user_id: int, login: str, role: str):
         )
         r.raise_for_status()
         return r.json()
+
+
+async def user_set_login(telegram_user_id: int, new_login: str):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/users/set-login",
+            params={"telegram_user_id": telegram_user_id},
+            json={"new_login": new_login},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+
+async def admin_set_login(telegram_user_id: int, login: str, new_login: str):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/admin/set-login",
+            params={"telegram_user_id": telegram_user_id},
+            json={
+                "login": login,
+                "new_login": new_login,
+            },
+        )
+        r.raise_for_status()
+        return r.json()

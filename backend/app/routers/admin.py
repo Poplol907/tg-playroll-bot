@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from backend.app.database import AsyncSessionLocal
 from backend.app.models import User
-
+from backend.app.schemas.admin import AdminSetLoginIn
 from backend.app.schemas.admin import (
     AdminBindIn,
     AdminUserOut,
@@ -135,3 +135,41 @@ async def admin_set_role(payload: AdminSetRoleIn, telegram_user_id: int):
         }
 
 
+@router.post("/set-login")
+async def admin_set_login(payload: AdminSetLoginIn, telegram_user_id: int):
+    async with AsyncSessionLocal() as session:
+
+        q = await session.execute(
+            select(User).where(User.telegram_user_id == telegram_user_id)
+        )
+        admin = q.scalar_one_or_none()
+
+        if admin is None:
+            raise HTTPException(status_code=401, detail="unknown telegram user")
+
+        if admin.role != "ADMIN":
+            raise HTTPException(status_code=403, detail="admin only")
+
+        uq = await session.execute(
+            select(User).where(User.login == payload.login)
+        )
+        user = uq.scalar_one_or_none()
+
+        if user is None:
+            raise HTTPException(status_code=404, detail="user not found")
+
+        exists_q = await session.execute(
+            select(User).where(User.login == payload.new_login)
+        )
+        exists = exists_q.scalar_one_or_none()
+
+        if exists is not None and exists.id != user.id:
+            raise HTTPException(status_code=409, detail="login already exists")
+
+        user.login = payload.new_login
+        await session.commit()
+
+        return {
+            "login": user.login,
+            "role": user.role
+        }
