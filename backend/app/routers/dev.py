@@ -22,14 +22,22 @@ def get_dev_router(dev_mode: bool, dev_key: str | None) -> APIRouter:
         dependencies=[Depends(require_dev_key)],
     )
 
+    DEFAULT_ORG_ID = 1
+
     @router.post("/create-user")
     async def dev_create_user(payload: CreateUserIn):
         async with AsyncSessionLocal() as session:
-            q = await session.execute(select(User).where(User.login == payload.login))
+            q = await session.execute(
+                select(User).where(
+                    User.org_id == DEFAULT_ORG_ID,
+                    User.login == payload.login,
+                )
+            )
             if q.scalar_one_or_none() is not None:
                 return {"ok": False, "error": "login exists"}
 
             u = User(
+                org_id=DEFAULT_ORG_ID,
                 login=payload.login,
                 role=payload.role,
                 teacher_name=payload.teacher_name,
@@ -37,6 +45,7 @@ def get_dev_router(dev_mode: bool, dev_key: str | None) -> APIRouter:
             session.add(u)
             await session.commit()
             return {"ok": True, "id": u.id}
+
 
     @router.post("/bind")
     async def dev_bind(payload: BindIn):

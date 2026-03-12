@@ -66,11 +66,14 @@ async def get_user_by_telegram_id(telegram_id: int):
         )
         return result.scalar_one_or_none()
 
+DEFAULT_ORG_ID = 1
+
 async def create_pending_user(telegram_id: int):
     async with AsyncSessionLocal() as session:
         login = f"tg_{telegram_id}"
 
         user = User(
+            org_id=DEFAULT_ORG_ID,
             login=login,
             role="PENDING",
             telegram_user_id=telegram_id,

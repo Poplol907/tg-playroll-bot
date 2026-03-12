@@ -82,13 +82,19 @@ async def admin_create_user(payload: AdminCreateUserIn, telegram_user_id: int):
         if admin.role != "ADMIN":
             raise HTTPException(status_code=403, detail="admin only")
 
-        uq = await session.execute(select(User).where(User.login == payload.login))
+        uq = await session.execute(
+            select(User).where(
+                User.org_id == admin.org_id,
+                User.login == payload.login,
+            )
+        )
         existing = uq.scalar_one_or_none()
 
         if existing is not None:
             raise HTTPException(status_code=409, detail="login already exists")
 
         u = User(
+            org_id=admin.org_id,
             login=payload.login,
             role=payload.role,
             teacher_name=payload.teacher_name,
@@ -103,7 +109,6 @@ async def admin_create_user(payload: AdminCreateUserIn, telegram_user_id: int):
             "login": u.login,
             "role": u.role,
         }
-
 
 @router.post("/set-role")
 async def admin_set_role(payload: AdminSetRoleIn, telegram_user_id: int):
