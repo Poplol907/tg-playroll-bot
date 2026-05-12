@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
-import '../../../../shared/widgets/app_background_host.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -14,6 +13,7 @@ import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
+import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
 
 // ─────────────────────────────────────────────
 //  AdminScreen — user management for ADMIN role
@@ -33,32 +33,39 @@ class AdminScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final usersAsync = ref.watch(orgUsersProvider);
 
+    // Когда экран — корневая вкладка, кнопки "назад" нет.
+    // Когда он pushed (Navigator.push), показываем кнопку.
+    final canPop = Navigator.of(context).canPop();
+
     return Scaffold(
-      body: AppBackgroundHost(
-        child: SafeArea(
-          child: Column(
-            children: [
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
               // ── Header ──
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: NebulaColors.nebulaSurface,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: NebulaColors.surfaceBorder),
+                    if (canPop) ...[
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: NebulaColors.nebulaSurface,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: NebulaColors.surfaceBorder),
+                          ),
+                          child: const Icon(Icons.arrow_back_rounded,
+                              color: NebulaColors.dimText, size: 18),
                         ),
-                        child: const Icon(Icons.arrow_back_rounded,
-                            color: NebulaColors.dimText, size: 18),
                       ),
-                    ),
-                    const SizedBox(width: 14),
+                      const SizedBox(width: 14),
+                    ],
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -131,18 +138,48 @@ class AdminScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  data: (users) => ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    itemCount: users.length,
-                    itemBuilder: (context, i) => _UserTile(
-                      user: users[i],
-                      onUpdated: () => ref.invalidate(orgUsersProvider),
-                    ),
-                  ),
+                  data: (users) => users.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.people_outline_rounded,
+                                    color: NebulaColors.ghostText, size: 48),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Нет пользователей',
+                                  style: TextStyle(
+                                    color: NebulaColors.dimText,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 6),
+                                Text(
+                                  'Нажмите + чтобы добавить педагога',
+                                  style: TextStyle(
+                                    color: NebulaColors.ghostText,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          itemCount: users.length,
+                          itemBuilder: (context, i) => _UserTile(
+                            user: users[i],
+                            index: i,
+                            onUpdated: () => ref.invalidate(orgUsersProvider),
+                          ),
+                        ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -156,14 +193,25 @@ class AdminScreen extends ConsumerWidget {
 class _UserTile extends ConsumerWidget {
   final OrgUser user;
   final VoidCallback onUpdated;
+  final int index;
 
-  const _UserTile({required this.user, required this.onUpdated});
+  const _UserTile({
+    required this.user,
+    required this.onUpdated,
+    this.index = 0,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: NebulaSurface(
+      child: JiggleDeleteWrapper(
+        jiggleIndex: index,
+        onTap: null,
+        onDeleteConfirmed: () => _deleteUser(context, ref),
+        deleteLabel: 'Удалить пользователя',
+        borderRadius: NebulaTokens.radiusMD,
+        child: NebulaSurface(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         borderRadius: NebulaTokens.radiusMD,
         child: Row(
@@ -288,6 +336,7 @@ class _UserTile extends ConsumerWidget {
           ],
         ),
       ),
+      ), // JiggleDeleteWrapper
     );
   }
 
@@ -311,6 +360,26 @@ class _UserTile extends ConsumerWidget {
     );
   }
 
+  Future<void> _deleteUser(BuildContext context, WidgetRef ref) async {
+    final confirm = await _confirmDelete(context);
+    if (confirm != true) return;
+    try {
+      await ref.read(adminRepositoryProvider).deleteUser(user.id);
+      HapticFeedback.mediumImpact();
+      onUpdated();
+    } on Exception catch (e) {
+      if (context.mounted) {
+        showNebulaSnackBar(
+          context,
+          title: 'Не удалось удалить',
+          message:
+              parseApiError(e, fallback: 'Проверь подключение и попробуй ещё раз'),
+          tone: NebulaSnackTone.error,
+        );
+      }
+    }
+  }
+
   Future<void> _handleAction(
       BuildContext context, WidgetRef ref, String action) async {
     switch (action) {
@@ -318,24 +387,7 @@ class _UserTile extends ConsumerWidget {
         final ok = await SetPasswordSheet.show(context, user);
         if (ok) onUpdated();
       case 'delete':
-        final confirm = await _confirmDelete(context);
-        if (confirm == true) {
-          try {
-            await ref.read(adminRepositoryProvider).deleteUser(user.id);
-            HapticFeedback.mediumImpact();
-            onUpdated();
-          } on Exception catch (e) {
-            if (context.mounted) {
-              showNebulaSnackBar(
-                context,
-                title: 'Не удалось удалить',
-                message: parseApiError(e,
-                    fallback: 'Проверь подключение и попробуй ещё раз'),
-                tone: NebulaSnackTone.error,
-              );
-            }
-          }
-        }
+        await _deleteUser(context, ref);
     }
   }
 

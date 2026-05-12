@@ -60,26 +60,45 @@ class CosmoThemeTokens extends ThemeExtension<CosmoThemeTokens> {
     glowIntensity: 1.0,
   );
 
-  // Light theme — cool blue-gray page, near-solid white panels.
-  // Colored elements use paint-bleed spread shadows (glowIntensity: 0.0).
-  // Text is near-black for maximum WCAG contrast.
-  static const lightLite = CosmoThemeTokens(
-    background: Color(0xFFE5EAF3),       // deeper cool blue-gray — good contrast with white panels
-    backgroundMid: Color(0xFFD8DFEb),
-    backgroundNear: Color(0xFFCDD5E2),
-    surface: Color(0xFFF5F8FF),          // cool white — clearly distinct from background
-    denseSurface: Color(0xFFFFFFFF),     // pure white for modals/forms
-    surfaceBorder: Color(0x40000000),    // 25% black — clearly visible hairlines
-    primaryText: Color(0xFF0D1117),      // near-black — maximum contrast
-    secondaryText: Color(0xCC0D1117),    // 80%
-    mutedText: Color(0xFF4B5563),        // gray-600 — readable secondary
-    primaryAccent: Color(0xFF2563EB),    // royal blue — vivid but not neon
-    secondaryAccent: Color(0xFF7C3AED), // deep violet
+  // Warm off-white page with subtle warmth — soft shader lighting feel.
+  // Slight glow allowed (0.3) for accent elements; text is near-charcoal.
+  static const lightShader = CosmoThemeTokens(
+    background: Color(0xFFFAFAF7),
+    backgroundMid: Color(0xFFF0F0EA),
+    backgroundNear: Color(0xFFE8E8E2),
+    surface: Color(0xFFFFFFFF),
+    denseSurface: Color(0xFFFFFFFF),
+    surfaceBorder: Color(0x30000000),
+    primaryText: Color(0xFF171717),
+    secondaryText: Color(0xCC171717),
+    mutedText: Color(0xFF4B5563),
+    primaryAccent: Color(0xFF2563EB),
+    secondaryAccent: Color(0xFF7C3AED),
     focusAccent: Color(0xFF1D4ED8),
     success: Color(0xFF059669),
     warning: Color(0xFFD97706),
     error: Color(0xFFDC2626),
-    glowIntensity: 0.0,                  // no glow — use spreading paint shadows only
+    glowIntensity: 0.3,
+  );
+
+  // Pure-white page — lightest possible load; no glow at all.
+  static const lightLite = CosmoThemeTokens(
+    background: Color(0xFFFFFFFF),
+    backgroundMid: Color(0xFFF5F5F5),
+    backgroundNear: Color(0xFFEBEBEB),
+    surface: Color(0xFFF5F8FF),
+    denseSurface: Color(0xFFFFFFFF),
+    surfaceBorder: Color(0x40000000),
+    primaryText: Color(0xFF0D1117),
+    secondaryText: Color(0xCC0D1117),
+    mutedText: Color(0xFF4B5563),
+    primaryAccent: Color(0xFF2563EB),
+    secondaryAccent: Color(0xFF7C3AED),
+    focusAccent: Color(0xFF1D4ED8),
+    success: Color(0xFF059669),
+    warning: Color(0xFFD97706),
+    error: Color(0xFFDC2626),
+    glowIntensity: 0.0,
   );
 
   @override

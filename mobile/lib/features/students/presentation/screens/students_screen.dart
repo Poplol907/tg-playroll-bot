@@ -7,6 +7,7 @@ import '../../../../shared/models/student.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
+import '../../../../shared/widgets/nebula_parallax_frame.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../core/utils/error_parser.dart';
@@ -29,8 +30,11 @@ class StudentsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Padding(
+            // Header — wrapped for subtle pointer parallax depth
+            NebulaParallaxFrame(
+              strength: 0.018,
+              maxOffset: 4.0,
+              child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
               child: Row(
                 children: [
@@ -103,6 +107,7 @@ class StudentsScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            ), // NebulaParallaxFrame
             // List
             Expanded(
               child: studentsAsync.when(
@@ -124,7 +129,7 @@ class StudentsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                         itemCount: students.length,
                         itemBuilder: (context, i) =>
-                            _StudentCard(student: students[i]),
+                            _StudentCard(student: students[i], index: i),
                       ),
               ),
             ),
@@ -157,8 +162,9 @@ class StudentsScreen extends ConsumerWidget {
 
 class _StudentCard extends ConsumerWidget {
   final StudentModel student;
+  final int index;
 
-  const _StudentCard({required this.student});
+  const _StudentCard({required this.student, this.index = 0});
 
   bool get _isNew {
     final diff = DateTime.now().difference(student.createdAt);
@@ -195,6 +201,7 @@ class _StudentCard extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: JiggleDeleteWrapper(
+        jiggleIndex: index,
         borderRadius: NebulaTokens.radiusMD,
         onTap: () => StudentDetailSheet.show(context, student),
         onDeleteConfirmed: () async {

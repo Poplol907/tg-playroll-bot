@@ -109,18 +109,25 @@ class AppTheme {
     );
   }
 
+  static ThemeData get lightShader =>
+      _buildLightPlaceholder(CosmoThemeTokens.lightShader);
+
   static ThemeData get lightLite =>
       _buildLightPlaceholder(CosmoThemeTokens.lightLite);
 
   static ThemeMode themeModeFor(AppVisualMode visualMode) {
     return switch (visualMode) {
       AppVisualMode.darkInternals => ThemeMode.dark,
+      AppVisualMode.lightShader => ThemeMode.light,
       AppVisualMode.lightLite => ThemeMode.light,
     };
   }
 
   static ThemeData lightThemeFor(AppVisualMode visualMode) {
-    return lightLite;
+    return switch (visualMode) {
+      AppVisualMode.lightShader => lightShader,
+      _ => lightLite,
+    };
   }
 
   static ThemeData _buildLightPlaceholder(CosmoThemeTokens tokens) {
