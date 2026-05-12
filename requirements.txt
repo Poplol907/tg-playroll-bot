@@ -19,6 +19,7 @@ uvicorn==0.41.0
 
 sqlalchemy
 asyncpg
+PyJWT==2.10.1
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
