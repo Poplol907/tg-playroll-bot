@@ -1,18 +1,7 @@
-# Замени yourdomain.com на свой реальный домен.
-# Caddy автоматически получит Let's Encrypt сертификат — никаких certbot не нужно.
+# HTTP по IP — временно, до покупки домена.
+# Когда будет домен: заменить :80 на yourdomain.com (Caddy сам получит HTTPS).
 
-yourdomain.com {
-    # Всё проксируем в FastAPI backend
+:80 {
     reverse_proxy backend:8000
-
-    # Сжатие ответов
     encode gzip
-
-    # Заголовки безопасности
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
-        -Server
-    }
 }
