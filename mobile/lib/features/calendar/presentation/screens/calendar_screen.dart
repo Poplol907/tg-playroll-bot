@@ -142,6 +142,7 @@ class CalendarScreen extends ConsumerWidget {
                   child: AppErrorCard(
                     message: parseApiError(e, fallback: 'Нет подключения'),
                     onRetry: () => invalidateMonthData(ref, monthYear),
+                    isConnectionError: isConnectionError(e),
                   ),
                 ),
                 data: (lessons) {

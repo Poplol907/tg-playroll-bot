@@ -4,16 +4,70 @@ import '../../core/theme/nebula_tokens.dart';
 import 'nebula_surface.dart';
 import 'nebula_text_button.dart';
 
+/// Empty state — когда данные загрузились, но список пустой.
+/// Показывает нейтральную иконку без ошибки.
+class AppEmptyState extends StatelessWidget {
+  final String message;
+  final String? subtitle;
+  final IconData icon;
+
+  const AppEmptyState({
+    super.key,
+    required this.message,
+    this.subtitle,
+    this.icon = Icons.inbox_outlined,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: NebulaColors.ghostText, size: 48),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: NebulaColors.dimText,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: NebulaColors.ghostText,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Full-width error state shown when a data provider fails to load.
 /// Style matches the salary screen error card.
 class AppErrorCard extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
+  /// Если true — показывает иконку отсутствия связи вместо общей ошибки.
+  final bool isConnectionError;
 
   const AppErrorCard({
     super.key,
     required this.message,
     required this.onRetry,
+    this.isConnectionError = false,
   });
 
   @override
@@ -24,15 +78,17 @@ class AppErrorCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.cloud_off_rounded,
+          Icon(
+            isConnectionError
+                ? Icons.wifi_off_rounded
+                : Icons.error_outline_rounded,
             color: NebulaColors.ghostText,
             size: 48,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Ошибка загрузки',
-            style: TextStyle(
+          Text(
+            isConnectionError ? 'Нет соединения' : 'Ошибка загрузки',
+            style: const TextStyle(
               color: NebulaColors.errorRose,
               fontSize: 15,
               fontWeight: FontWeight.w600,
