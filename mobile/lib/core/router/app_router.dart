@@ -43,9 +43,10 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   // Маршруты в порядке вкладок для роли.
-  // Для админа первая вкладка — админ-панель, остальное доступно для просмотра.
+  // Админ видит только админку — управление студией.
+  // Педагог видит свои календарь / учеников / зарплату.
   List<String> _routesForRole(bool isAdmin) => isAdmin
-      ? ['/admin', '/calendar', '/students', '/salary']
+      ? ['/admin']
       : ['/calendar', '/students', '/salary'];
 
   void _onTabTap(int index, bool isAdmin) {
@@ -125,14 +126,10 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
-    final navItems = [
-      if (isAdmin) _adminMenuItem,
-      ..._teacherMenuItems,
-    ];
-    final sidebarItems = [
-      if (isAdmin) _adminSidebarItem,
-      ..._teacherSidebarItems,
-    ];
+    // Админ видит только админку, педагог — свой набор вкладок
+    final navItems = isAdmin ? [_adminMenuItem] : _teacherMenuItems;
+    final sidebarItems =
+        isAdmin ? [_adminSidebarItem] : _teacherSidebarItems;
 
     return UpdateChecker(
       child: AppBackgroundHost(
@@ -392,6 +389,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Педагог не может зайти в /admin
       if (isAuth && !isAdmin && state.matchedLocation.startsWith('/admin')) {
         return '/calendar';
+      }
+      // Админ не может зайти в /calendar, /students, /salary — только /admin
+      if (isAuth && isAdmin &&
+          (state.matchedLocation.startsWith('/calendar') ||
+           state.matchedLocation.startsWith('/students') ||
+           state.matchedLocation.startsWith('/salary'))) {
+        return '/admin';
       }
       return null;
     },

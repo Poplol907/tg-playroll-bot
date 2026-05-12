@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -13,13 +15,14 @@ import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
-import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
 
 // ─────────────────────────────────────────────
-//  AdminScreen — user management for ADMIN role
+//  AdminScreen — главный экран администратора
+//  Показывает: статистику студии за месяц + список педагогов
+//  Клик на педагога → детальный профиль с возможностью управления
 // ─────────────────────────────────────────────
 
-class AdminScreen extends ConsumerWidget {
+class AdminScreen extends ConsumerStatefulWidget {
   const AdminScreen({super.key});
 
   static void show(BuildContext context) {
@@ -30,11 +33,16 @@ class AdminScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final usersAsync = ref.watch(orgUsersProvider);
+  ConsumerState<AdminScreen> createState() => _AdminScreenState();
+}
 
-    // Когда экран — корневая вкладка, кнопки "назад" нет.
-    // Когда он pushed (Navigator.push), показываем кнопку.
+class _AdminScreenState extends ConsumerState<AdminScreen> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final statsAsync = ref.watch(studioStatsProvider);
+    final usersAsync = ref.watch(orgUsersProvider);
     final canPop = Navigator.of(context).canPop();
 
     return Scaffold(
@@ -43,42 +51,44 @@ class AdminScreen extends ConsumerWidget {
         top: false,
         child: Column(
           children: [
-              // ── Header ──
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    if (canPop) ...[
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: NebulaColors.nebulaSurface,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: NebulaColors.surfaceBorder),
-                          ),
-                          child: const Icon(Icons.arrow_back_rounded,
-                              color: NebulaColors.dimText, size: 18),
+            // ── Header ─────────────────────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  if (canPop) ...[
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: NebulaColors.nebulaSurface,
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: NebulaColors.surfaceBorder),
                         ),
+                        child: const Icon(Icons.arrow_back_rounded,
+                            color: NebulaColors.dimText, size: 18),
                       ),
-                      const SizedBox(width: 14),
-                    ],
-                    const Column(
+                    ),
+                    const SizedBox(width: 14),
+                  ],
+                  const Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Пользователи',
+                          'Студия',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 24,
                             fontWeight: FontWeight.w700,
                             color: NebulaColors.softWhite,
                           ),
                         ),
                         Text(
-                          'Управление аккаунтами',
+                          'Обзор и педагоги',
                           style: TextStyle(
                             fontSize: 12,
                             color: NebulaColors.dimText,
@@ -86,99 +96,62 @@ class AdminScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    // Add user button
-                    GestureDetector(
-                      onTap: () async {
-                        HapticFeedback.lightImpact();
-                        final ok = await CreateUserSheet.show(context);
-                        if (ok) ref.invalidate(orgUsersProvider);
-                      },
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color:
-                              NebulaColors.stellarBlue.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: NebulaColors.stellarBlue
-                                  .withValues(alpha: 0.4)),
-                        ),
-                        child: const Icon(Icons.person_add_outlined,
-                            color: NebulaColors.stellarBlue, size: 18),
+                  ),
+                  // Add user button
+                  GestureDetector(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      final ok = await CreateUserSheet.show(context);
+                      if (ok) {
+                        ref.invalidate(orgUsersProvider);
+                        ref.invalidate(studioStatsProvider);
+                      }
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color:
+                            NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: NebulaColors.stellarBlue
+                                .withValues(alpha: 0.4)),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── User list ──
-              Expanded(
-                child: usersAsync.when(
-                  loading: () => const Center(child: OrbitLoader()),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.cloud_off_rounded,
-                            color: NebulaColors.ghostText, size: 48),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Ошибка загрузки',
-                          style: TextStyle(
-                            color: NebulaColors.dimText,
-                          ),
-                        ),
-                        NebulaTextButton(
-                          label: 'Повторить',
-                          icon: Icons.refresh_rounded,
-                          onPressed: () => ref.invalidate(orgUsersProvider),
-                        ),
-                      ],
+                      child: const Icon(Icons.person_add_outlined,
+                          color: NebulaColors.stellarBlue, size: 18),
                     ),
                   ),
-                  data: (users) => users.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.people_outline_rounded,
-                                    color: NebulaColors.ghostText, size: 48),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Нет пользователей',
-                                  style: TextStyle(
-                                    color: NebulaColors.dimText,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(height: 6),
-                                Text(
-                                  'Нажмите + чтобы добавить педагога',
-                                  style: TextStyle(
-                                    color: NebulaColors.ghostText,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                          itemCount: users.length,
-                          itemBuilder: (context, i) => _UserTile(
-                            user: users[i],
-                            index: i,
-                            onUpdated: () => ref.invalidate(orgUsersProvider),
-                          ),
-                        ),
-                ),
+                ],
               ),
+            ),
+
+            // ── Studio stats card (compact) ─────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: _StudioStatsCard(statsAsync: statsAsync),
+            ),
+
+            // ── Search field ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: _SearchField(
+                onChanged: (s) => setState(() => _query = s.trim()),
+              ),
+            ),
+
+            // ── Teachers list ───────────────────────────────────────────
+            Expanded(
+              child: _TeachersList(
+                statsAsync: statsAsync,
+                usersAsync: usersAsync,
+                query: _query,
+                onChanged: () {
+                  ref.invalidate(orgUsersProvider);
+                  ref.invalidate(studioStatsProvider);
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -187,61 +160,309 @@ class AdminScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-//  User tile
+//  Studio stats card
 // ─────────────────────────────────────────────
 
-class _UserTile extends ConsumerWidget {
-  final OrgUser user;
-  final VoidCallback onUpdated;
-  final int index;
+class _StudioStatsCard extends StatelessWidget {
+  final AsyncValue<StudioStats> statsAsync;
 
-  const _UserTile({
-    required this.user,
-    required this.onUpdated,
-    this.index = 0,
+  const _StudioStatsCard({required this.statsAsync});
+
+  @override
+  Widget build(BuildContext context) {
+    return statsAsync.when(
+      loading: () => const NebulaSurface(
+        padding: EdgeInsets.symmetric(vertical: 28),
+        borderRadius: NebulaTokens.radiusLG,
+        child: Center(child: OrbitLoader()),
+      ),
+      error: (e, _) => NebulaSurface(
+        padding: const EdgeInsets.all(16),
+        borderRadius: NebulaTokens.radiusLG,
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_off_rounded,
+                color: NebulaColors.warningAmber, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                parseApiError(e, fallback: 'Не удалось загрузить статистику'),
+                style: const TextStyle(
+                    fontSize: 12, color: NebulaColors.mistWhite),
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (s) => NebulaSurface(
+        padding: const EdgeInsets.all(16),
+        borderRadius: NebulaTokens.radiusLG,
+        accent: NebulaColors.stellarBlue,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'СТАТИСТИКА СТУДИИ',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: NebulaColors.ghostText,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatItem(
+                    label: 'Заработок',
+                    value: _formatMoney(s.totalAmount),
+                    color: NebulaColors.successMint,
+                  ),
+                ),
+                Expanded(
+                  child: _StatItem(
+                    label: 'Уроков',
+                    value: '${s.totalLessonsDone}',
+                    color: NebulaColors.stellarBlue,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatItem(
+                    label: 'Учеников',
+                    value: '${s.activeStudents}',
+                    color: NebulaColors.nebulaPurple,
+                  ),
+                ),
+                Expanded(
+                  child: _StatItem(
+                    label: 'Педагогов',
+                    value: '${s.activeTeachers}',
+                    color: NebulaColors.warningAmber,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatMoney(int amount) {
+    final formatter = NumberFormat.decimalPattern('ru');
+    return '${formatter.format(amount)} ₽';
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: NebulaColors.dimText,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Search field
+// ─────────────────────────────────────────────
+
+class _SearchField extends StatelessWidget {
+  final ValueChanged<String> onChanged;
+
+  const _SearchField({required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: NebulaColors.nebulaSurface,
+        borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+        border: Border.all(color: NebulaColors.surfaceBorder),
+      ),
+      child: TextField(
+        onChanged: onChanged,
+        style: const TextStyle(
+            fontSize: 14, color: NebulaColors.softWhite),
+        decoration: const InputDecoration(
+          isDense: true,
+          contentPadding:
+              EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          hintText: 'Поиск по имени или логину...',
+          hintStyle: TextStyle(
+              fontSize: 14, color: NebulaColors.ghostText),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: NebulaColors.dimText, size: 18),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Teachers list
+//  Объединяет данные из orgUsersProvider (user info) и studioStatsProvider (stats)
+// ─────────────────────────────────────────────
+
+class _TeachersList extends ConsumerWidget {
+  final AsyncValue<StudioStats> statsAsync;
+  final AsyncValue<List<OrgUser>> usersAsync;
+  final String query;
+  final VoidCallback onChanged;
+
+  const _TeachersList({
+    required this.statsAsync,
+    required this.usersAsync,
+    required this.query,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Ждём оба провайдера
+    if (usersAsync.isLoading) {
+      return const Center(child: OrbitLoader());
+    }
+    if (usersAsync.hasError) {
+      return Center(
+        child: AppErrorCard(
+          message: parseApiError(usersAsync.error!,
+              fallback: 'Ошибка загрузки списка'),
+          onRetry: () {
+            ref.invalidate(orgUsersProvider);
+            ref.invalidate(studioStatsProvider);
+          },
+          isConnectionError: isConnectionError(usersAsync.error!),
+        ),
+      );
+    }
+
+    final users = usersAsync.value ?? [];
+    final teachers = users.where((u) => !u.isAdmin).toList();
+
+    // Фильтр по поиску (нечувствительный к регистру)
+    final q = query.toLowerCase();
+    final filtered = q.isEmpty
+        ? teachers
+        : teachers.where((t) {
+            final name = (t.teacherName ?? '').toLowerCase();
+            final login = t.login.toLowerCase();
+            return name.contains(q) || login.contains(q);
+          }).toList();
+
+    // Маппинг user → stats
+    final statsByTeacher = <int, TeacherStats>{};
+    statsAsync.whenData((s) {
+      for (final t in s.teachers) {
+        statsByTeacher[t.teacherId] = t;
+      }
+    });
+
+    if (filtered.isEmpty) {
+      return AppEmptyState(
+        message: q.isEmpty ? 'Нет педагогов' : 'Никого не нашли',
+        subtitle: q.isEmpty
+            ? 'Нажмите + чтобы добавить педагога'
+            : 'Попробуй другой запрос',
+        icon: Icons.school_outlined,
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      itemCount: filtered.length,
+      itemBuilder: (context, i) => _TeacherTile(
+        user: filtered[i],
+        stats: statsByTeacher[filtered[i].id],
+        onUpdated: onChanged,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Teacher tile
+// ─────────────────────────────────────────────
+
+class _TeacherTile extends ConsumerWidget {
+  final OrgUser user;
+  final TeacherStats? stats;
+  final VoidCallback onUpdated;
+
+  const _TeacherTile({
+    required this.user,
+    required this.stats,
+    required this.onUpdated,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lessonsDone = stats?.lessonsDone ?? 0;
+    final totalAmount = stats?.totalAmount ?? 0;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: JiggleDeleteWrapper(
-        jiggleIndex: index,
-        onTap: null,
-        onDeleteConfirmed: () => _deleteUser(context, ref),
-        deleteLabel: 'Удалить пользователя',
-        borderRadius: NebulaTokens.radiusMD,
-        child: NebulaSurface(
+      child: NebulaSurface(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         borderRadius: NebulaTokens.radiusMD,
+        onTap: () => _openProfile(context, ref),
         child: Row(
           children: [
-            // Role icon
+            // Avatar with role icon
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: user.isAdmin
-                    ? NebulaColors.nebulaPurple.withValues(alpha: 0.12)
-                    : NebulaColors.stellarBlue.withValues(alpha: 0.1),
+                color: NebulaColors.stellarBlue.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: user.isAdmin
-                      ? NebulaColors.nebulaPurple.withValues(alpha: 0.3)
-                      : NebulaColors.stellarBlue.withValues(alpha: 0.25),
+                  color: NebulaColors.stellarBlue.withValues(alpha: 0.25),
                 ),
               ),
-              child: Icon(
-                user.isAdmin ? Icons.shield_outlined : Icons.school_outlined,
-                color: user.isAdmin
-                    ? NebulaColors.nebulaPurple
-                    : NebulaColors.stellarBlue,
+              child: const Icon(
+                Icons.school_outlined,
+                color: NebulaColors.stellarBlue,
                 size: 20,
               ),
             ),
             const SizedBox(width: 14),
 
-            // Info
+            // Name + login
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,36 +480,18 @@ class _UserTile extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: user.isAdmin
-                              ? NebulaColors.nebulaPurple
-                                  .withValues(alpha: 0.12)
-                              : NebulaColors.stellarBlue.withValues(alpha: 0.1),
-                          borderRadius:
-                              BorderRadius.circular(NebulaTokens.radiusXS),
-                        ),
-                        child: Text(
-                          user.isAdmin ? 'ADMIN' : 'TEACHER',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: user.isAdmin
-                                ? NebulaColors.nebulaPurple
-                                : NebulaColors.stellarBlue,
-                          ),
-                        ),
-                      ),
+                      if (!user.hasPassword) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.lock_open_rounded,
+                            size: 12, color: NebulaColors.warningAmber),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    user.login,
+                    '${user.login} · $lessonsDone уроков · ${_formatMoney(totalAmount)}',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: NebulaColors.ghostText,
                     ),
                   ),
@@ -296,109 +499,280 @@ class _UserTile extends ConsumerWidget {
               ),
             ),
 
-            // Password indicator
-            if (!user.hasPassword)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: NebulaColors.warningAmber.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
-                  border: Border.all(
-                      color: NebulaColors.warningAmber.withValues(alpha: 0.3)),
+            const Icon(Icons.chevron_right_rounded,
+                color: NebulaColors.ghostText, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatMoney(int amount) {
+    if (amount == 0) return '0 ₽';
+    final formatter = NumberFormat.decimalPattern('ru');
+    return '${formatter.format(amount)} ₽';
+  }
+
+  void _openProfile(BuildContext context, WidgetRef ref) {
+    HapticFeedback.selectionClick();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (_) => _TeacherProfileDialog(
+        user: user,
+        stats: stats,
+        onUpdated: onUpdated,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Teacher profile dialog
+// ─────────────────────────────────────────────
+
+class _TeacherProfileDialog extends ConsumerWidget {
+  final OrgUser user;
+  final TeacherStats? stats;
+  final VoidCallback onUpdated;
+
+  const _TeacherProfileDialog({
+    required this.user,
+    required this.stats,
+    required this.onUpdated,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = stats;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 460),
+        decoration: BoxDecoration(
+          gradient: NebulaColors.warmGlass,
+          borderRadius: BorderRadius.circular(NebulaTokens.radiusXL),
+          border: Border.all(color: NebulaColors.warmPearlBorder),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: NebulaColors.stellarBlue
+                            .withValues(alpha: 0.3)),
+                  ),
+                  child: const Icon(Icons.school_outlined,
+                      color: NebulaColors.stellarBlue, size: 24),
                 ),
-                child: const Text(
-                  'нет пароля',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: NebulaColors.warningAmber,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.displayName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: NebulaColors.softWhite,
+                        ),
+                      ),
+                      Text(
+                        '@${user.login}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: NebulaColors.dimText,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded,
+                      color: NebulaColors.dimText, size: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
 
-            // Actions menu
-            PopupMenuButton<String>(
-              color: NebulaColors.spaceBlack,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
-                side: const BorderSide(color: NebulaColors.surfaceBorder),
+            // ── Stats grid ──
+            const Text(
+              'СТАТИСТИКА МЕСЯЦА',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: NebulaColors.ghostText,
+                letterSpacing: 0.8,
               ),
-              icon: const Icon(Icons.more_vert_rounded,
-                  color: NebulaColors.ghostText, size: 18),
-              onSelected: (action) => _handleAction(context, ref, action),
-              itemBuilder: (_) => [
-                _menuItem('password', Icons.lock_outline_rounded,
-                    'Установить пароль', NebulaColors.stellarBlue),
-                _menuItem('delete', Icons.person_remove_outlined, 'Удалить',
-                    NebulaColors.errorRose),
+            ),
+            const SizedBox(height: 10),
+            _DialogStatRow(
+              icon: Icons.check_circle_outline_rounded,
+              label: 'Проведено',
+              value: '${s?.lessonsDone ?? 0}',
+              color: NebulaColors.successMint,
+            ),
+            _DialogStatRow(
+              icon: Icons.warning_amber_rounded,
+              label: 'Пропусков',
+              value: '${s?.lessonsMissed ?? 0}',
+              color: NebulaColors.errorRose,
+            ),
+            _DialogStatRow(
+              icon: Icons.repeat_rounded,
+              label: 'Отработок',
+              value: '${s?.lessonsCancelledMakeup ?? 0}',
+              color: NebulaColors.auroraCyan,
+            ),
+            _DialogStatRow(
+              icon: Icons.cancel_outlined,
+              label: 'Долгов педагога',
+              value: '${s?.lessonsDebt ?? 0}',
+              color: NebulaColors.warningAmber,
+            ),
+            const Divider(
+                color: NebulaColors.surfaceBorder, height: 24),
+            _DialogStatRow(
+              icon: Icons.payments_outlined,
+              label: 'К выплате',
+              value: _formatMoney(s?.totalAmount ?? 0),
+              color: NebulaColors.stellarBlue,
+              valueBig: true,
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Actions ──
+            Row(
+              children: [
+                Expanded(
+                  child: NebulaTextButton(
+                    label: 'Сменить пароль',
+                    icon: Icons.lock_outline_rounded,
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final ok = await SetPasswordSheet.show(context, user);
+                      if (ok) onUpdated();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: NebulaTextButton(
+                    label: 'Удалить',
+                    icon: Icons.person_remove_outlined,
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _confirmAndDelete(context, ref);
+                    },
+                  ),
+                ),
               ],
             ),
           ],
         ),
       ),
-      ), // JiggleDeleteWrapper
     );
   }
 
-  PopupMenuItem<String> _menuItem(
-      String value, IconData icon, String label, Color color) {
-    return PopupMenuItem<String>(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
+  String _formatMoney(int amount) {
+    final formatter = NumberFormat.decimalPattern('ru');
+    return '${formatter.format(amount)} ₽';
   }
 
-  Future<void> _deleteUser(BuildContext context, WidgetRef ref) async {
-    final confirm = await _confirmDelete(context);
-    if (confirm != true) return;
+  Future<void> _confirmAndDelete(
+      BuildContext context, WidgetRef ref) async {
+    final confirm = await NebulaDialog.confirm(
+      context,
+      title: 'Удалить педагога?',
+      message:
+          'Это действие нельзя отменить. Все связанные с ${user.displayName} данные останутся в базе, но войти под этим логином будет невозможно.',
+      confirmLabel: 'Удалить',
+      cancelLabel: 'Отмена',
+      destructive: true,
+    );
+    if (!confirm) return;
+
     try {
       await ref.read(adminRepositoryProvider).deleteUser(user.id);
       HapticFeedback.mediumImpact();
       onUpdated();
+      if (context.mounted) {
+        showNebulaSnackBar(
+          context,
+          title: 'Удалено',
+          message: '${user.displayName} больше не имеет доступа',
+          tone: NebulaSnackTone.success,
+        );
+      }
     } on Exception catch (e) {
       if (context.mounted) {
         showNebulaSnackBar(
           context,
           title: 'Не удалось удалить',
-          message:
-              parseApiError(e, fallback: 'Проверь подключение и попробуй ещё раз'),
+          message: parseApiError(e),
           tone: NebulaSnackTone.error,
         );
       }
     }
   }
+}
 
-  Future<void> _handleAction(
-      BuildContext context, WidgetRef ref, String action) async {
-    switch (action) {
-      case 'password':
-        final ok = await SetPasswordSheet.show(context, user);
-        if (ok) onUpdated();
-      case 'delete':
-        await _deleteUser(context, ref);
-    }
-  }
+class _DialogStatRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool valueBig;
 
-  Future<bool> _confirmDelete(BuildContext context) {
-    return NebulaDialog.confirm(
-      context,
-      title: 'Удалить ${user.displayName}?',
-      message: 'Это действие нельзя отменить.',
-      confirmLabel: 'Удалить',
-      destructive: true,
-      icon: Icons.delete_outline_rounded,
+  const _DialogStatRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    this.valueBig = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: NebulaColors.mistWhite,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: valueBig ? 18 : 14,
+              fontWeight: valueBig ? FontWeight.w700 : FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
