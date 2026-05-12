@@ -27,7 +27,7 @@ async def student_create(
         )
     )
     if existing.first():
-        raise HTTPException(status_code=409, detail="student already exists")
+        raise HTTPException(status_code=409, detail="Ученик с таким именем уже существует")
 
     # Determine which teacher this student belongs to
     if current_user.role == "TEACHER":

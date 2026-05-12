@@ -111,14 +111,21 @@ class StudentsScreen extends ConsumerWidget {
                   child: AppErrorCard(
                     message: parseApiError(e, fallback: 'Ошибка загрузки'),
                     onRetry: () => ref.invalidate(studentsProvider),
+                    isConnectionError: isConnectionError(e),
                   ),
                 ),
-                data: (students) => ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: students.length,
-                  itemBuilder: (context, i) =>
-                      _StudentCard(student: students[i]),
-                ),
+                data: (students) => students.isEmpty
+                    ? const AppEmptyState(
+                        message: 'Нет учеников',
+                        subtitle: 'Нажмите + чтобы добавить первого ученика',
+                        icon: Icons.people_outline_rounded,
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        itemCount: students.length,
+                        itemBuilder: (context, i) =>
+                            _StudentCard(student: students[i]),
+                      ),
               ),
             ),
           ],

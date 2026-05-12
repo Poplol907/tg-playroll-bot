@@ -1,5 +1,13 @@
 import 'package:dio/dio.dart';
 
+/// Возвращает true если ошибка — проблема с соединением (нет сети / сервер не отвечает).
+bool isConnectionError(Object e) {
+  if (e is DioException) {
+    return e.response == null;
+  }
+  return false;
+}
+
 /// Converts any API/network error into a short, user-friendly Russian string.
 ///
 /// Priority:
@@ -26,14 +34,17 @@ String parseApiError(Object e, {String? fallback}) {
       case 404:
         return 'Запись не найдена.';
       case 409:
-        return 'Конфликт: такая запись уже существует.';
+        return 'Такая запись уже существует.';
       case 422:
         return 'Неверный формат данных. Проверьте поля.';
       case 500:
-        return 'Ошибка сервера. Попробуйте позже.';
+        return 'Внутренняя ошибка сервера. Попробуйте позже.';
+      case 502:
+      case 503:
+        return 'Сервер временно недоступен. Попробуйте позже.';
       case null:
         // No response — connection problem
-        return 'Нет соединения с сервером. Проверьте интернет.';
+        return 'Нет соединения с сервером. Проверьте интернет или адрес сервера в настройках.';
     }
     return 'Ошибка соединения. Попробуйте снова.';
   }
