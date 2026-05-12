@@ -297,40 +297,39 @@ class _GlowTabState extends State<_GlowTab>
                   ),
 
                 // ── Front face ─────────────────────────────────────────────
-                // Visible when inactive. Folds downward on selection.
-                // Pivot = bottom-centre (Alignment.bottomCenter).
-                Transform(
-                  transform: Matrix4.identity()
-                    ..rotateX(-math.pi / 2 * tRaw),
-                  alignment: Alignment.bottomCenter,
-                  child: Opacity(
-                    opacity: (1.0 - t * 1.6).clamp(0.0, 1.0),
-                    child: _TabContent(
-                      item: widget.item,
-                      active: false,
-                      isDark: widget.isDark,
+                // Excluded from tree once fully active (t≥0.99) — keeps
+                // find.text() returning findsOneWidget in tests.
+                if (t < 0.99)
+                  Transform(
+                    transform: Matrix4.identity()
+                      ..rotateX(-math.pi / 2 * tRaw),
+                    alignment: Alignment.bottomCenter,
+                    child: Opacity(
+                      opacity: (1.0 - t * 1.6).clamp(0.0, 1.0),
+                      child: _TabContent(
+                        item: widget.item,
+                        active: false,
+                        isDark: widget.isDark,
+                      ),
                     ),
                   ),
-                ),
 
                 // ── Back face ──────────────────────────────────────────────
-                // Starts at rotateX=90° (above, invisible).
-                // Folds in from the top on selection.
-                // Pivot = top-centre (Alignment.topCenter).
-                Transform(
-                  transform: Matrix4.identity()
-                    ..setEntry(3, 2, 0.002)
-                    ..rotateX(math.pi / 2 * (1.0 - tRaw)),
-                  alignment: Alignment.topCenter,
-                  child: Opacity(
-                    opacity: ((t - 0.25) * 1.6).clamp(0.0, 1.0),
-                    child: _TabContent(
-                      item: widget.item,
-                      active: true,
-                      isDark: widget.isDark,
+                // Only added to tree when visible (t>0.01).
+                if (t > 0.01)
+                  Transform(
+                    transform: Matrix4.identity()
+                      ..rotateX(math.pi / 2 * (1.0 - tRaw)),
+                    alignment: Alignment.topCenter,
+                    child: Opacity(
+                      opacity: ((t - 0.25) * 1.6).clamp(0.0, 1.0),
+                      child: _TabContent(
+                        item: widget.item,
+                        active: true,
+                        isDark: widget.isDark,
+                      ),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -381,7 +380,7 @@ class _TabContent extends StatelessWidget {
         ),
         const SizedBox(height: 3),
         Text(
-          item.label.toUpperCase(),
+          item.label,
           style: TextStyle(
             fontFamily: 'SpaceMono',
             fontSize: 9,

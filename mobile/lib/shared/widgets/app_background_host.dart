@@ -37,6 +37,11 @@ class AppBackgroundHost extends ConsumerWidget {
             ),
           AppDarkBackground.asciiWater => AsciiWaterBackground(child: child),
         },
+      AppVisualMode.lightShader => PathFieldBackground(
+          tokens: CosmoThemeTokens.lightShader,
+          animated: true,
+          child: child,
+        ),
       AppVisualMode.lightLite => PathFieldBackground(
           tokens: CosmoThemeTokens.lightLite,
           animated: false,
