@@ -109,3 +109,144 @@ async def admin_set_login(telegram_user_id: int, login: str, new_login: str):
         )
         r.raise_for_status()
         return r.json()
+
+async def create_student(
+    telegram_user_id: int,
+    first_name: str,
+    last_name: str,
+    phone: str | None = None,
+):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/students/create",
+            params={"telegram_user_id": telegram_user_id},
+            json={
+                "first_name": first_name,
+                "last_name": last_name,
+                "phone": phone,
+            },
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def get_students(telegram_user_id: int):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(
+            f"{API_URL}/students",
+            params={"telegram_user_id": telegram_user_id},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+# ── Инструменты ────────────────────────────────────────────────────────────
+
+async def get_instruments(telegram_user_id: int):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(
+            f"{API_URL}/instruments",
+            params={"telegram_user_id": telegram_user_id},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def create_instrument(telegram_user_id: int, name: str):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/instruments",
+            params={"telegram_user_id": telegram_user_id},
+            json={"name": name},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def delete_instrument(telegram_user_id: int, instrument_id: int):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.delete(
+            f"{API_URL}/instruments/{instrument_id}",
+            params={"telegram_user_id": telegram_user_id},
+        )
+        r.raise_for_status()
+# ── Отчёты v2 ──────────────────────────────────────────────────────────────
+
+async def get_salary_report(telegram_user_id: int, teacher_id: int, month: str, report_type: str = "final"):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(
+            f"{API_URL}/reports/salary",
+            params={
+                "telegram_user_id": telegram_user_id,
+                "teacher_id": teacher_id,
+                "month": month,
+                "report_type": report_type,
+            },
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def get_studio_report(telegram_user_id: int, month: str):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(
+            f"{API_URL}/reports/studio",
+            params={"telegram_user_id": telegram_user_id, "month": month},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def get_teachers(telegram_user_id: int):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(
+            f"{API_URL}/teachers",
+            params={"telegram_user_id": telegram_user_id},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def get_teacher_rates(telegram_user_id: int, teacher_id: int):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.get(
+            f"{API_URL}/rates/teacher/{teacher_id}",
+            params={"telegram_user_id": telegram_user_id},
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+async def set_teacher_rate(
+    telegram_user_id: int,
+    teacher_id: int,
+    rate: int,
+    effective_from: str,  # 'YYYY-MM-DD'
+    instrument_id: int | None = None,
+    note: str | None = None,
+):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/rates/teacher/{teacher_id}",
+            params={"telegram_user_id": telegram_user_id},
+            json={
+                "teacher_user_id": teacher_id,
+                "rate_per_lesson": rate,
+                "effective_from": effective_from,
+                "instrument_id": instrument_id,
+                "note": note,
+            },
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+# ── Пароль (для Flutter) ───────────────────────────────────────────────────
+
+async def init_password(login: str, password: str):
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        r = await client.post(
+            f"{API_URL}/auth/init-password",
+            json={"login": login, "password": password},
+        )
+        r.raise_for_status()

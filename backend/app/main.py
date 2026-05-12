@@ -1,39 +1,74 @@
-
 import os
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from backend.app.routers.reports import router as reports_router
 from backend.app.routers.users import router as users_router
 from backend.app.routers.dev import get_dev_router
 from backend.app.routers.admin import router as admin_router
 from backend.app.routers.health import router as health_router
-from backend.app.database import engine, Base
-
+from backend.app.routers.students import router as students_router
+from backend.app.routers.instruments import router as instruments_router
+from backend.app.routers.subscriptions import router as subscriptions_router
+from backend.app.routers.lessons import router as lessons_router
+from backend.app.routers.auth import router as auth_router
+from backend.app.routers.teachers import router as teachers_router
+from backend.app.routers.reports_v2 import router as reports_v2_router
+from backend.app.routers.rates import router as rates_router
+from backend.app.routers.system import router as system_router
+from backend.app.routers.org import router as org_router
 
 load_dotenv()
 
 DEV_MODE = os.getenv("DEV_MODE", "0") == "1"
 DEV_KEY = os.getenv("DEV_KEY")
 
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
+    # Таблицы создаются через migrations/001_full_schema.sql
+    # create_all оставлен только для локальной разработки (DEV_MODE)
+    if DEV_MODE:
+        from backend.app.database import engine, Base
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     yield
-app = FastAPI(lifespan=lifespan)
 
+
+app = FastAPI(
+    lifespan=lifespan,
+    title="Kosmo Studio API",
+    version="1.0.0",
+    docs_url="/docs" if DEV_MODE else None,   # Swagger только в dev
+    redoc_url="/redoc" if DEV_MODE else None,
+)
+
+# CORS — разрешаем любые origins (мобильные приложения не имеют origin)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(admin_router)
-app.include_router(reports_router)
-
 app.include_router(users_router)
-
+app.include_router(students_router)
+app.include_router(instruments_router)
+app.include_router(subscriptions_router)
+app.include_router(lessons_router)
+app.include_router(teachers_router)
+app.include_router(rates_router)
+app.include_router(reports_router)
+app.include_router(reports_v2_router)
+app.include_router(system_router)
+app.include_router(org_router)
 
 if DEV_MODE:
     app.include_router(get_dev_router(DEV_MODE, DEV_KEY))
-

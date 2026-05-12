@@ -43,6 +43,9 @@ from bot.handlers.teacher import (
     teacher_home_cmd
 )
 
+from bot.handlers.students import student_create_cmd, students_list_cmd
+from bot.handlers.reports_v2 import salary_report_cmd, studio_report_cmd
+from bot.handlers.rates import set_rate_cmd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -110,6 +113,8 @@ def main():
     app.bot_data["last_report_cmd"] = last_report_cmd
     app.bot_data["admin_users_cmd"] = admin_users_cmd
     app.bot_data["teacher_home_cmd"] = teacher_home_cmd
+    app.bot_data["salary_report_cmd"] = salary_report_cmd
+    app.bot_data["studio_report_cmd"] = studio_report_cmd
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("whoami", whoami))
@@ -128,10 +133,23 @@ def main():
     app.add_handler(CommandHandler("admin_set_role", admin_set_role_cmd))
     app.add_handler(CommandHandler("admin_set_login", admin_set_login_cmd))
 
+    app.add_handler(CommandHandler("student_create", student_create_cmd))
+    app.add_handler(CommandHandler("students", students_list_cmd))
+    app.add_handler(CommandHandler("set_rate", set_rate_cmd))
+
     app.add_handler(
         MessageHandler(
             filters.Regex(
-                "^(Меню админа|Меню преподавателя|Профиль|Помощь|Пользователи|Привязать Telegram|Назначить роль|Изменить логин|Рассчитать отчёт|Последний отчёт|Мои отчёты|Назад)$"
+                "^("
+                "Меню админа|Меню преподавателя|Профиль|Помощь|Назад|Назад в меню админа|"
+                "Ученики|Список учеников|Добавить ученика|"
+                "Педагоги|Список педагогов|Ставки педагогов|"
+                "Инструменты|Список инструментов|Добавить инструмент|"
+                "Отчёты|Зарплата педагога|Статистика студии|"
+                "Настройки|Установить пароль|Список пользователей|"
+                "Привязать Telegram|Назначить роль|Изменить логин|"
+                "Рассчитать отчёт|Последний отчёт|Мои отчёты"
+                ")$"
             ),
             menu_button_handler,
         )

@@ -1,0 +1,18 @@
+# Замени yourdomain.com на свой реальный домен.
+# Caddy автоматически получит Let's Encrypt сертификат — никаких certbot не нужно.
+
+yourdomain.com {
+    # Всё проксируем в FastAPI backend
+    reverse_proxy backend:8000
+
+    # Сжатие ответов
+    encode gzip
+
+    # Заголовки безопасности
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+}
