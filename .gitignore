@@ -28,3 +28,30 @@ dist/
 
 # pytest cache (если появится)
 .pytest_cache/
+
+# Local code intelligence / agent state
+.gitnexus/
+.claude/
+.claude-flow/
+.codegraph/
+AGENTS.md
+CLAUDE.md
+
+# Downloaded design/reference media
+gallery-dl/
+
+# Local Flutter/iCloud build leftovers
+mobile/build 2
+mobile/.claude-flow/
+mobile/.codegraph/
+mobile/run_safe.sh
+mobile/xattr_watcher.sh
+
+# Generated OTA artifacts
+backend/static/manifest.plist
+
+# One-off local data repair scripts
+scripts/add_missing_lessons.py
+scripts/find_maxim.py
+scripts/find_students.py
+scripts/fix_april_lessons.py

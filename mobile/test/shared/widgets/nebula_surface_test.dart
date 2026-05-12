@@ -1,0 +1,58 @@
+import 'package:cosmo_studio/shared/widgets/nebula_surface.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('NebulaSurface paints rounded specular border without assertion',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: NebulaSurface(
+              child: Text('surface'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('surface'), findsOneWidget);
+  });
+
+  testWidgets('NebulaSurface is blur-free by default', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: NebulaSurface(
+              child: Text('cheap surface'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('NebulaSurface can opt into frosted blur', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: NebulaSurface(
+              frosted: true,
+              child: Text('frosted surface'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(BackdropFilter), findsOneWidget);
+  });
+}

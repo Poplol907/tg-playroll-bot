@@ -7,6 +7,11 @@ from bot.services.api import (
     get_last_report,
     get_report_by_id,
 )
+from bot.handlers.students import handle_student_text
+from bot.handlers.instruments import handle_instrument_text
+from bot.handlers.reports_v2 import handle_reports_admin_text
+from bot.services.api import init_password
+from bot.ui.keyboards import build_settings_menu
 
 
 def fmt_sum(n: int) -> str:
@@ -54,6 +59,15 @@ def looks_like_calc_input(text: str) -> bool:
     return False
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if await handle_student_text(update, context):
+        return
+    if await handle_instrument_text(update, context):
+        return
+    if await handle_reports_admin_text(update, context):
+        return
+    if await _handle_password_text(update, context):
+        return
+
     if not context.user_data.get("awaiting_calc_text"):
         return
 
@@ -127,6 +141,43 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(msg)
+
+
+async def _handle_password_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    if not context.user_data.get("awaiting_password_input"):
+        return False
+    context.user_data["awaiting_password_input"] = False
+    parts = update.message.text.strip().split(maxsplit=1)
+    if len(parts) != 2:
+        await update.message.reply_text(
+            "Неверный формат. Нужно: <login> <пароль>",
+            reply_markup=build_settings_menu(),
+        )
+        return True
+    login, password = parts
+    try:
+        await init_password(login, password)
+        await update.message.reply_text(
+            f"✓ Пароль для «{login}» установлен.\n"
+            f"Теперь можно войти в приложение.",
+            reply_markup=build_settings_menu(),
+        )
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+        if code == 404:
+            await update.message.reply_text(f"Пользователь «{login}» не найден.", reply_markup=build_settings_menu())
+        elif code == 409:
+            await update.message.reply_text(
+                f"У «{login}» уже есть пароль.\nИспользуйте /admin_set_password для смены.",
+                reply_markup=build_settings_menu(),
+            )
+        elif code == 403:
+            await update.message.reply_text("Аккаунт не активирован.", reply_markup=build_settings_menu())
+        else:
+            await update.message.reply_text(f"Ошибка: {code}", reply_markup=build_settings_menu())
+    except httpx.HTTPError:
+        await update.message.reply_text("Ошибка связи.", reply_markup=build_settings_menu())
+    return True
 
 
 async def last_report_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):

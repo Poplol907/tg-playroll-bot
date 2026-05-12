@@ -1,0 +1,235 @@
+import 'package:cosmo_studio/core/platform/app_platform.dart';
+import 'package:cosmo_studio/core/storage/app_storage.dart';
+import 'package:cosmo_studio/features/auth/presentation/screens/login_screen.dart';
+import 'package:cosmo_studio/features/auth/presentation/widgets/cosmo_login_sphere.dart';
+import 'package:cosmo_studio/features/students/presentation/widgets/schedule_builder_modal.dart';
+import 'package:cosmo_studio/shared/models/student.dart';
+import 'package:cosmo_studio/shared/widgets/adaptive_modal.dart';
+import 'package:cosmo_studio/shared/widgets/mist_modal.dart';
+import 'package:cosmo_studio/shared/widgets/nebula_dialog.dart';
+import 'package:cosmo_studio/shared/widgets/nebula_toggle.dart';
+import 'package:cosmo_studio/shared/widgets/server_settings_modal.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    await AppStorage.init();
+    await initializeDateFormatting('ru');
+  });
+
+  tearDown(() {
+    AppPlatform.debugOverrideIsDesktop = null;
+  });
+
+  testWidgets('schedule builder opens as dialog on desktop', (tester) async {
+    AppPlatform.debugOverrideIsDesktop = true;
+    final student = StudentModel(
+      id: 1,
+      orgId: 1,
+      firstName: 'Али',
+      lastName: 'Абидов',
+      status: 'ACTIVE',
+      createdAt: DateTime(2026),
+      studentTeacherId: 10,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              return TextButton(
+                onPressed: () => ScheduleBuilderModal.show(
+                  context,
+                  student: student,
+                  studentTeacherId: 10,
+                ),
+                child: const Text('open'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    expect(find.text('Пн'), findsOneWidget);
+    expect(find.text('Вс'), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('adaptive desktop modal avoids backdrop blur', (tester) async {
+    AppPlatform.debugOverrideIsDesktop = true;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => AdaptiveModal.show<void>(
+                context,
+                builder: (_) => const Text('modal content'),
+              ),
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.text('modal content'), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('mist modal surface avoids backdrop blur', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: MistModal(
+            child: Text('sheet content'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('sheet content'), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('server settings modal keeps only input-local blur',
+      (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: ServerSettingsModal(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Адрес сервера'), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsOneWidget);
+  });
+
+  testWidgets('schedule builder opens as bottom sheet on mobile',
+      (tester) async {
+    AppPlatform.debugOverrideIsDesktop = false;
+    final student = StudentModel(
+      id: 1,
+      orgId: 1,
+      firstName: 'Али',
+      lastName: 'Абидов',
+      status: 'ACTIVE',
+      createdAt: DateTime(2026),
+      studentTeacherId: 10,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              return TextButton(
+                onPressed: () => ScheduleBuilderModal.show(
+                  context,
+                  student: student,
+                  studentTeacherId: 10,
+                ),
+                child: const Text('open'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsNothing);
+    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(find.text('Пн'), findsOneWidget);
+    expect(find.text('Вс'), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('nebula confirm dialog returns selected action', (tester) async {
+    bool? result;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () async {
+                result = await NebulaDialog.confirm(
+                  context,
+                  title: 'Удалить урок?',
+                  message: 'Это действие нельзя отменить.',
+                  confirmLabel: 'Удалить',
+                  destructive: true,
+                );
+              },
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.text('Удалить урок?'), findsOneWidget);
+
+    await tester.tap(find.text('Удалить'));
+    await tester.pumpAndSettle();
+
+    expect(result, isTrue);
+  });
+
+  testWidgets('nebula toggle keeps a 44px tap target', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: NebulaToggle(
+            value: false,
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final box = tester.renderObject<RenderBox>(find.byType(NebulaToggle));
+    expect(box.size.width, greaterThanOrEqualTo(56));
+    expect(box.size.height, greaterThanOrEqualTo(44));
+  });
+
+  testWidgets('login screen uses the shared Cosmo login sphere',
+      (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: LoginScreen(),
+        ),
+      ),
+    );
+
+    expect(find.byType(CosmoLoginSphere), findsOneWidget);
+  });
+}
