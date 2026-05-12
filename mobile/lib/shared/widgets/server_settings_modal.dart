@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/network/server_config.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
-import '../../features/admin/presentation/screens/admin_screen.dart';
 import 'adaptive_modal.dart';
 import 'nebula_input.dart';
 import 'nebula_surface.dart';
@@ -212,12 +212,8 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                 onTap: () {
                   HapticFeedback.lightImpact();
                   Navigator.pop(context);
-                  Future.delayed(
-                    const Duration(milliseconds: 200),
-                    () {
-                      if (context.mounted) AdminScreen.show(context);
-                    },
-                  );
+                  // Переключаем на админ-вкладку через router
+                  context.go('/admin');
                 },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

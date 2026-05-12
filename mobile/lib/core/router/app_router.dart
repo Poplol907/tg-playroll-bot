@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/admin/presentation/screens/admin_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/students/presentation/screens/students_screen.dart';
 import '../../features/salary/presentation/screens/salary_screen.dart';
@@ -41,15 +42,15 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  void _onTabTap(int index) {
-    switch (index) {
-      case 0:
-        context.go('/calendar');
-      case 1:
-        context.go('/students');
-      case 2:
-        context.go('/salary');
-    }
+  // Маршруты в порядке вкладок для роли.
+  // Для админа первая вкладка — админ-панель, остальное доступно для просмотра.
+  List<String> _routesForRole(bool isAdmin) => isAdmin
+      ? ['/admin', '/calendar', '/students', '/salary']
+      : ['/calendar', '/students', '/salary'];
+
+  void _onTabTap(int index, bool isAdmin) {
+    final routes = _routesForRole(isAdmin);
+    if (index < routes.length) context.go(routes[index]);
   }
 
   void _cycleTheme() {
@@ -57,10 +58,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     ref.read(appVisualModeProvider.notifier).state = switch (mode) {
       AppVisualMode.darkInternals => AppVisualMode.lightLite,
       AppVisualMode.lightLite => AppVisualMode.darkInternals,
+      _ => AppVisualMode.darkInternals,
     };
   }
 
-  static const _navItems = [
+  static const _adminMenuItem = GlowMenuItem(
+    icon: Icons.shield_outlined,
+    label: 'Админ',
+    glowColor: NebulaColors.warningAmber,
+  );
+
+  static const _teacherMenuItems = [
     GlowMenuItem(
       icon: Icons.calendar_month_rounded,
       label: 'Календарь',
@@ -78,7 +86,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     ),
   ];
 
-  static const _sidebarItems = [
+  static const _adminSidebarItem = DesktopSidebarItem(
+    icon: Icons.shield_outlined,
+    label: 'Админ',
+  );
+
+  static const _teacherSidebarItems = [
     DesktopSidebarItem(icon: Icons.calendar_month_rounded, label: 'Календарь'),
     DesktopSidebarItem(icon: Icons.people_outline_rounded, label: 'Ученики'),
     DesktopSidebarItem(icon: Icons.payments_outlined, label: 'Зарплата'),
@@ -110,29 +123,44 @@ class _AppShellState extends ConsumerState<AppShell> {
       },
     );
 
+    final user = ref.watch(currentUserProvider);
+    final isAdmin = user?.isAdmin ?? false;
+    final navItems = [
+      if (isAdmin) _adminMenuItem,
+      ..._teacherMenuItems,
+    ];
+    final sidebarItems = [
+      if (isAdmin) _adminSidebarItem,
+      ..._teacherSidebarItems,
+    ];
+
     return UpdateChecker(
       child: AppBackgroundHost(
         darkBackground: AppDarkBackground.asciiWater,
         child: AppPlatform.isDesktop
-            ? _buildDesktopLayout(monthBar)
-            : _buildMobileLayout(monthBar),
+            ? _buildDesktopLayout(monthBar, sidebarItems, isAdmin)
+            : _buildMobileLayout(monthBar, navItems, isAdmin),
       ),
     );
   }
 
   // ── Десктоп: боковая панель + контент ───────────────────────────────────────
-  Widget _buildDesktopLayout(Widget monthBar) {
+  Widget _buildDesktopLayout(
+    Widget monthBar,
+    List<DesktopSidebarItem> items,
+    bool isAdmin,
+  ) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
         children: [
           DesktopSidebar(
             currentIndex: widget.currentIndex,
-            onTap: _onTabTap,
+            onTap: (i) => _onTabTap(i, isAdmin),
             onSettingsTap: () => ServerSettingsModal.show(context),
             onThemeTap: _cycleTheme,
             visualMode: ref.watch(appVisualModeProvider),
-            items: _sidebarItems,
+            items: items,
           ),
           Expanded(
             child: DesktopContentFrame(
@@ -146,7 +174,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   // ── Мобайл: нижний таббар ───────────────────────────────────────────────────
-  Widget _buildMobileLayout(Widget monthBar) {
+  Widget _buildMobileLayout(
+    Widget monthBar,
+    List<GlowMenuItem> items,
+    bool isAdmin,
+  ) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Column(
@@ -157,11 +189,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
-        onTap: _onTabTap,
+        onTap: (i) => _onTabTap(i, isAdmin),
         onSettingsTap: () => ServerSettingsModal.show(context),
         onThemeTap: _cycleTheme,
         visualMode: ref.watch(appVisualModeProvider),
-        items: _navItems,
+        items: items,
       ),
     );
   }
@@ -351,10 +383,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isInit = authState.status == AuthStatus.initial;
       final isLoading = authState.status == AuthStatus.loading;
       final onLogin = state.matchedLocation == '/login';
+      final isAdmin = authState.user?.isAdmin ?? false;
 
       if (isInit || isLoading) return null;
       if (!isAuth && !onLogin) return '/login';
-      if (isAuth && onLogin) return '/calendar';
+      // После логина: админа кидаем на /admin, педагога — на /calendar
+      if (isAuth && onLogin) return isAdmin ? '/admin' : '/calendar';
+      // Педагог не может зайти в /admin
+      if (isAuth && !isAdmin && state.matchedLocation.startsWith('/admin')) {
+        return '/calendar';
+      }
       return null;
     },
     routes: [
@@ -368,12 +406,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) {
           final loc = state.matchedLocation;
-          int index = 0;
-          if (loc.startsWith('/students')) index = 1;
-          if (loc.startsWith('/salary')) index = 2;
+          final isAdmin = authState.user?.isAdmin ?? false;
+          // Индекс вкладки зависит от роли (у админа /admin = 0)
+          int index;
+          if (isAdmin) {
+            if (loc.startsWith('/admin')) {
+              index = 0;
+            } else if (loc.startsWith('/calendar')) {
+              index = 1;
+            } else if (loc.startsWith('/students')) {
+              index = 2;
+            } else {
+              index = 3; // /salary
+            }
+          } else {
+            if (loc.startsWith('/students')) {
+              index = 1;
+            } else if (loc.startsWith('/salary')) {
+              index = 2;
+            } else {
+              index = 0; // /calendar
+            }
+          }
           return AppShell(currentIndex: index, child: child);
         },
         routes: [
+          GoRoute(
+            path: '/admin',
+            pageBuilder: (context, state) => nebulaFadePage(
+              key: state.pageKey,
+              child: const AdminScreen(),
+            ),
+          ),
           GoRoute(
             path: '/calendar',
             pageBuilder: (context, state) => nebulaFadePage(

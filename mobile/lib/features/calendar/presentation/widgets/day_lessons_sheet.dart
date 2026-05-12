@@ -276,6 +276,7 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
 
                   final l = _localLessons[i];
                   return JiggleDeleteWrapper(
+                    jiggleIndex: i,
                     borderRadius: NebulaTokens.radiusSM,
                     onTap: () {
                       Navigator.pop(stateCtx);

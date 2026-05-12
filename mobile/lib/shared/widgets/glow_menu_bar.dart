@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_visual_mode.dart';
@@ -79,7 +78,8 @@ class _GlowBarBody extends StatelessWidget {
   });
 
   static IconData _modeIcon(AppVisualMode? mode) => switch (mode) {
-        AppVisualMode.lightLite => Icons.light_mode_rounded,
+        AppVisualMode.lightShader || AppVisualMode.lightLite =>
+          Icons.light_mode_rounded,
         _ => Icons.dark_mode_rounded,
       };
 
@@ -101,10 +101,7 @@ class _GlowBarBody extends StatelessWidget {
         ? (currentIndex + 0.5) / totalSlots
         : 0.5;
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
+    return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -195,8 +192,6 @@ class _GlowBarBody extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
@@ -306,7 +301,6 @@ class _GlowTabState extends State<_GlowTab>
                 // Pivot = bottom-centre (Alignment.bottomCenter).
                 Transform(
                   transform: Matrix4.identity()
-                    ..setEntry(3, 2, 0.002) // perspective
                     ..rotateX(-math.pi / 2 * tRaw),
                   alignment: Alignment.bottomCenter,
                   child: Opacity(
