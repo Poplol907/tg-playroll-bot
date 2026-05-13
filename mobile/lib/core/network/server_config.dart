@@ -2,10 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../storage/app_storage.dart';
 
 const _kServerUrlKey = 'server_url';
-// Production URL — замени на свой домен после настройки сервера.
-// Кнопка шестерёнки на экране логина позволяет переключиться на локальный сервер
-// для разработки без пересборки приложения.
-const kDefaultServerUrl = 'https://yourdomain.com';
+// Temporary production URL. Replace with the HTTPS domain when DNS is ready.
+const kDefaultServerUrl = 'http://5.223.55.57';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Notifier — хранит URL сервера, персистит в AppStorage
@@ -39,7 +37,9 @@ class ServerUrlNotifier extends Notifier<String> {
   static bool _isValidUrl(String value) {
     try {
       final uri = Uri.parse(value);
-      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
+      return uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.host.isNotEmpty;
     } catch (_) {
       return false;
     }

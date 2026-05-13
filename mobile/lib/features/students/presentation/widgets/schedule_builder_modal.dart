@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../shared/models/student.dart';
@@ -281,18 +283,30 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
     required String monthLabel,
     required List<DateTime> preview,
   }) {
+    final surface = NebulaSurfaceProfile.modal.resolve(context);
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(NebulaTokens.radiusXL),
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: NebulaColors.warmGlass,
+        decoration: BoxDecoration(
+          color: surface.fill,
+          gradient: surface.sheen,
           border: Border(
-            top: BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
-            left: BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
-            right: BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
+            top: BorderSide(
+              color: surface.border,
+              width: surface.borderWidth,
+            ),
+            left: BorderSide(
+              color: surface.border,
+              width: surface.borderWidth,
+            ),
+            right: BorderSide(
+              color: surface.border,
+              width: surface.borderWidth,
+            ),
           ),
+          boxShadow: surface.shadows,
         ),
         child: Column(
           children: [
@@ -362,6 +376,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Column(
       children: [
         if (showHandle)
@@ -372,7 +388,7 @@ class _Header extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: NebulaColors.dimText.withValues(alpha: 0.5),
+                  color: tokens.mutedText.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -389,19 +405,19 @@ class _Header extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Расписание',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: NebulaColors.softWhite,
+                        color: tokens.primaryText,
                       ),
                     ),
                     Text(
                       '$studentName · $monthLabel',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: NebulaColors.dimText,
+                        color: tokens.secondaryText,
                       ),
                     ),
                   ],
@@ -417,9 +433,9 @@ class _Header extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: NebulaColors.surfaceBorder),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.close_rounded,
-                    color: NebulaColors.dimText,
+                    color: tokens.mutedText,
                     size: 18,
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:cosmo_studio/shared/widgets/nebula_surface.dart';
+import 'package:cosmo_studio/core/theme/nebula_surface_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -47,6 +48,24 @@ void main() {
             child: NebulaSurface(
               frosted: true,
               child: Text('frosted surface'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(BackdropFilter), findsOneWidget);
+  });
+
+  testWidgets('NebulaSurface frostedSmall profile is explicit blur opt-in',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: NebulaSurface(
+              profile: NebulaSurfaceProfile.frostedSmall,
+              child: Text('frosted profile'),
             ),
           ),
         ),

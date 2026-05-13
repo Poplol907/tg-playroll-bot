@@ -1,5 +1,7 @@
 import 'package:cosmo_studio/core/platform/app_platform.dart';
 import 'package:cosmo_studio/core/storage/app_storage.dart';
+import 'package:cosmo_studio/core/theme/app_theme.dart';
+import 'package:cosmo_studio/core/theme/cosmo_theme_tokens.dart';
 import 'package:cosmo_studio/features/auth/presentation/screens/login_screen.dart';
 import 'package:cosmo_studio/features/auth/presentation/widgets/cosmo_login_sphere.dart';
 import 'package:cosmo_studio/features/students/presentation/widgets/schedule_builder_modal.dart';
@@ -94,6 +96,44 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
+  testWidgets(
+      'adaptive desktop modal uses modal surface profile in light theme',
+      (tester) async {
+    AppPlatform.debugOverrideIsDesktop = true;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightLite,
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => AdaptiveModal.show<void>(
+                context,
+                builder: (_) => const Text('modal content'),
+              ),
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final container = tester.widget<Container>(
+      find.byKey(const ValueKey('adaptive-modal-desktop-surface')),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+
+    expect(decoration.color, CosmoThemeTokens.lightLite.denseSurface);
+    expect(
+      (decoration.border! as Border).top.color,
+      CosmoThemeTokens.lightLite.surfaceBorder,
+    );
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
   testWidgets('mist modal surface avoids backdrop blur', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -109,8 +149,7 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
-  testWidgets('server settings modal keeps only input-local blur',
-      (tester) async {
+  testWidgets('server settings modal is blur-free by default', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -122,7 +161,31 @@ void main() {
     );
 
     expect(find.text('Адрес сервера'), findsOneWidget);
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets('server settings modal uses modal surface profile in light theme',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.lightLite,
+          home: const Scaffold(
+            body: ServerSettingsModal(),
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<Container>(
+      find.byKey(const ValueKey('server-settings-modal-surface')),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    final border = decoration.border! as Border;
+
+    expect(decoration.color, CosmoThemeTokens.lightLite.denseSurface);
+    expect(border.top.color, CosmoThemeTokens.lightLite.surfaceBorder);
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets('schedule builder opens as bottom sheet on mobile',

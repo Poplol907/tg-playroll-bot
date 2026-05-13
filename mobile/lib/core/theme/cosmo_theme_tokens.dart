@@ -45,8 +45,8 @@ class CosmoThemeTokens extends ThemeExtension<CosmoThemeTokens> {
     background: NebulaColors.deepVoid,
     backgroundMid: NebulaColors.spaceBlack,
     backgroundNear: NebulaColors.depthNear,
-    surface: NebulaColors.nebulaSurface,
-    denseSurface: NebulaColors.denseNebulaSurface,
+    surface: Color(0xE60F1528),
+    denseSurface: Color(0xF01B2444),
     surfaceBorder: NebulaColors.surfaceBorder,
     primaryText: NebulaColors.softWhite,
     secondaryText: NebulaColors.mistWhite,
@@ -60,38 +60,38 @@ class CosmoThemeTokens extends ThemeExtension<CosmoThemeTokens> {
     glowIntensity: 1.0,
   );
 
-  // Warm off-white page with subtle warmth — soft shader lighting feel.
-  // Slight glow allowed (0.3) for accent elements; text is near-charcoal.
+  // Cool near-white page with subtle blue-gray depth.
+  // Slight glow allowed for accent elements, but content stays crisp.
   static const lightShader = CosmoThemeTokens(
-    background: Color(0xFFFAFAF7),
-    backgroundMid: Color(0xFFF0F0EA),
-    backgroundNear: Color(0xFFE8E8E2),
-    surface: Color(0xFFFFFFFF),
+    background: Color(0xFFF8FAFF),
+    backgroundMid: Color(0xFFF0F5FF),
+    backgroundNear: Color(0xFFE7EEFC),
+    surface: Color(0xFFFDFEFF),
     denseSurface: Color(0xFFFFFFFF),
-    surfaceBorder: Color(0x30000000),
-    primaryText: Color(0xFF171717),
-    secondaryText: Color(0xCC171717),
-    mutedText: Color(0xFF4B5563),
+    surfaceBorder: Color(0x263B5B8A),
+    primaryText: Color(0xFF111827),
+    secondaryText: Color(0xCC111827),
+    mutedText: Color(0xFF5B677A),
     primaryAccent: Color(0xFF2563EB),
-    secondaryAccent: Color(0xFF7C3AED),
+    secondaryAccent: Color(0xFF5B5FEF),
     focusAccent: Color(0xFF1D4ED8),
     success: Color(0xFF059669),
     warning: Color(0xFFD97706),
     error: Color(0xFFDC2626),
-    glowIntensity: 0.3,
+    glowIntensity: 0.18,
   );
 
   // Pure-white page — lightest possible load; no glow at all.
   static const lightLite = CosmoThemeTokens(
     background: Color(0xFFFFFFFF),
-    backgroundMid: Color(0xFFF5F5F5),
-    backgroundNear: Color(0xFFEBEBEB),
-    surface: Color(0xFFF5F8FF),
+    backgroundMid: Color(0xFFF7FAFF),
+    backgroundNear: Color(0xFFEEF4FF),
+    surface: Color(0xFFF7FAFF),
     denseSurface: Color(0xFFFFFFFF),
-    surfaceBorder: Color(0x40000000),
+    surfaceBorder: Color(0x223B5B8A),
     primaryText: Color(0xFF0D1117),
     secondaryText: Color(0xCC0D1117),
-    mutedText: Color(0xFF4B5563),
+    mutedText: Color(0xFF5B677A),
     primaryAccent: Color(0xFF2563EB),
     secondaryAccent: Color(0xFF7C3AED),
     focusAccent: Color(0xFF1D4ED8),

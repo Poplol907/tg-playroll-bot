@@ -1,4 +1,5 @@
 import 'package:cosmo_studio/core/theme/app_theme.dart';
+import 'package:cosmo_studio/core/theme/nebula_colors.dart';
 import 'package:cosmo_studio/shared/widgets/stellar_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,5 +62,28 @@ void main() {
     expect(iconShadows!.last.blurRadius, lessThanOrEqualTo(20));
 
     await gesture.up();
+  });
+
+  testWidgets('StellarButton does not use legacy warm glass gradient',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.darkInternals,
+        home: Scaffold(
+          body: StellarButton(
+            label: 'Сохранить',
+            icon: Icons.check_rounded,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    final decorated = tester.widget<Container>(
+      find.byKey(const ValueKey('stellar-button-surface')),
+    );
+    final decoration = decorated.decoration! as BoxDecoration;
+
+    expect(decoration.gradient, isNot(NebulaColors.warmGlass));
   });
 }

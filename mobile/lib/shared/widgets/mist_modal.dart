@@ -1,12 +1,12 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
-import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 import 'adaptive_modal.dart';
+import 'app_safe_layout.dart';
 
-/// Base bottom sheet surface using Nebula Material (dense variant).
-/// Replaces solid containers in all bottom sheets with a warmGlass island.
+/// Canonical bottom sheet surface using the modal surface profile.
 ///
 /// Use [MistModal.show] as a drop-in for [showModalBottomSheet].
 /// Wrap your sheet content in [MistModal] for standalone use inside builders.
@@ -47,6 +47,7 @@ class MistModal extends StatelessWidget {
       enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.55),
+      useSafeArea: true,
       constraints: maxHeightFraction != null
           ? BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * maxHeightFraction,
@@ -58,24 +59,36 @@ class MistModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final profile = NebulaSurfaceProfile.modal.resolve(context);
     const br = BorderRadius.vertical(
       top: Radius.circular(NebulaTokens.radiusLG),
     );
     return ClipRRect(
       borderRadius: br,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          decoration: const BoxDecoration(
-          gradient: NebulaColors.warmGlass,
-          borderRadius: BorderRadius.vertical(
+      child: Container(
+        decoration: BoxDecoration(
+          color: profile.fill,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(NebulaTokens.radiusLG),
           ),
           border: Border(
-            top: BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
-            left: BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
-            right: BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
+            top: BorderSide(
+              color: profile.border,
+              width: profile.borderWidth,
+            ),
+            left: BorderSide(
+              color: profile.border,
+              width: profile.borderWidth,
+            ),
+            right: BorderSide(
+              color: profile.border,
+              width: profile.borderWidth,
+            ),
           ),
+          boxShadow: profile.shadows,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -86,29 +99,35 @@ class MistModal extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: NebulaColors.dimText.withValues(alpha: 0.5),
+                  color: tokens.mutedText.withValues(alpha: 0.42),
                   borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
                 ),
               ),
               const SizedBox(height: 8),
             ],
             Flexible(
-              child: Padding(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
                 padding: padding ??
-                    EdgeInsets.only(
-                      left: NebulaTokens.sp20,
-                      right: NebulaTokens.sp20,
-                      bottom: MediaQuery.of(context).padding.bottom +
-                          NebulaTokens.sp20,
+                    AppSafeInsets.modal(
+                      context,
                       top: showHandle ? 0 : NebulaTokens.sp20,
                     ),
-                child: child,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: media.viewInsets.bottom > 0 ? 0 : 1,
+                  ),
+                  child: child,
+                ),
               ),
             ),
           ],
         ),
       ),
-    ),
     );
   }
 }

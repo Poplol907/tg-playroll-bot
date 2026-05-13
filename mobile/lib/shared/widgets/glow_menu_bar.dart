@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/theme/app_visual_mode.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,25 +21,19 @@ import '../../core/theme/nebula_tokens.dart';
 //  • RepaintBoundary per tab — isolated raster layers
 //  • Glow via CustomPainter — one drawCircle call, zero BoxShadow overhead
 //  • AnimationController per tab with spring-bezier curve
-//  • BackdropFilter at bar level for frosted-glass effect
+//  • No bar-level BackdropFilter; the surface uses a lightweight tint gradient
 // ─────────────────────────────────────────────────────────────────────────────
 
 class GlowMenuBar extends StatelessWidget {
   final List<GlowMenuItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final VoidCallback? onSettingsTap;
-  final VoidCallback? onThemeTap;
-  final AppVisualMode? visualMode;
 
   const GlowMenuBar({
     super.key,
     required this.items,
     required this.currentIndex,
     required this.onTap,
-    this.onSettingsTap,
-    this.onThemeTap,
-    this.visualMode,
   });
 
   @override
@@ -48,112 +43,133 @@ class GlowMenuBar extends StatelessWidget {
         items: items,
         currentIndex: currentIndex,
         onTap: onTap,
-        onSettingsTap: onSettingsTap,
-        onThemeTap: onThemeTap,
-        visualMode: visualMode,
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Bar body — frosted-glass container + nav-wide ambient glow
+//  Bar body — profile-driven nav surface + nav-wide ambient glow
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _GlowBarBody extends StatelessWidget {
   final List<GlowMenuItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final VoidCallback? onSettingsTap;
-  final VoidCallback? onThemeTap;
-  final AppVisualMode? visualMode;
 
   const _GlowBarBody({
     required this.items,
     required this.currentIndex,
     required this.onTap,
-    this.onSettingsTap,
-    this.onThemeTap,
-    this.visualMode,
   });
-
-  static IconData _modeIcon(AppVisualMode? mode) => switch (mode) {
-        AppVisualMode.lightShader || AppVisualMode.lightLite =>
-          Icons.light_mode_rounded,
-        _ => Icons.dark_mode_rounded,
-      };
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasSettings = onSettingsTap != null;
-    final hasTheme    = onThemeTap != null;
+    final surface = NebulaSurfaceProfile.nav.resolve(context);
+    final isAdminPair = items.length == 2 &&
+        items.first.icon == Icons.shield_outlined &&
+        items.last.icon == Icons.settings_outlined;
 
     // Active colour drives the nav-wide ambient bloom.
     final activeColor = currentIndex < items.length
         ? items[currentIndex].glowColor
         : Colors.transparent;
 
-    // Count fixed-width extras so the fraction stays accurate.
-    final extrasCount = (hasSettings ? 1 : 0) + (hasTheme ? 1 : 0);
-    final totalSlots  = items.length + extrasCount * 0.55; // extras narrower
-    final activeFrac  = items.isNotEmpty
-        ? (currentIndex + 0.5) / totalSlots
-        : 0.5;
+    // Count fixed-width tabs so the fraction stays accurate.
+    final tabCount = items.length;
+    final activeFrac = isAdminPair
+        ? (currentIndex == 0 ? 0.5 : 0.9)
+        : (tabCount > 0 ? (currentIndex + 0.5) / tabCount : 0.5);
 
     return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: isDark
-                  ? [
-                      NebulaColors.nebulaSurface,
-                      NebulaColors.denseNebulaSurface,
-                    ]
-                  : [
-                      Colors.white.withValues(alpha: 0.82),
-                      Colors.white.withValues(alpha: 0.96),
-                    ],
-            ),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? NebulaColors.surfaceBorder
-                    : Colors.black.withValues(alpha: 0.08),
-                width: 0.8,
+      key: const ValueKey('glow-menu-bar-surface'),
+      decoration: BoxDecoration(
+        color: surface.fill,
+        gradient: surface.sheen,
+        border: Border(
+          top: BorderSide(
+            color: surface.border,
+            width: surface.borderWidth,
+          ),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // ── Nav-wide ambient bloom ──────────────────────────────────
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _NavAmbientPainter(
+                  color: activeColor,
+                  xFraction: activeFrac,
+                  isDark: isDark,
+                ),
               ),
             ),
           ),
-          child: Stack(
-            children: [
-              // ── Nav-wide ambient bloom ──────────────────────────────────
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    painter: _NavAmbientPainter(
-                      color: activeColor,
-                      xFraction: activeFrac,
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-              ),
 
-              // ── Tab row ─────────────────────────────────────────────────
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: NebulaTokens.sp8,
-                    vertical: NebulaTokens.sp8,
-                  ),
-                  child: Row(
-                    children: [
-                      ...items.asMap().entries.map(
-                            (e) => Expanded(
-                              child: RepaintBoundary(
-                                child: _GlowTab(
+          // ── Tab row ─────────────────────────────────────────────────
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: NebulaTokens.sp8,
+                vertical: NebulaTokens.sp8,
+              ),
+              child: isAdminPair
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        const tabWidth = 76.0;
+                        final centerLeft =
+                            constraints.maxWidth / 2 - tabWidth / 2;
+                        return SizedBox(
+                          height: 58,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Positioned(
+                                left: centerLeft,
+                                width: tabWidth,
+                                top: 0,
+                                bottom: 0,
+                                child: _GlowNavTab(
+                                  item: items[0],
+                                  selected: currentIndex == 0,
+                                  isDark: isDark,
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    onTap(0);
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                width: tabWidth,
+                                top: 0,
+                                bottom: 0,
+                                child: _GlowNavTab(
+                                  item: items[1],
+                                  selected: currentIndex == 1,
+                                  isDark: isDark,
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    onTap(1);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ...items.asMap().entries.map(
+                              (e) => SizedBox(
+                                width: 76,
+                                child: _GlowNavTab(
                                   item: e.value,
                                   selected: e.key == currentIndex,
                                   isDark: isDark,
@@ -164,34 +180,12 @@ class _GlowBarBody extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ),
-                      if (hasSettings)
-                        RepaintBoundary(
-                          child: _GlowSettingsTab(
-                            isDark: isDark,
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              onSettingsTap!();
-                            },
-                          ),
-                        ),
-                      if (hasTheme)
-                        RepaintBoundary(
-                          child: _GlowThemeTab(
-                            icon: _modeIcon(visualMode),
-                            isDark: isDark,
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              onThemeTap!();
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+                      ],
+                    ),
+            ),
           ),
+        ],
+      ),
     );
   }
 }
@@ -199,6 +193,32 @@ class _GlowBarBody extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 //  Single animated tab — 3D flip + scaling radial glow
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _GlowNavTab extends StatelessWidget {
+  final GlowMenuItem item;
+  final bool selected;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _GlowNavTab({
+    required this.item,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: _GlowTab(
+        item: item,
+        selected: selected,
+        isDark: isDark,
+        onTap: onTap,
+      ),
+    );
+  }
+}
 
 class _GlowTab extends StatefulWidget {
   final GlowMenuItem item;
@@ -301,8 +321,7 @@ class _GlowTabState extends State<_GlowTab>
                 // find.text() returning findsOneWidget in tests.
                 if (t < 0.99)
                   Transform(
-                    transform: Matrix4.identity()
-                      ..rotateX(-math.pi / 2 * tRaw),
+                    transform: Matrix4.identity()..rotateX(-math.pi / 2 * tRaw),
                     alignment: Alignment.bottomCenter,
                     child: Opacity(
                       opacity: (1.0 - t * 1.6).clamp(0.0, 1.0),
@@ -356,9 +375,9 @@ class _TabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inactiveColor = isDark
-        ? NebulaColors.ghostText
-        : Colors.black.withValues(alpha: 0.55);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final inactiveColor = isDark ? NebulaColors.ghostText : tokens.mutedText;
     final color = active ? item.glowColor : inactiveColor;
 
     return Column(
@@ -390,95 +409,6 @@ class _TabContent extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Settings tab — static, no flip
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GlowSettingsTab extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _GlowSettingsTab({required this.onTap, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDark
-        ? NebulaColors.ghostText
-        : Colors.black.withValues(alpha: 0.30);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 48,
-        height: 58,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.settings_ethernet_rounded, color: color, size: 20),
-            const SizedBox(height: 3),
-            Text(
-              'СЕТ',
-              style: TextStyle(
-                fontFamily: 'SpaceMono',
-                fontSize: 9,
-                color: color,
-                letterSpacing: 0.6,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Theme toggle tab — static, no flip
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GlowThemeTab extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _GlowThemeTab({
-    required this.icon,
-    required this.onTap,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDark
-        ? NebulaColors.ghostText
-        : Colors.black.withValues(alpha: 0.30);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 48,
-        height: 58,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 3),
-            Text(
-              'ТЕМА',
-              style: TextStyle(
-                fontFamily: 'SpaceMono',
-                fontSize: 9,
-                color: color,
-                letterSpacing: 0.6,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -578,9 +508,7 @@ class _NavAmbientPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_NavAmbientPainter old) =>
-      old.color != color ||
-      old.xFraction != xFraction ||
-      old.isDark != isDark;
+      old.color != color || old.xFraction != xFraction || old.isDark != isDark;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,17 +7,16 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/admin/presentation/screens/admin_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/students/presentation/screens/students_screen.dart';
 import '../../features/salary/presentation/screens/salary_screen.dart';
 import '../../shared/providers/month_provider.dart';
 import '../../shared/widgets/app_background_host.dart';
 import '../../shared/widgets/space_page_transition.dart';
-import '../../shared/widgets/server_settings_modal.dart';
 import '../../shared/widgets/glow_menu_bar.dart';
 import '../../shared/widgets/desktop_sidebar.dart';
 import '../../shared/widgets/desktop_content_frame.dart';
 import '../../core/platform/app_platform.dart';
-import '../../core/theme/app_visual_mode.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/services/update_service.dart';
@@ -43,29 +41,26 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   // Маршруты в порядке вкладок для роли.
-  // Админ видит только админку — управление студией.
-  // Педагог видит свои календарь / учеников / зарплату.
+  // Админ: Студия + Настройки.
+  // Педагог: Календарь + Ученики + Зарплата + Настройки.
   List<String> _routesForRole(bool isAdmin) => isAdmin
-      ? ['/admin']
-      : ['/calendar', '/students', '/salary'];
+      ? ['/admin', '/settings']
+      : ['/calendar', '/students', '/salary', '/settings'];
 
   void _onTabTap(int index, bool isAdmin) {
     final routes = _routesForRole(isAdmin);
     if (index < routes.length) context.go(routes[index]);
   }
 
-  void _cycleTheme() {
-    final mode = ref.read(appVisualModeProvider);
-    ref.read(appVisualModeProvider.notifier).state = switch (mode) {
-      AppVisualMode.darkInternals => AppVisualMode.lightLite,
-      AppVisualMode.lightLite => AppVisualMode.darkInternals,
-      _ => AppVisualMode.darkInternals,
-    };
-  }
+  static const _settingsMenuItem = GlowMenuItem(
+    icon: Icons.settings_outlined,
+    label: 'Настройки',
+    glowColor: NebulaColors.warmPearlBorder,
+  );
 
   static const _adminMenuItem = GlowMenuItem(
     icon: Icons.shield_outlined,
-    label: 'Админ',
+    label: 'Студия',
     glowColor: NebulaColors.warningAmber,
   );
 
@@ -87,9 +82,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     ),
   ];
 
+  static const _settingsSidebarItem =
+      DesktopSidebarItem(icon: Icons.settings_outlined, label: 'Настройки');
+
   static const _adminSidebarItem = DesktopSidebarItem(
     icon: Icons.shield_outlined,
-    label: 'Админ',
+    label: 'Студия',
   );
 
   static const _teacherSidebarItems = [
@@ -126,10 +124,14 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
-    // Админ видит только админку, педагог — свой набор вкладок
-    final navItems = isAdmin ? [_adminMenuItem] : _teacherMenuItems;
-    final sidebarItems =
-        isAdmin ? [_adminSidebarItem] : _teacherSidebarItems;
+    // У всех — основные вкладки + "Настройки" в конце.
+    // Кнопки шестерёнки и темы убраны из бара — теперь они на /settings.
+    final navItems = isAdmin
+        ? [_adminMenuItem, _settingsMenuItem]
+        : [..._teacherMenuItems, _settingsMenuItem];
+    final sidebarItems = isAdmin
+        ? [_adminSidebarItem, _settingsSidebarItem]
+        : [..._teacherSidebarItems, _settingsSidebarItem];
 
     return UpdateChecker(
       child: AppBackgroundHost(
@@ -154,9 +156,6 @@ class _AppShellState extends ConsumerState<AppShell> {
           DesktopSidebar(
             currentIndex: widget.currentIndex,
             onTap: (i) => _onTabTap(i, isAdmin),
-            onSettingsTap: () => ServerSettingsModal.show(context),
-            onThemeTap: _cycleTheme,
-            visualMode: ref.watch(appVisualModeProvider),
             items: items,
           ),
           Expanded(
@@ -187,9 +186,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
         onTap: (i) => _onTabTap(i, isAdmin),
-        onSettingsTap: () => ServerSettingsModal.show(context),
-        onThemeTap: _cycleTheme,
-        visualMode: ref.watch(appVisualModeProvider),
         items: items,
       ),
     );
@@ -220,10 +216,7 @@ class _GlobalMonthBar extends StatelessWidget {
     final label = DateFormat('MMMM yyyy', 'ru').format(month);
     final topPad = MediaQuery.of(context).padding.top;
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
+    return Container(
       padding: EdgeInsets.only(
         top: topPad + 8,
         bottom: 8,
@@ -299,8 +292,6 @@ class _GlobalMonthBar extends StatelessWidget {
           const SizedBox(width: 12),
           _MonthArrow(icon: Icons.chevron_right_rounded, onTap: onNext),
         ],
-      ),
-        ),
       ),
     );
   }
@@ -391,10 +382,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/calendar';
       }
       // Админ не может зайти в /calendar, /students, /salary — только /admin
-      if (isAuth && isAdmin &&
+      if (isAuth &&
+          isAdmin &&
           (state.matchedLocation.startsWith('/calendar') ||
-           state.matchedLocation.startsWith('/students') ||
-           state.matchedLocation.startsWith('/salary'))) {
+              state.matchedLocation.startsWith('/students') ||
+              state.matchedLocation.startsWith('/salary'))) {
         return '/admin';
       }
       return null;
@@ -411,27 +403,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) {
           final loc = state.matchedLocation;
           final isAdmin = authState.user?.isAdmin ?? false;
-          // Индекс вкладки зависит от роли (у админа /admin = 0)
-          int index;
-          if (isAdmin) {
-            if (loc.startsWith('/admin')) {
-              index = 0;
-            } else if (loc.startsWith('/calendar')) {
-              index = 1;
-            } else if (loc.startsWith('/students')) {
-              index = 2;
-            } else {
-              index = 3; // /salary
-            }
-          } else {
-            if (loc.startsWith('/students')) {
-              index = 1;
-            } else if (loc.startsWith('/salary')) {
-              index = 2;
-            } else {
-              index = 0; // /calendar
-            }
-          }
+          // Индекс вкладки зависит от роли и порядка _routesForRole.
+          final index = isAdmin
+              ? (loc.startsWith('/settings') ? 1 : 0)
+              : loc.startsWith('/students')
+                  ? 1
+                  : loc.startsWith('/salary')
+                      ? 2
+                      : loc.startsWith('/settings')
+                          ? 3
+                          : 0;
           return AppShell(currentIndex: index, child: child);
         },
         routes: [
@@ -461,6 +442,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => nebulaFadePage(
               key: state.pageKey,
               child: const SalaryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/settings',
+            pageBuilder: (context, state) => nebulaFadePage(
+              key: state.pageKey,
+              child: const SettingsScreen(),
             ),
           ),
         ],

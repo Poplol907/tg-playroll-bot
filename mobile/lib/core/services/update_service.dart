@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../network/api_client.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
 // ── Текущая версия приложения ─────────────────────────────────────────────────
@@ -95,28 +97,26 @@ class _UpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final surface = NebulaSurfaceProfile.modal.resolve(context);
+    final radius = BorderRadius.circular(surface.radius);
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(NebulaTokens.radiusXL)),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: radius),
       child: Container(
         clipBehavior: Clip.antiAlias,
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          gradient: NebulaColors.warmGlass,
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusXL),
+          color: surface.fill,
+          gradient: surface.sheen,
+          borderRadius: radius,
           border: Border.all(
-            color: NebulaColors.warmPearlBorder,
-            width: 0.8,
+            color: surface.border,
+            width: surface.borderWidth,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: NebulaColors.auroraCyan.withValues(alpha: 0.12),
-              blurRadius: 40,
-              offset: Offset.zero,
-            ),
-          ],
+          boxShadow: surface.shadows,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -157,12 +157,12 @@ class _UpdateDialog extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Title ─────────────────────────────────────────────────
-            const Text(
+            Text(
               'Доступно обновление',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: NebulaColors.softWhite,
+                color: tokens.primaryText,
               ),
             ),
             const SizedBox(height: 8),
@@ -174,11 +174,11 @@ class _UpdateDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Установи обновление чтобы получить последние изменения.',
               style: TextStyle(
                 fontSize: 13,
-                color: NebulaColors.mistWhite,
+                color: tokens.secondaryText,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
@@ -244,10 +244,10 @@ class _UpdateDialog extends StatelessWidget {
 
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 'Позже',
                 style: TextStyle(
-                  color: NebulaColors.mistWhite,
+                  color: tokens.secondaryText,
                   fontSize: 14,
                 ),
               ),
