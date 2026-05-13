@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
 /// Primary action button using Nebula Material.
@@ -68,6 +69,7 @@ class _StellarButtonState extends State<StellarButton>
     final isLight = theme.brightness == Brightness.light;
     final accent = widget.color ?? tokens.primaryAccent;
     final disabled = widget.onPressed == null || widget.loading;
+    final surface = NebulaSurfaceProfile.panel.resolve(context, accent: accent);
 
     return GestureDetector(
       onTapDown: disabled ? null : (_) => _press.forward(),
@@ -102,23 +104,25 @@ class _StellarButtonState extends State<StellarButton>
           return Transform.scale(
             scale: disabled ? 1.0 : _scale.value,
             child: Container(
+              key: const ValueKey('stellar-button-surface'),
               width: widget.width ?? double.infinity,
               height: 56,
               decoration: BoxDecoration(
-                gradient: isLight
-                    ? LinearGradient(
-                        colors: [
-                          accent.withValues(alpha: 0.08 + g * 0.02),
-                          tokens.surface,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : NebulaColors.warmGlass,
-                borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+                color: surface.fill,
+                gradient: LinearGradient(
+                  colors: [
+                    accent.withValues(
+                      alpha: isLight ? 0.08 + g * 0.02 : 0.12 + g * 0.03,
+                    ),
+                    surface.fill,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(surface.radius),
                 border: Border.all(
                   color: accent.withValues(alpha: borderAlpha),
-                  width: 1,
+                  width: surface.borderWidth,
                 ),
               ),
               child: Center(

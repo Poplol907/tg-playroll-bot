@@ -19,6 +19,7 @@ import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
+import '../../../../shared/widgets/app_safe_layout.dart';
 
 part '../widgets/salary_components.dart';
 part '../widgets/salary_ring.dart';
@@ -45,8 +46,12 @@ class SalaryScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: AppScrollView(
+          includeKeyboardInset: false,
+          padding: AppSafeInsets.screen(
+            context,
+            bottom: 32,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -286,58 +291,58 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     const SizedBox(height: 32),
                     RepaintBoundary(
                       child: SizedBox(
-                      width: 300,
-                      height: 300,
-                      child: CustomPaint(
-                        painter: _RingPainter(
-                          earnedFrac: earnedFrac * ring,
-                          pendingFrac: pendingFrac * ring,
-                          breathe: breathe,
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                d.goalAmount > 0
-                                    ? '${((d.totalCurrent / d.goalAmount) * 100).round()}%'
-                                    : '—',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w700,
-                                  color: tokens.primaryText,
-                                  shadows: isLight
-                                      ? null
-                                      : [
-                                          Shadow(
-                                            color: Colors.white.withValues(
-                                                alpha: 0.5 + breathe * 0.2),
-                                            blurRadius: 4,
-                                          ),
-                                          Shadow(
-                                            color: NebulaColors.successMint
-                                                .withValues(
-                                                    alpha:
-                                                        0.4 + breathe * 0.15),
-                                            blurRadius: 12,
-                                          ),
-                                        ],
+                        width: 300,
+                        height: 300,
+                        child: CustomPaint(
+                          painter: _RingPainter(
+                            earnedFrac: earnedFrac * ring,
+                            pendingFrac: pendingFrac * ring,
+                            breathe: breathe,
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  d.goalAmount > 0
+                                      ? '${((d.totalCurrent / d.goalAmount) * 100).round()}%'
+                                      : '—',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                    color: tokens.primaryText,
+                                    shadows: isLight
+                                        ? null
+                                        : [
+                                            Shadow(
+                                              color: Colors.white.withValues(
+                                                  alpha: 0.5 + breathe * 0.2),
+                                              blurRadius: 4,
+                                            ),
+                                            Shadow(
+                                              color: NebulaColors.successMint
+                                                  .withValues(
+                                                      alpha:
+                                                          0.4 + breathe * 0.15),
+                                              blurRadius: 12,
+                                            ),
+                                          ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'выполнено',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: tokens.mutedText,
-                                  letterSpacing: 0.3,
+                                const SizedBox(height: 2),
+                                Text(
+                                  'выполнено',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: tokens.mutedText,
+                                    letterSpacing: 0.3,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     ), // RepaintBoundary
                     const SizedBox(height: 28),
                     Row(

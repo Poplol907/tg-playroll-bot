@@ -1,6 +1,7 @@
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_visual_mode.dart';
 import 'cosmo_theme_tokens.dart';
 import 'nebula_colors.dart';
@@ -27,14 +28,15 @@ class AppTheme {
         onSecondary: NebulaColors.softWhite,
         onSurface: NebulaColors.softWhite,
       ),
-      textTheme: _buildTextTheme(),
+      textTheme: _buildTextTheme(useGlow: true),
       extensions: themeExtensions,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: TextStyle(fontFamily: 'SpaceMono', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'SpaceMono',
           color: NebulaColors.softWhite,
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -69,8 +71,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
           borderSide: const BorderSide(color: NebulaColors.errorRose),
         ),
-        labelStyle: TextStyle(fontFamily: 'SpaceMono', color: NebulaColors.dimText),
-        hintStyle: TextStyle(fontFamily: 'SpaceMono', color: NebulaColors.ghostText),
+        labelStyle:
+            TextStyle(fontFamily: 'SpaceMono', color: NebulaColors.dimText),
+        hintStyle:
+            TextStyle(fontFamily: 'SpaceMono', color: NebulaColors.ghostText),
         prefixIconColor: NebulaColors.dimText,
         suffixIconColor: NebulaColors.dimText,
         contentPadding:
@@ -85,7 +89,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
           ),
-          textStyle: TextStyle(fontFamily: 'SpaceMono', 
+          textStyle: TextStyle(
+            fontFamily: 'SpaceMono',
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -140,11 +145,11 @@ class AppTheme {
         secondary: tokens.secondaryAccent,
         surface: tokens.surface,
         error: tokens.error,
-        onPrimary: tokens.background,
-        onSecondary: tokens.background,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
         onSurface: tokens.primaryText,
       ),
-      textTheme: _buildTextTheme().apply(
+      textTheme: _buildTextTheme(useGlow: false).apply(
         bodyColor: tokens.primaryText,
         displayColor: tokens.primaryText,
       ),
@@ -190,7 +195,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: tokens.primaryAccent,
-          foregroundColor: tokens.background,
+          foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
@@ -219,89 +224,104 @@ class AppTheme {
     );
   }
 
-  static TextTheme _buildTextTheme() {
-    const shadow = Shadow(
+  static TextTheme _buildTextTheme({required bool useGlow}) {
+    const glowShadow = Shadow(
       color: Color(0x9900FFCC), // auroraCyan with opacity
       blurRadius: 4.0,
     );
-    
+    final shadows = useGlow ? const [glowShadow] : null;
+
     return TextTheme(
-      displayLarge: TextStyle(fontFamily: 'SpaceMono', 
+      displayLarge: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 48,
         fontWeight: FontWeight.w700,
         letterSpacing: -1.0,
-        shadows: const [shadow],
+        shadows: shadows,
       ),
-      displayMedium: TextStyle(fontFamily: 'SpaceMono', 
+      displayMedium: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 36,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.8,
-        shadows: const [shadow],
+        shadows: shadows,
       ),
-      displaySmall: TextStyle(fontFamily: 'SpaceMono', 
+      displaySmall: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 28,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.6,
-        shadows: const [shadow],
+        shadows: shadows,
       ),
-      headlineLarge: TextStyle(fontFamily: 'SpaceMono', 
+      headlineLarge: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 24,
         fontWeight: FontWeight.w600,
-        shadows: const [shadow],
+        shadows: shadows,
       ),
-      headlineMedium: TextStyle(fontFamily: 'SpaceMono', 
+      headlineMedium: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        shadows: const [shadow],
+        shadows: shadows,
       ),
-      headlineSmall: TextStyle(fontFamily: 'SpaceMono', 
+      headlineSmall: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        shadows: const [shadow],
+        shadows: shadows,
       ),
-      titleLarge: TextStyle(fontFamily: 'SpaceMono', 
+      titleLarge: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),
-      titleMedium: TextStyle(fontFamily: 'SpaceMono', 
+      titleMedium: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.dimText,
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
-      bodyLarge: TextStyle(fontFamily: 'SpaceMono', 
+      bodyLarge: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 16,
         height: 1.6,
       ),
-      bodyMedium: TextStyle(fontFamily: 'SpaceMono', 
+      bodyMedium: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.dimText,
         fontSize: 14,
         height: 1.6,
       ),
-      bodySmall: TextStyle(fontFamily: 'SpaceMono', 
+      bodySmall: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.ghostText,
         fontSize: 12,
         height: 1.5,
       ),
-      labelLarge: TextStyle(fontFamily: 'SpaceMono', 
+      labelLarge: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.softWhite,
         fontSize: 14,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
       ),
-      labelMedium: TextStyle(fontFamily: 'SpaceMono', 
+      labelMedium: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.dimText,
         fontSize: 12,
         letterSpacing: 0.4,
       ),
-      labelSmall: TextStyle(fontFamily: 'SpaceMono', 
+      labelSmall: TextStyle(
+        fontFamily: 'SpaceMono',
         color: NebulaColors.ghostText,
         fontSize: 10,
         letterSpacing: 0.2,

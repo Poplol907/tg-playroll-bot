@@ -35,6 +35,16 @@ abstract class NebulaTokens {
   static const double blurMedium = 8;
   static const double blurDense = 12;
 
+  // ── Input profile ──────────────────────────────────────────────────────────
+  static const double inputBorderWidth = 1;
+  static const double inputFocusAlphaLight = 0.34;
+  static const double inputFocusAlphaDark = 0.55;
+  static const double inputGlowAlphaLight = 0.04;
+  static const double inputGlowAlphaDark = 0.16;
+  static const double inputGlowBlurLight = 8;
+  static const double inputGlowBlurDark = 14;
+  static const double inputSpotlightAlphaLight = 0.18;
+
   // ── Glow presets — restrained 3-layer light model ───────────────────────────
   // Keep a white core, colored body, and wide haze, but cap blur/spread so dark
   // mode stays expressive without turning every state into a neon bloom.

@@ -7,6 +7,7 @@ import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/widgets/app_background_host.dart';
+import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
@@ -68,8 +69,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               constraints: BoxConstraints(
                 maxWidth: AppPlatform.isDesktop ? 460 : double.infinity,
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: AppScrollView(
+                padding: AppSafeInsets.screen(
+                  context,
+                  left: 28,
+                  top: 0,
+                  right: 28,
+                  bottom: 40,
+                  includeKeyboard: true,
+                ),
                 child: Column(
                   children: [
                     const SizedBox(height: 60),

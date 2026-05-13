@@ -195,7 +195,8 @@ class _NebulaPainter extends CustomPainter {
     // ── Deep space tint ───────────────────────────────────────────────────
     canvas.drawRect(
       Offset.zero & size,
-      Paint()..color = const Color(0xFF04020E).withValues(alpha: 0.82 * opacity),
+      Paint()
+        ..color = const Color(0xFF04020E).withValues(alpha: 0.82 * opacity),
     );
 
     // ── Nebula clouds ─────────────────────────────────────────────────────
@@ -277,8 +278,8 @@ class _NebulaPainter extends CustomPainter {
           Colors.black.withValues(alpha: 0.45 * opacity),
         ],
         stops: const [0.55, 1.0],
-      ).createShader(
-          Rect.fromCircle(center: size.center(Offset.zero), radius: size.longestSide * 0.65));
+      ).createShader(Rect.fromCircle(
+          center: size.center(Offset.zero), radius: size.longestSide * 0.65));
     canvas.drawRect(Offset.zero & size, vignette);
   }
 
@@ -300,10 +301,10 @@ class SpacePageRoute<T> extends PageRouteBuilder<T> {
           reverseTransitionDuration: const Duration(milliseconds: 480),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               SpaceTransition(
-                animation: animation,
-                secondaryAnimation: secondaryAnimation,
-                child: child,
-              ),
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            child: child,
+          ),
         );
 }
 
@@ -318,15 +319,16 @@ CustomTransitionPage<T> spaceTransitionPage<T>({
     reverseTransitionDuration: const Duration(milliseconds: 480),
     transitionsBuilder: (context, animation, secondaryAnimation, child) =>
         SpaceTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          child: child,
-        ),
+      animation: animation,
+      secondaryAnimation: secondaryAnimation,
+      child: child,
+    ),
   );
 }
 
 /// Lightweight crossfade for bottom-tab navigation.
-/// No nebula overlay — just a quick, smooth opacity swap.
+/// No nebula overlay and no route-owned background. AppBackgroundHost remains
+/// the single background; this transition only manages transparent foregrounds.
 CustomTransitionPage<T> nebulaFadePage<T>({
   required LocalKey key,
   required Widget child,
@@ -337,25 +339,64 @@ CustomTransitionPage<T> nebulaFadePage<T>({
     transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 240),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final fade = CurvedAnimation(
-        parent: animation,
-        curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
-      );
-      final slide = Tween<Offset>(
-        begin: const Offset(0.0, 0.04),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: animation,
-        curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
-      ));
-
-      return SlideTransition(
-        position: slide,
-        child: FadeTransition(
-          opacity: fade,
-          child: child,
-        ),
+      return _ShellForegroundTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        child: child,
       );
     },
   );
+}
+
+class _ShellForegroundTransition extends StatelessWidget {
+  final Animation<double> animation;
+  final Animation<double> secondaryAnimation;
+  final Widget child;
+
+  const _ShellForegroundTransition({
+    required this.animation,
+    required this.secondaryAnimation,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enter = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.55, 1.0, curve: Curves.easeOutCubic),
+      reverseCurve: const Interval(0.0, 0.45, curve: Curves.easeInCubic),
+    );
+    final exit = CurvedAnimation(
+      parent: secondaryAnimation,
+      curve: const Interval(0.0, 0.38, curve: Curves.easeInCubic),
+      reverseCurve: const Interval(0.62, 1.0, curve: Curves.easeOutCubic),
+    );
+    final enterSlide = Tween<Offset>(
+      begin: const Offset(0.0, 0.025),
+      end: Offset.zero,
+    ).animate(enter);
+    final exitSlide = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0.0, -0.018),
+    ).animate(exit);
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([animation, secondaryAnimation]),
+      child: child,
+      builder: (context, child) {
+        final opacity = (enter.value * (1.0 - exit.value)).clamp(0.0, 1.0);
+        final offset = enterSlide.value + exitSlide.value;
+        return IgnorePointer(
+          ignoring: opacity < 0.99,
+          child: FractionalTranslation(
+            translation: offset,
+            child: Opacity(
+              opacity: opacity,
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

@@ -15,6 +15,7 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/pulse_indicator.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
+import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../../data/calendar_repository.dart';
@@ -184,8 +185,15 @@ class CalendarScreen extends ConsumerWidget {
                   }
 
                   // Mobile: aspect-ratio square, scrollable if content overflows
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  return AppScrollView(
+                    includeKeyboardInset: false,
+                    padding: AppSafeInsets.screen(
+                      context,
+                      left: 16,
+                      top: 0,
+                      right: 16,
+                      bottom: 24,
+                    ),
                     child: Column(
                       children: [
                         NebulaSurface(

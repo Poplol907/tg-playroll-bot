@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_visual_mode.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
 /// Боковая панель навигации для десктопа (macOS / Windows).
@@ -8,36 +9,28 @@ import '../../core/theme/nebula_tokens.dart';
 class DesktopSidebar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final VoidCallback onSettingsTap;
-  final VoidCallback? onThemeTap;
-  final AppVisualMode? visualMode;
   final List<DesktopSidebarItem> items;
 
   const DesktopSidebar({
     super.key,
     required this.currentIndex,
     required this.onTap,
-    required this.onSettingsTap,
-    this.onThemeTap,
-    this.visualMode,
     required this.items,
   });
 
-  static IconData _modeIcon(AppVisualMode? mode) => switch (mode) {
-        AppVisualMode.lightLite => Icons.light_mode_rounded,
-        _ => Icons.dark_mode_rounded,
-      };
-
   @override
   Widget build(BuildContext context) {
+    final surface = NebulaSurfaceProfile.nav.resolve(context);
     return Container(
+      key: const ValueKey('desktop-sidebar-surface'),
       width: 72,
       decoration: BoxDecoration(
-        color: NebulaColors.depthMid.withValues(alpha: 0.95),
+        color: surface.fill,
+        gradient: surface.sheen,
         border: Border(
           right: BorderSide(
-            color: NebulaColors.surfaceBorder,
-            width: 0.8,
+            color: surface.border,
+            width: surface.borderWidth,
           ),
         ),
       ),
@@ -50,16 +43,17 @@ class DesktopSidebar extends StatelessWidget {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [NebulaColors.nebulaPurple, NebulaColors.stellarBlue],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
             child: const Center(
-              child: Icon(Icons.music_note_rounded, color: Colors.white, size: 18),
+              child:
+                  Icon(Icons.music_note_rounded, color: Colors.white, size: 18),
             ),
           ),
           const SizedBox(height: 24),
@@ -75,29 +69,6 @@ class DesktopSidebar extends StatelessWidget {
           ],
 
           const Spacer(),
-
-          // ── Theme toggle ─────────────────────────────────────────────
-          if (onThemeTap != null) ...[
-            _SidebarNavItem(
-              item: DesktopSidebarItem(
-                icon: _modeIcon(visualMode),
-                label: 'Тема',
-              ),
-              selected: false,
-              onTap: onThemeTap!,
-            ),
-            const SizedBox(height: 4),
-          ],
-
-          // ── Settings ─────────────────────────────────────────────────
-          _SidebarNavItem(
-            item: const DesktopSidebarItem(
-              icon: Icons.settings_outlined,
-              label: 'Настройки',
-            ),
-            selected: false,
-            onTap: onSettingsTap,
-          ),
           const SizedBox(height: 16),
         ],
       ),
@@ -137,15 +108,19 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
   @override
   Widget build(BuildContext context) {
     final active = widget.selected;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final accent = tokens.primaryAccent;
 
     final color = active
-        ? NebulaColors.nebulaPurple
+        ? accent
         : _hovered
-            ? NebulaColors.mistWhite
-            : NebulaColors.dimText;
+            ? tokens.primaryText
+            : tokens.mutedText;
 
-    final activeBg = NebulaColors.nebulaPurple.withValues(alpha: 0.18);
-    final hoverBg = NebulaColors.nebulaSurface;
+    final activeBg = accent.withValues(alpha: isLight ? 0.12 : 0.18);
+    final hoverBg = tokens.surface;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -160,12 +135,13 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
-            color: active ? activeBg : (_hovered ? hoverBg : Colors.transparent),
+            color:
+                active ? activeBg : (_hovered ? hoverBg : Colors.transparent),
             boxShadow: active
                 ? [
                     BoxShadow(
-                      color: NebulaColors.nebulaPurple.withValues(alpha: 0.30),
-                      blurRadius: 14,
+                      color: accent.withValues(alpha: isLight ? 0.14 : 0.30),
+                      blurRadius: isLight ? 10 : 14,
                     )
                   ]
                 : null,

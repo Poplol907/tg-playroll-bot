@@ -1,7 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ import '../../core/theme/nebula_tokens.dart';
 //  • Glow drawn via CustomPainter (2 draw calls max).
 //  • Cursor position tracked via ValueNotifier — no setState in parent.
 //  • RepaintBoundary isolates the glow layer from the TextField subtree.
-//  • BackdropFilter kept shallow (sigma ≤ 6) to stay within 120fps budget.
+//  • No default BackdropFilter; crisp input tint keeps this repeated-safe.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class NebulaInput extends StatefulWidget {
@@ -158,9 +158,11 @@ class _NebulaInputState extends State<NebulaInput>
     _cursorX.value = (_textStartX + painter.width).clamp(0, double.infinity);
   }
 
-  InputDecoration _buildDecoration(bool isLight) {
-    final labelColor = isLight ? const Color(0xFF6B7280) : NebulaColors.dimText;
-    final hintColor  = isLight ? const Color(0xFF9CA3AF) : NebulaColors.ghostText;
+  InputDecoration _buildDecoration(CosmoThemeTokens tokens, bool isLight) {
+    final labelColor = tokens.mutedText;
+    final hintColor = isLight
+        ? tokens.mutedText.withValues(alpha: 0.68)
+        : NebulaColors.ghostText;
     return InputDecoration(
       labelText: widget.labelText,
       hintText: widget.hintText,
@@ -180,9 +182,9 @@ class _NebulaInputState extends State<NebulaInput>
     );
   }
 
-  Widget _buildTextField(bool isLight) {
+  Widget _buildTextField(CosmoThemeTokens tokens, bool isLight) {
     final style = TextStyle(
-      color: isLight ? const Color(0xFF111827) : NebulaColors.softWhite,
+      color: tokens.primaryText,
       fontSize: 15,
     );
 
@@ -198,7 +200,7 @@ class _NebulaInputState extends State<NebulaInput>
         maxLines: widget.obscureText ? 1 : widget.maxLines,
         minLines: widget.minLines,
         style: style,
-        decoration: _buildDecoration(isLight),
+        decoration: _buildDecoration(tokens, isLight),
         cursorColor: widget.glowColor,
         cursorWidth: 1.5,
         validator: widget.validator,
@@ -219,7 +221,7 @@ class _NebulaInputState extends State<NebulaInput>
       maxLines: widget.obscureText ? 1 : widget.maxLines,
       minLines: widget.minLines,
       style: style,
-      decoration: _buildDecoration(isLight),
+      decoration: _buildDecoration(tokens, isLight),
       cursorColor: widget.glowColor,
       cursorWidth: 1.5,
       onChanged: _onChangedInternal,
@@ -234,10 +236,14 @@ class _NebulaInputState extends State<NebulaInput>
     final tokens =
         theme.extension<CosmoThemeTokens>() ?? CosmoThemeTokens.darkInternals;
     final isLight = theme.brightness == Brightness.light;
+    final profile = NebulaSurfaceProfile.input.resolve(
+      context,
+      accent: widget.glowColor,
+    );
 
     final effectiveRadius = widget.borderRadius;
-    final idleBorderColor = tokens.surfaceBorder;
-    final glassBg = isLight ? tokens.denseSurface : NebulaColors.denseNebulaSurface;
+    final idleBorderColor = profile.border;
+    final inputBg = profile.fill;
 
     return AnimatedBuilder(
       animation: _glowAnim,
@@ -245,7 +251,11 @@ class _NebulaInputState extends State<NebulaInput>
         final t = _glowAnim.value;
         final borderColor = Color.lerp(
           idleBorderColor,
-          widget.glowColor.withValues(alpha: isLight ? 0.30 : 0.55),
+          widget.glowColor.withValues(
+            alpha: isLight
+                ? NebulaTokens.inputFocusAlphaLight
+                : NebulaTokens.inputFocusAlphaDark,
+          ),
           t,
         )!;
         return Container(
@@ -253,16 +263,21 @@ class _NebulaInputState extends State<NebulaInput>
             borderRadius: BorderRadius.circular(effectiveRadius),
             border: Border.all(
               color: borderColor,
-              width: isLight ? 1.0 : 0.8,
+              width: profile.borderWidth,
             ),
             boxShadow: t > 0.01
                 ? [
                     BoxShadow(
                       color: widget.glowColor.withValues(
-                        alpha:
-                            (isLight ? 0.05 : 0.18) * tokens.glowIntensity * t,
+                        alpha: (isLight
+                                ? NebulaTokens.inputGlowAlphaLight
+                                : NebulaTokens.inputGlowAlphaDark) *
+                            tokens.glowIntensity *
+                            t,
                       ),
-                      blurRadius: isLight ? 8 : 14,
+                      blurRadius: isLight
+                          ? NebulaTokens.inputGlowBlurLight
+                          : NebulaTokens.inputGlowBlurDark,
                       spreadRadius: 0,
                       offset: Offset.zero,
                     ),
@@ -271,47 +286,46 @@ class _NebulaInputState extends State<NebulaInput>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(effectiveRadius),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Stack(
-                children: [
-                  // ── Glass base ──────────────────────────────────────────
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: glassBg,
-                        borderRadius: BorderRadius.circular(effectiveRadius),
-                      ),
+            child: Stack(
+              children: [
+                // ── Input base ────────────────────────────────────────────
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: inputBg,
+                      borderRadius: BorderRadius.circular(effectiveRadius),
                     ),
                   ),
+                ),
 
-                  // ── Cursor-following radial spotlight ───────────────────
-                  if (t > 0.01)
-                    Positioned.fill(
-                      child: RepaintBoundary(
-                        child: ValueListenableBuilder<double>(
-                          valueListenable: _cursorX,
-                          builder: (_, cursorX, __) => CustomPaint(
-                            painter: _SpotlightPainter(
-                              cursorX: cursorX,
-                              color: widget.glowColor,
-                              opacity:
-                                  t * (isLight ? 0.35 : tokens.glowIntensity),
-                            ),
+                // ── Cursor-following radial spotlight ─────────────────────
+                if (t > 0.01)
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: ValueListenableBuilder<double>(
+                        valueListenable: _cursorX,
+                        builder: (_, cursorX, __) => CustomPaint(
+                          painter: _SpotlightPainter(
+                            cursorX: cursorX,
+                            color: widget.glowColor,
+                            opacity: t *
+                                (isLight
+                                    ? NebulaTokens.inputSpotlightAlphaLight
+                                    : tokens.glowIntensity),
                           ),
                         ),
                       ),
                     ),
+                  ),
 
-                  // ── TextField (on top) ──────────────────────────────────
-                  child!,
-                ],
-              ),
+                // ── TextField (on top) ────────────────────────────────────
+                child!,
+              ],
             ),
           ),
         );
       },
-      child: _buildTextField(isLight),
+      child: _buildTextField(tokens, isLight),
     );
   }
 }

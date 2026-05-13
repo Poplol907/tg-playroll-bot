@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
@@ -11,6 +13,7 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
+import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
 import '../widgets/create_user_sheet.dart';
@@ -53,8 +56,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           children: [
             // ── Header ─────────────────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
                   if (canPop) ...[
@@ -66,8 +68,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                         decoration: BoxDecoration(
                           color: NebulaColors.nebulaSurface,
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: NebulaColors.surfaceBorder),
+                          border: Border.all(color: NebulaColors.surfaceBorder),
                         ),
                         child: const Icon(Icons.arrow_back_rounded,
                             color: NebulaColors.dimText, size: 18),
@@ -111,8 +112,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color:
-                            NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                        color: NebulaColors.stellarBlue.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                         border: Border.all(
                             color: NebulaColors.stellarBlue
@@ -316,18 +316,15 @@ class _SearchField extends StatelessWidget {
       ),
       child: TextField(
         onChanged: onChanged,
-        style: const TextStyle(
-            fontSize: 14, color: NebulaColors.softWhite),
+        style: const TextStyle(fontSize: 14, color: NebulaColors.softWhite),
         decoration: const InputDecoration(
           isDense: true,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
           hintText: 'Поиск по имени или логину...',
-          hintStyle: TextStyle(
-              fontSize: 14, color: NebulaColors.ghostText),
-          prefixIcon: Icon(Icons.search_rounded,
-              color: NebulaColors.dimText, size: 18),
+          hintStyle: TextStyle(fontSize: 14, color: NebulaColors.ghostText),
+          prefixIcon:
+              Icon(Icons.search_rounded, color: NebulaColors.dimText, size: 18),
         ),
       ),
     );
@@ -403,8 +400,14 @@ class _TeachersList extends ConsumerWidget {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+    return AppListView.builder(
+      includeKeyboardInset: true,
+      padding: AppSafeInsets.list(
+        context,
+        top: 4,
+        bottom: 24,
+        includeKeyboard: true,
+      ),
       itemCount: filtered.length,
       itemBuilder: (context, i) => _TeacherTile(
         user: filtered[i],
@@ -545,15 +548,23 @@ class _TeacherProfileDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = stats;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final modalSurface = NebulaSurfaceProfile.modal.resolve(context);
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(24),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 460),
         decoration: BoxDecoration(
-          gradient: NebulaColors.warmGlass,
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusXL),
-          border: Border.all(color: NebulaColors.warmPearlBorder),
+          color: modalSurface.fill,
+          gradient: modalSurface.sheen,
+          borderRadius: BorderRadius.circular(modalSurface.radius),
+          border: Border.all(
+            color: modalSurface.border,
+            width: modalSurface.borderWidth,
+          ),
+          boxShadow: modalSurface.shadows,
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -570,8 +581,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
                     color: NebulaColors.stellarBlue.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: NebulaColors.stellarBlue
-                            .withValues(alpha: 0.3)),
+                        color: NebulaColors.stellarBlue.withValues(alpha: 0.3)),
                   ),
                   child: const Icon(Icons.school_outlined,
                       color: NebulaColors.stellarBlue, size: 24),
@@ -583,17 +593,17 @@ class _TeacherProfileDialog extends ConsumerWidget {
                     children: [
                       Text(
                         user.displayName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: NebulaColors.softWhite,
+                          color: tokens.primaryText,
                         ),
                       ),
                       Text(
                         '@${user.login}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: NebulaColors.dimText,
+                          color: tokens.secondaryText,
                         ),
                       ),
                     ],
@@ -601,8 +611,8 @@ class _TeacherProfileDialog extends ConsumerWidget {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded,
-                      color: NebulaColors.dimText, size: 20),
+                  icon: Icon(Icons.close_rounded,
+                      color: tokens.mutedText, size: 20),
                 ),
               ],
             ),
@@ -643,8 +653,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
               value: '${s?.lessonsDebt ?? 0}',
               color: NebulaColors.warningAmber,
             ),
-            const Divider(
-                color: NebulaColors.surfaceBorder, height: 24),
+            const Divider(color: NebulaColors.surfaceBorder, height: 24),
             _DialogStatRow(
               icon: Icons.payments_outlined,
               label: 'К выплате',
@@ -693,8 +702,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
     return '${formatter.format(amount)} ₽';
   }
 
-  Future<void> _confirmAndDelete(
-      BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
     final confirm = await NebulaDialog.confirm(
       context,
       title: 'Удалить педагога?',
@@ -748,6 +756,8 @@ class _DialogStatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -757,9 +767,9 @@ class _DialogStatRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: NebulaColors.mistWhite,
+                color: tokens.secondaryText,
               ),
             ),
           ),

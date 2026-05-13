@@ -10,6 +10,7 @@ import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
 import '../../../../shared/widgets/nebula_parallax_frame.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
+import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../data/students_repository.dart';
@@ -35,78 +36,80 @@ class StudentsScreen extends ConsumerWidget {
               strength: 0.018,
               maxOffset: 4.0,
               child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-              child: Row(
-                children: [
-                  Builder(builder: (ctx) {
-                    final isLight =
-                        Theme.of(ctx).brightness == Brightness.light;
-                    final titleText = Text(
-                      'Ученики',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: isLight ? Colors.white : NebulaColors.softWhite,
-                      ),
-                    );
-                    if (!isLight) return titleText;
-                    return ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF1A2540), Color(0xFF0D1117)],
-                      ).createShader(bounds),
-                      child: titleText,
-                    );
-                  }),
-                  const Spacer(),
-                  studentsAsync.whenOrNull(
-                        data: (students) => Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: NebulaColors.stellarBlue
-                                .withValues(alpha: 0.12),
-                            borderRadius:
-                                BorderRadius.circular(NebulaTokens.radiusSM),
-                            border: Border.all(
-                                color: NebulaColors.stellarBlue
-                                    .withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            '${students.length}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: NebulaColors.stellarBlue,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Row(
+                  children: [
+                    Builder(builder: (ctx) {
+                      final isLight =
+                          Theme.of(ctx).brightness == Brightness.light;
+                      final titleText = Text(
+                        'Ученики',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isLight ? Colors.white : NebulaColors.softWhite,
+                        ),
+                      );
+                      if (!isLight) return titleText;
+                      return ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF1A2540), Color(0xFF0D1117)],
+                        ).createShader(bounds),
+                        child: titleText,
+                      );
+                    }),
+                    const Spacer(),
+                    studentsAsync.whenOrNull(
+                          data: (students) => Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: NebulaColors.stellarBlue
+                                  .withValues(alpha: 0.12),
+                              borderRadius:
+                                  BorderRadius.circular(NebulaTokens.radiusSM),
+                              border: Border.all(
+                                  color: NebulaColors.stellarBlue
+                                      .withValues(alpha: 0.3)),
+                            ),
+                            child: Text(
+                              '${students.length}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: NebulaColors.stellarBlue,
+                              ),
                             ),
                           ),
+                        ) ??
+                        const SizedBox.shrink(),
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: () => _openAddStudent(context, ref),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color:
+                              NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: NebulaColors.stellarBlue
+                                  .withValues(alpha: 0.4)),
                         ),
-                      ) ??
-                      const SizedBox.shrink(),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () => _openAddStudent(context, ref),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: NebulaColors.stellarBlue.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: NebulaColors.stellarBlue
-                                .withValues(alpha: 0.4)),
-                      ),
-                      child: const Icon(
-                        Icons.add_rounded,
-                        color: NebulaColors.stellarBlue,
-                        size: 20,
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: NebulaColors.stellarBlue,
+                          size: 20,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ), // NebulaParallaxFrame
             // List
             Expanded(
@@ -125,8 +128,12 @@ class StudentsScreen extends ConsumerWidget {
                         subtitle: 'Нажмите + чтобы добавить первого ученика',
                         icon: Icons.people_outline_rounded,
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    : AppListView.builder(
+                        padding: AppSafeInsets.list(
+                          context,
+                          top: 0,
+                          bottom: 24,
+                        ),
                         itemCount: students.length,
                         itemBuilder: (context, i) =>
                             _StudentCard(student: students[i], index: i),
@@ -192,9 +199,11 @@ class _StudentCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final nameColor = isLight ? const Color(0xFF0D1117) : NebulaColors.softWhite;
+    final nameColor =
+        isLight ? const Color(0xFF0D1117) : NebulaColors.softWhite;
     final subColor = isLight ? const Color(0xFF4B5563) : NebulaColors.dimText;
-    final iconColor = isLight ? const Color(0xFF9CA3AF) : NebulaColors.ghostText;
+    final iconColor =
+        isLight ? const Color(0xFF9CA3AF) : NebulaColors.ghostText;
     final newBadgeBorder =
         isLight ? const Color(0xFFFFFFFF) : NebulaColors.spaceBlack;
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_visual_mode.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import 'ascii_water_background.dart';
+import 'interactive_light_shader_background.dart';
 import 'nebula_background.dart';
 import 'path_field_background.dart';
 
@@ -37,10 +38,13 @@ class AppBackgroundHost extends ConsumerWidget {
             ),
           AppDarkBackground.asciiWater => AsciiWaterBackground(child: child),
         },
-      AppVisualMode.lightShader => PathFieldBackground(
+      AppVisualMode.lightShader => InteractiveLightShaderBackground(
           tokens: CosmoThemeTokens.lightShader,
-          animated: true,
-          child: child,
+          child: PathFieldBackground(
+            tokens: CosmoThemeTokens.lightShader,
+            animated: true,
+            child: child,
+          ),
         ),
       AppVisualMode.lightLite => PathFieldBackground(
           tokens: CosmoThemeTokens.lightLite,

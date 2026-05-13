@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/models/student.dart';
@@ -162,6 +164,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
   Widget build(BuildContext context) {
     final student = widget.student;
     final bottomPad = MediaQuery.of(context).viewPadding.bottom;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final modalSurface = NebulaSurfaceProfile.modal.resolve(context);
 
     return DraggableScrollableSheet(
       controller: _sheetCtrl,
@@ -176,16 +181,21 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
           borderRadius: const BorderRadius.vertical(
               top: Radius.circular(NebulaTokens.radiusXL)),
           child: Container(
-            decoration: const BoxDecoration(
-              gradient: NebulaColors.warmGlass,
+            decoration: BoxDecoration(
+              color: modalSurface.fill,
+              gradient: modalSurface.sheen,
               border: Border(
-                top:
-                    BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
-                left:
-                    BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
-                right:
-                    BorderSide(color: NebulaColors.warmPearlBorder, width: 0.8),
+                top: BorderSide(
+                    color: modalSurface.border,
+                    width: modalSurface.borderWidth),
+                left: BorderSide(
+                    color: modalSurface.border,
+                    width: modalSurface.borderWidth),
+                right: BorderSide(
+                    color: modalSurface.border,
+                    width: modalSurface.borderWidth),
               ),
+              boxShadow: modalSurface.shadows,
             ),
             child: Column(
               children: [
@@ -205,8 +215,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                               width: 36,
                               height: 4,
                               decoration: BoxDecoration(
-                                color:
-                                    NebulaColors.dimText.withValues(alpha: 0.5),
+                                color: tokens.mutedText.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(
                                     NebulaTokens.radiusXS),
                               ),
@@ -227,18 +236,18 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                                 children: [
                                   Text(
                                     student.fullName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
-                                      color: NebulaColors.softWhite,
+                                      color: tokens.primaryText,
                                     ),
                                   ),
                                   if (student.phone != null)
                                     Text(
                                       student.phone!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: NebulaColors.dimText,
+                                        color: tokens.secondaryText,
                                       ),
                                     ),
                                 ],

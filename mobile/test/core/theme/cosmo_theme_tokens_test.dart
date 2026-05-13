@@ -12,7 +12,7 @@ void main() {
         AppTheme.themeExtensions.whereType<CosmoThemeTokens>().single;
 
     expect(tokens.background, NebulaColors.deepVoid);
-    expect(tokens.surface, NebulaColors.nebulaSurface);
+    expect(tokens.surface, const Color(0xE60F1528));
     expect(tokens.primaryAccent, NebulaColors.stellarBlue);
     expect(tokens.success, NebulaColors.successMint);
   });
@@ -27,9 +27,22 @@ void main() {
   });
 
   test('light placeholder tokens use bright canvas values', () {
-    expect(CosmoThemeTokens.lightShader.background, const Color(0xFFFAFAF7));
+    expect(CosmoThemeTokens.lightShader.background, const Color(0xFFF8FAFF));
     expect(CosmoThemeTokens.lightLite.background, const Color(0xFFFFFFFF));
-    expect(CosmoThemeTokens.lightShader.primaryText, const Color(0xFF171717));
+    expect(CosmoThemeTokens.lightShader.primaryText, const Color(0xFF111827));
+  });
+
+  test('light tokens stay cool and avoid beige surfaces', () {
+    final shaderBg = CosmoThemeTokens.lightShader.background;
+    final liteSurface = CosmoThemeTokens.lightLite.surface;
+
+    int red(Color color) => (color.r * 255).round();
+    int green(Color color) => (color.g * 255).round();
+    int blue(Color color) => (color.b * 255).round();
+
+    expect(blue(shaderBg), greaterThanOrEqualTo(red(shaderBg)));
+    expect(green(shaderBg), greaterThanOrEqualTo(red(shaderBg)));
+    expect(blue(liteSurface), greaterThan(red(liteSurface)));
   });
 
   test('light theme tokens keep glow intensity restrained', () {

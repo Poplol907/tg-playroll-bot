@@ -8,6 +8,7 @@ import '../../../../core/platform/app_platform.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
@@ -250,7 +251,7 @@ class _LessonModalState extends ConsumerState<LessonModal>
 
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final modalSurface = NebulaSurfaceProfile.modal.resolve(context);
     final isTeacherCancelled =
         lesson.status == 'cancelled' && lesson.cancelledBy == 'teacher';
     final isStudentFault = lesson.status == 'missed' ||
@@ -268,28 +269,32 @@ class _LessonModalState extends ConsumerState<LessonModal>
       snapSizes: const [1.0],
       expand: false,
       builder: (context, scrollCtrl) {
-        final sheetBg = isLight
-            ? const Color(0xFFF5F8FF)
-            : NebulaColors.denseNebulaSurface;
-        final borderColor = isLight
-            ? const Color(0x30000000)
-            : NebulaColors.warmPearlBorder;
         return ClipRRect(
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(NebulaTokens.radiusLG),
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: isLight ? sheetBg : null,
-              gradient: isLight ? null : NebulaColors.warmGlass,
+              color: modalSurface.fill,
+              gradient: modalSurface.sheen,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(NebulaTokens.radiusLG),
               ),
               border: Border(
-                top: BorderSide(color: borderColor, width: 0.8),
-                left: BorderSide(color: borderColor, width: 0.8),
-                right: BorderSide(color: borderColor, width: 0.8),
+                top: BorderSide(
+                  color: modalSurface.border,
+                  width: modalSurface.borderWidth,
+                ),
+                left: BorderSide(
+                  color: modalSurface.border,
+                  width: modalSurface.borderWidth,
+                ),
+                right: BorderSide(
+                  color: modalSurface.border,
+                  width: modalSurface.borderWidth,
+                ),
               ),
+              boxShadow: modalSurface.shadows,
             ),
             child: Column(
               children: [
@@ -544,7 +549,10 @@ class _MakeupChip extends StatelessWidget {
                   subtitle!,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Theme.of(context).extension<CosmoThemeTokens>()?.mutedText ?? NebulaColors.dimText,
+                    color: Theme.of(context)
+                            .extension<CosmoThemeTokens>()
+                            ?.mutedText ??
+                        NebulaColors.dimText,
                   ),
                 ),
             ],
@@ -571,7 +579,10 @@ class _SheetHandle extends StatelessWidget {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: (Theme.of(context).extension<CosmoThemeTokens>()?.mutedText ?? NebulaColors.dimText).withValues(alpha: 0.4),
+              color:
+                  (Theme.of(context).extension<CosmoThemeTokens>()?.mutedText ??
+                          NebulaColors.dimText)
+                      .withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
             ),
           ),
@@ -790,8 +801,7 @@ class _LessonModalDesktopState extends ConsumerState<_LessonModalDesktop> {
               padding: const EdgeInsets.all(14),
               borderRadius: NebulaTokens.radiusSM,
               child: Text(lesson.notes!,
-                  style: TextStyle(
-                      fontSize: 14, color: tokens.secondaryText)),
+                  style: TextStyle(fontSize: 14, color: tokens.secondaryText)),
             ),
           ],
 

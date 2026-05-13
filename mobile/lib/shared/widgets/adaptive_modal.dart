@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
-import '../../core/theme/nebula_colors.dart';
-import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 
 /// Показывает bottom sheet на мобайле и Dialog на десктопе.
 /// Используй вместо прямого вызова [showModalBottomSheet].
@@ -62,7 +61,7 @@ abstract class AdaptiveModal {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Обёртка диалога для десктопа — Nebula glass стиль
+//  Обёртка диалога для десктопа — canonical modal surface profile
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DesktopDialogWrapper extends StatelessWidget {
@@ -76,28 +75,27 @@ class _DesktopDialogWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = NebulaSurfaceProfile.modal.resolve(context);
+    final radius = BorderRadius.circular(surface.radius);
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
       child: Container(
+        key: const ValueKey('adaptive-modal-desktop-surface'),
         width: width,
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: NebulaColors.warmGlass,
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusXL),
+          color: surface.fill,
+          gradient: surface.sheen,
+          borderRadius: radius,
           border: Border.all(
-            color: NebulaColors.warmPearlBorder,
-            width: 0.8,
+            color: surface.border,
+            width: surface.borderWidth,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: NebulaColors.nebulaPurple.withValues(alpha: 0.12),
-              blurRadius: 40,
-            ),
-          ],
+          boxShadow: surface.shadows,
         ),
         child: child,
       ),

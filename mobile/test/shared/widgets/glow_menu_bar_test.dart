@@ -1,3 +1,5 @@
+import 'package:cosmo_studio/core/theme/app_theme.dart';
+import 'package:cosmo_studio/core/theme/cosmo_theme_tokens.dart';
 import 'package:cosmo_studio/shared/widgets/glow_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,5 +63,91 @@ void main() {
         .where((widget) => widget.transform.storage[7] != 0);
 
     expect(perspectiveTransforms, isEmpty);
+  });
+
+  testWidgets('GlowMenuBar uses nav surface profile in light theme',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightLite,
+        home: Scaffold(
+          bottomNavigationBar: GlowMenuBar(
+            currentIndex: 0,
+            onTap: (_) {},
+            items: const [
+              GlowMenuItem(
+                icon: Icons.calendar_month_rounded,
+                label: 'Календарь',
+                glowColor: Colors.blue,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<Container>(
+      find.byKey(const ValueKey('glow-menu-bar-surface')),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    final border = decoration.border! as Border;
+
+    expect(
+      decoration.color,
+      CosmoThemeTokens.lightLite.denseSurface.withValues(alpha: 0.96),
+    );
+    expect(border.top.color, CosmoThemeTokens.lightLite.surfaceBorder);
+  });
+
+  testWidgets(
+      'GlowMenuBar admin layout centers Studio and keeps empty bar inert',
+      (tester) async {
+    final taps = <int>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: GlowMenuBar(
+            currentIndex: 0,
+            onTap: taps.add,
+            items: const [
+              GlowMenuItem(
+                icon: Icons.shield_outlined,
+                label: 'Студия',
+                glowColor: Colors.amber,
+              ),
+              GlowMenuItem(
+                icon: Icons.settings_outlined,
+                label: 'Настройки',
+                glowColor: Colors.blueGrey,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final surfaceRect = tester.getRect(
+      find.byKey(const ValueKey('glow-menu-bar-surface')),
+    );
+    final studioCenter = tester.getCenter(find.byIcon(Icons.shield_outlined));
+    final settingsCenter =
+        tester.getCenter(find.byIcon(Icons.settings_outlined));
+
+    expect(
+        studioCenter.dx, moreOrLessEquals(surfaceRect.center.dx, epsilon: 1));
+    expect(settingsCenter.dx, greaterThan(surfaceRect.right - 64));
+
+    await tester.tapAt(Offset(surfaceRect.left + 32, surfaceRect.center.dy));
+    await tester.pump();
+    expect(taps, isEmpty);
+
+    await tester.tapAt(studioCenter);
+    await tester.pump();
+    expect(taps, [0]);
+
+    await tester.tapAt(settingsCenter);
+    await tester.pump();
+    expect(taps, [0, 1]);
   });
 }
