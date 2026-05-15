@@ -110,8 +110,9 @@ void main() {
     }
     // BASELINE captured 2026-05-16 when NebulaAlpha was introduced.
     // RATCHET DOWN — never up. When you migrate a file, drop this number.
-    // 2026-05-16: 160 → 153 after MetricStat migration in admin screen.
-    const baseline = 153;
+    // 2026-05-16: 160 → 153 (MetricStat in admin)
+    //             153 → 150 (IconCallout + ActionRow + StatusBadge migrations)
+    const baseline = 150;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -148,8 +149,9 @@ void main() {
     }
     // BASELINE captured 2026-05-16 when NebulaTypography was introduced.
     // RATCHET DOWN as screens migrate to type.displayL / bodyM / etc.
-    // 2026-05-16: 180 → 175 after MetricStat + Settings migration.
-    const baseline = 175;
+    // 2026-05-16: 180 → 175 (MetricStat + Settings)
+    //             175 → 169 (IconCallout + ActionRow + StatusBadge migrations)
+    const baseline = 169;
     expect(
       count,
       lessThanOrEqualTo(baseline),

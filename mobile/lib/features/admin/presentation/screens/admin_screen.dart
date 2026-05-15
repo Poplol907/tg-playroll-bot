@@ -404,74 +404,30 @@ class _TeacherTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lessonsDone = stats?.lessonsDone ?? 0;
     final totalAmount = stats?.totalAmount ?? 0;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+
+    final trailing = user.hasPassword
+        ? Icon(Icons.chevron_right_rounded, color: tokens.mutedText, size: 20)
+        : const StatusBadge(
+            label: 'НЕТ ПАРОЛЯ',
+            icon: Icons.lock_open_rounded,
+            intent: SemanticIntent.warning,
+          );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: NebulaSurface(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: EdgeInsets.zero,
         borderRadius: NebulaTokens.radiusMD,
-        onTap: () => _openProfile(context, ref),
-        child: Row(
-          children: [
-            // Avatar with role icon
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: NebulaColors.stellarBlue.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: NebulaColors.stellarBlue.withValues(alpha: 0.25),
-                ),
-              ),
-              child: const Icon(
-                Icons.school_outlined,
-                color: NebulaColors.stellarBlue,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-
-            // Name + login
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          user.displayName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: NebulaColors.softWhite,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (!user.hasPassword) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.lock_open_rounded,
-                            size: 12, color: NebulaColors.warningAmber),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${user.login} · $lessonsDone уроков · ${_formatMoney(totalAmount)}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: NebulaColors.ghostText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const Icon(Icons.chevron_right_rounded,
-                color: NebulaColors.ghostText, size: 20),
-          ],
+        child: IconCallout(
+          icon: Icons.school_outlined,
+          title: user.displayName,
+          subtitle:
+              '${user.login} · $lessonsDone уроков · ${_formatMoney(totalAmount)}',
+          intent: SemanticIntent.info,
+          onTap: () => _openProfile(context, ref),
+          trailing: trailing,
         ),
       ),
     );

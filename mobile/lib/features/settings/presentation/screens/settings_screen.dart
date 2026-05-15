@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/server_config.dart';
 import '../../../../core/theme/app_visual_mode.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
@@ -12,6 +13,7 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/widgets/primitives/primitives.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -210,63 +212,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // ── Theme section ────────────────────────────────────────────
               const _SectionLabel(label: 'ИНТЕРФЕЙС'),
               NebulaSurface(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: EdgeInsets.zero,
                 borderRadius: NebulaTokens.radiusMD,
-                onTap: _cycleTheme,
-                child: Row(
-                  children: [
-                    Icon(
-                      mode == AppVisualMode.lightLite ||
-                              mode == AppVisualMode.lightShader
-                          ? Icons.light_mode_rounded
-                          : Icons.dark_mode_rounded,
-                      color: NebulaColors.warningAmber,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Тема',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: NebulaColors.softWhite,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Тапни чтобы переключить',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: NebulaColors.dimText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color:
-                            NebulaColors.warningAmber.withValues(alpha: 0.12),
-                        borderRadius:
-                            BorderRadius.circular(NebulaTokens.radiusSM),
-                      ),
-                      child: Text(
-                        _modeLabel(mode),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: NebulaColors.warningAmber,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: IconCallout(
+                  icon: mode == AppVisualMode.lightLite ||
+                          mode == AppVisualMode.lightShader
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  title: 'Тема',
+                  subtitle: 'Тапни чтобы переключить',
+                  intent: SemanticIntent.warning,
+                  onTap: _cycleTheme,
+                  trailing: StatusBadge(
+                    label: _modeLabel(mode),
+                    intent: SemanticIntent.warning,
+                  ),
                 ),
               ),
 
@@ -275,28 +235,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // ── Account section ──────────────────────────────────────────
               const _SectionLabel(label: 'АККАУНТ'),
               NebulaSurface(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: EdgeInsets.zero,
                 borderRadius: NebulaTokens.radiusMD,
-                onTap: _logout,
-                child: const Row(
-                  children: [
-                    Icon(Icons.logout_rounded,
-                        color: NebulaColors.errorRose, size: 20),
-                    SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        'Выйти из аккаунта',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: NebulaColors.softWhite,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.chevron_right_rounded,
-                        color: NebulaColors.dimText, size: 20),
-                  ],
+                child: ActionRow(
+                  icon: Icons.logout_rounded,
+                  label: 'Выйти из аккаунта',
+                  destructive: true,
+                  onTap: _logout,
                 ),
               ),
             ],
