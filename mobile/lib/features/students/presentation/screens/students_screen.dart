@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_component_styles.dart';
+import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/models/student.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -13,6 +15,7 @@ import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../shared/widgets/app_error_card.dart';
+import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../data/students_repository.dart';
 import '../widgets/student_detail_sheet.dart';
 import '../widgets/add_student_modal.dart';
@@ -289,51 +292,18 @@ class _StudentCard extends ConsumerWidget {
                         ),
                         if (_isNew) ...[
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: NebulaColors.successMint
-                                  .withValues(alpha: 0.12),
-                              borderRadius:
-                                  BorderRadius.circular(NebulaTokens.radiusXS),
-                              border: Border.all(
-                                  color: NebulaColors.successMint
-                                      .withValues(alpha: 0.4)),
-                            ),
-                            child: const Text(
-                              'НОВЫЙ',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: NebulaColors.successMint,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                          const StatusBadge(
+                            label: 'НОВЫЙ',
+                            intent: SemanticIntent.success,
+                            styleOverride: BadgeStyle.compact,
                           ),
                         ],
                         if (student.isForeign) ...[
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: NebulaColors.warningAmber
-                                  .withValues(alpha: 0.15),
-                              borderRadius:
-                                  BorderRadius.circular(NebulaTokens.radiusXS),
-                              border: Border.all(
-                                  color: NebulaColors.warningAmber
-                                      .withValues(alpha: 0.4)),
-                            ),
-                            child: const Text(
-                              'EN',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: NebulaColors.warningAmber,
-                              ),
-                            ),
+                          const StatusBadge(
+                            label: 'EN',
+                            intent: SemanticIntent.warning,
+                            styleOverride: BadgeStyle.compact,
                           ),
                         ],
                       ],
