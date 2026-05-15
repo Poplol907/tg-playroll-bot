@@ -65,4 +65,57 @@ void main() {
       'lib/core/theme/nebula_colors.dart',
     ]);
   });
+
+  // ── Alpha token governance ──────────────────────────────────────────────────
+  // Theme code is the single source of truth for opacity. Once we migrated the
+  // values to NebulaAlpha, the theme layer must stay free of magic numbers so
+  // global "сделать стекло плотнее" stays a one-line change.
+  test('lib/core/theme uses NebulaAlpha — no magic alpha values', () {
+    final pattern = RegExp(r'withValues\(alpha: [0-9]+\.[0-9]+\)');
+    final offenders = <String>[];
+
+    for (final file in dartFiles().where((f) => f.path.startsWith('lib/core/theme'))) {
+      // The token file itself is allowed to have numeric literals (those ARE
+      // the source of truth) and the doc-comments in nebula_alpha.dart.
+      if (file.path == 'lib/core/theme/nebula_alpha.dart') continue;
+
+      final content = file.readAsStringSync();
+      final matches = pattern.allMatches(content);
+      for (final m in matches) {
+        offenders.add('${file.path} :: ${m.group(0)}');
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'Theme code must reference NebulaAlpha.* tokens. '
+          'Replace numeric alpha with the closest semantic token. '
+          'See lib/core/theme/nebula_alpha.dart.',
+    );
+  });
+
+  // Feature + shared widget code still has many hardcoded alpha values.
+  // We do not block all of them at once; we ratchet the baseline DOWN over
+  // time. When migrating a screen, lower the limit and lock it in.
+  test('feature/shared magic alpha usage stays within budget', () {
+    final pattern = RegExp(r'withValues\(alpha: [0-9]+\.[0-9]+\)');
+    int count = 0;
+    for (final file in dartFiles()) {
+      if (!file.path.startsWith('lib/features/') &&
+          !file.path.startsWith('lib/shared/widgets/')) {
+        continue;
+      }
+      count += pattern.allMatches(file.readAsStringSync()).length;
+    }
+    // BASELINE captured 2026-05-16 when NebulaAlpha was introduced.
+    // RATCHET DOWN — never up. When you migrate a file, drop this number.
+    const baseline = 160;
+    expect(
+      count,
+      lessThanOrEqualTo(baseline),
+      reason: 'You added new hardcoded alpha values. Use NebulaAlpha.* from '
+          'lib/core/theme/nebula_alpha.dart, then update the baseline.',
+    );
+  });
 }

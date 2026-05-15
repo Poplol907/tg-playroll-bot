@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'cosmo_theme_tokens.dart';
+import 'nebula_alpha.dart';
 import 'nebula_tokens.dart';
 
 enum NebulaBlurPolicy {
@@ -59,20 +60,18 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
       NebulaSurfaceProfile.modal => tokens.denseSurface,
       NebulaSurfaceProfile.input => tokens.denseSurface,
       NebulaSurfaceProfile.nav =>
-        isLight ? tokens.denseSurface.withValues(alpha: 0.96) : tokens.surface,
-      NebulaSurfaceProfile.status => isLight
-          ? semanticAccent.withValues(alpha: 0.10)
-          : semanticAccent.withValues(alpha: 0.12),
+        isLight ? tokens.denseSurface.withValues(alpha: NebulaAlpha.solid)
+                : tokens.surface,
+      NebulaSurfaceProfile.status =>
+        semanticAccent.withValues(alpha: NebulaAlpha.surface),
       NebulaSurfaceProfile.frostedSmall => tokens.denseSurface,
     };
 
     final border = switch (this) {
-      _ when hasAccent => semanticAccent.withValues(
-          alpha: isLight ? 0.32 : 0.38,
-        ),
-      NebulaSurfaceProfile.status => semanticAccent.withValues(
-          alpha: isLight ? 0.34 : 0.42,
-        ),
+      _ when hasAccent =>
+        semanticAccent.withValues(alpha: NebulaAlpha.accent),
+      NebulaSurfaceProfile.status =>
+        semanticAccent.withValues(alpha: NebulaAlpha.medium),
       NebulaSurfaceProfile.input => tokens.surfaceBorder,
       NebulaSurfaceProfile.frostedSmall => tokens.surfaceBorder,
       _ => tokens.surfaceBorder,
@@ -134,13 +133,13 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
     final base = isLight
         ? [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: NebulaAlpha.mist),
               blurRadius: 16,
               spreadRadius: -3,
               offset: const Offset(0, 4),
             ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withValues(alpha: NebulaAlpha.whisper),
               blurRadius: 36,
               spreadRadius: -8,
               offset: const Offset(0, 10),
@@ -148,7 +147,7 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
           ]
         : [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.24),
+              color: Colors.black.withValues(alpha: NebulaAlpha.border),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -156,12 +155,13 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
 
     if (this != NebulaSurfaceProfile.status && !hasAccent) return base;
 
+    final accentHaloAlpha = (isLight ? NebulaAlpha.whisper : NebulaAlpha.surface) *
+        (isLight ? 1.0 : tokens.glowIntensity);
+
     return [
       ...base,
       BoxShadow(
-        color: accent.withValues(
-          alpha: (isLight ? 0.06 : 0.12) * (isLight ? 1 : tokens.glowIntensity),
-        ),
+        color: accent.withValues(alpha: accentHaloAlpha),
         blurRadius: isLight ? 14 : 18,
         offset: Offset.zero,
       ),
@@ -174,16 +174,16 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
       end: Alignment.bottomRight,
       colors: isLight
           ? [
-              Colors.white.withValues(alpha: 0.70),
-              Colors.white.withValues(alpha: 0.08),
+              Colors.white.withValues(alpha: NebulaAlpha.high),
+              Colors.white.withValues(alpha: NebulaAlpha.mist),
               Colors.transparent,
-              Colors.black.withValues(alpha: 0.025),
+              Colors.black.withValues(alpha: NebulaAlpha.whisper),
             ]
           : [
-              Colors.white.withValues(alpha: 0.10),
-              Colors.white.withValues(alpha: 0.025),
+              Colors.white.withValues(alpha: NebulaAlpha.mist),
+              Colors.white.withValues(alpha: NebulaAlpha.whisper),
               Colors.transparent,
-              Colors.black.withValues(alpha: 0.07),
+              Colors.black.withValues(alpha: NebulaAlpha.mist),
             ],
       stops: const [0.0, 0.22, 0.55, 1.0],
     );
