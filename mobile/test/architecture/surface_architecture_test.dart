@@ -113,7 +113,9 @@ void main() {
     // 2026-05-16: 160 → 153 (MetricStat in admin)
     //             153 → 150 (IconCallout + ActionRow + StatusBadge migrations)
     //             150 → 146 (students NEW/EN badges, admin dialog rows)
-    const baseline = 146;
+    //             146 → 110 (student detail components + lesson_modal +
+    //                        schedule_builder_modal cleanup pass)
+    const baseline = 110;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -153,7 +155,9 @@ void main() {
     // 2026-05-16: 180 → 175 (MetricStat + Settings)
     //             175 → 169 (IconCallout + ActionRow + StatusBadge migrations)
     //             169 → 159 (students badges + admin titles & dialog rows)
-    const baseline = 159;
+    //             159 → 118 (student detail components + lesson_modal +
+    //                        schedule_builder_modal cleanup pass)
+    const baseline = 118;
     expect(
       count,
       lessThanOrEqualTo(baseline),

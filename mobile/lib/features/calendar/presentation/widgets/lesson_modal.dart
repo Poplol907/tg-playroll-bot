@@ -7,9 +7,11 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
@@ -38,7 +40,7 @@ class LessonModal extends ConsumerStatefulWidget {
       backgroundColor: Colors.transparent,
       useSafeArea: true,
       enableDrag: false,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
+      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
       builder: (_) => LessonModal(lesson: lesson),
     );
   }
@@ -187,7 +189,7 @@ class _LessonModalState extends ConsumerState<LessonModal>
               onSurfaceVariant: NebulaColors.dimText,
               outline: NebulaColors.surfaceBorder,
               secondaryContainer:
-                  NebulaColors.stellarBlue.withValues(alpha: 0.2),
+                  NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.border),
               onSecondaryContainer: NebulaColors.stellarBlue,
             ),
             dialogTheme: const DialogThemeData(
@@ -328,21 +330,19 @@ class _LessonModalState extends ConsumerState<LessonModal>
                                   horizontal: 8, vertical: 5),
                               decoration: BoxDecoration(
                                 color: NebulaColors.nebulaPurple
-                                    .withValues(alpha: 0.15),
+                                    .withValues(alpha: NebulaAlpha.subtle),
                                 borderRadius: BorderRadius.circular(
                                     NebulaTokens.radiusSM),
                                 border: Border.all(
                                     color: NebulaColors.nebulaPurple
-                                        .withValues(alpha: 0.4)),
+                                        .withValues(alpha: NebulaAlpha.medium)),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'ОТРАБОТКА',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: NebulaColors.nebulaPurple,
-                                  letterSpacing: 0.8,
-                                ),
+                                style: NebulaTypography.of(context)
+                                    .overline
+                                    .copyWith(
+                                        color: NebulaColors.nebulaPurple),
                               ),
                             ),
                           ],
@@ -350,31 +350,28 @@ class _LessonModalState extends ConsumerState<LessonModal>
                           Expanded(
                             child: Text(
                               lesson.studentName ?? 'Ученик',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: tokens.primaryText,
-                                letterSpacing: -0.5,
-                              ),
+                              style: NebulaTypography.of(context)
+                                  .titleL
+                                  .copyWith(
+                                      color: tokens.primaryText,
+                                      letterSpacing: -0.5),
                             ),
                           ),
                         ]),
                         const SizedBox(height: 8),
                         Text(
                           '$dateStr${lesson.scheduledTime != null ? ' · ${lesson.scheduledTime}' : ''}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: tokens.mutedText,
-                          ),
+                          style: NebulaTypography.of(context)
+                              .bodyS
+                              .copyWith(color: tokens.mutedText),
                         ),
                         if (lesson.instrumentName != null) ...[
                           const SizedBox(height: 4),
                           Text(
                             lesson.instrumentName!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: NebulaColors.nebulaPurple,
-                            ),
+                            style: NebulaTypography.of(context)
+                                .bodyM
+                                .copyWith(color: NebulaColors.nebulaPurple),
                           ),
                         ],
 
@@ -397,10 +394,9 @@ class _LessonModalState extends ConsumerState<LessonModal>
                             borderRadius: NebulaTokens.radiusSM,
                             child: Text(
                               lesson.notes!,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: tokens.secondaryText,
-                              ),
+                              style: NebulaTypography.of(context)
+                                  .bodyM
+                                  .copyWith(color: tokens.secondaryText),
                             ),
                           ),
                         ],
@@ -522,12 +518,14 @@ class _MakeupChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: NebulaAlpha.mist),
         borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
+        border: Border.all(color: color.withValues(alpha: NebulaAlpha.accent)),
       ),
       child: Row(
         children: [
@@ -538,22 +536,14 @@ class _MakeupChip extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
+                style: type.bodyS.copyWith(
+                    color: color, fontWeight: FontWeight.w600),
               ),
               if (subtitle != null)
                 Text(
                   subtitle!,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context)
-                            .extension<CosmoThemeTokens>()
-                            ?.mutedText ??
-                        NebulaColors.dimText,
-                  ),
+                  style: type.labelS.copyWith(
+                      color: tokens?.mutedText ?? NebulaColors.dimText),
                 ),
             ],
           ),
@@ -582,7 +572,7 @@ class _SheetHandle extends StatelessWidget {
               color:
                   (Theme.of(context).extension<CosmoThemeTokens>()?.mutedText ??
                           NebulaColors.dimText)
-                      .withValues(alpha: 0.4),
+                      .withValues(alpha: NebulaAlpha.medium),
               borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
             ),
           ),
@@ -617,17 +607,17 @@ class _StatusBadge extends StatelessWidget {
       label = labels[status] ?? status;
     }
 
+    final type = NebulaTypography.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: NebulaAlpha.subtle),
         borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(color: color.withValues(alpha: NebulaAlpha.medium)),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
+        style: type.labelS.copyWith(
           color: color,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.4,
@@ -764,24 +754,25 @@ class _LessonModalDesktopState extends ConsumerState<_LessonModalDesktop> {
           const SizedBox(height: 12),
           Text(
             lesson.studentName ?? 'Ученик',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: tokens.primaryText,
-              letterSpacing: -0.5,
-            ),
+            style: NebulaTypography.of(context).titleL.copyWith(
+                  color: tokens.primaryText,
+                  letterSpacing: -0.5,
+                ),
           ),
           const SizedBox(height: 4),
           Text(
             '$dateStr${lesson.scheduledTime != null ? ' · ${lesson.scheduledTime}' : ''}',
-            style: TextStyle(fontSize: 13, color: tokens.mutedText),
+            style: NebulaTypography.of(context)
+                .bodyS
+                .copyWith(color: tokens.mutedText),
           ),
           if (lesson.instrumentName != null) ...[
             const SizedBox(height: 4),
             Text(
               lesson.instrumentName!,
-              style: const TextStyle(
-                  fontSize: 14, color: NebulaColors.nebulaPurple),
+              style: NebulaTypography.of(context)
+                  .bodyM
+                  .copyWith(color: NebulaColors.nebulaPurple),
             ),
           ],
 
@@ -801,7 +792,9 @@ class _LessonModalDesktopState extends ConsumerState<_LessonModalDesktop> {
               padding: const EdgeInsets.all(14),
               borderRadius: NebulaTokens.radiusSM,
               child: Text(lesson.notes!,
-                  style: TextStyle(fontSize: 14, color: tokens.secondaryText)),
+                  style: NebulaTypography.of(context)
+                      .bodyM
+                      .copyWith(color: tokens.secondaryText)),
             ),
           ],
 

@@ -120,22 +120,22 @@ class _Body extends StatelessWidget {
             _StatTile(
                 label: 'Проведено',
                 value: '$attended',
-                color: NebulaColors.successMint),
+                intent: SemanticIntent.success),
             const SizedBox(width: 8),
             _StatTile(
                 label: 'Пропуски',
                 value: '$missed',
-                color: NebulaColors.errorRose),
+                intent: SemanticIntent.danger),
             const SizedBox(width: 8),
             _StatTile(
                 label: 'Отменено',
                 value: '$cancelled',
-                color: NebulaColors.warningAmber),
+                intent: SemanticIntent.warning),
             const SizedBox(width: 8),
             _StatTile(
                 label: 'Впереди',
                 value: '$scheduled',
-                color: NebulaColors.stellarBlue),
+                intent: SemanticIntent.primary),
           ]),
           const SizedBox(height: 22),
 
