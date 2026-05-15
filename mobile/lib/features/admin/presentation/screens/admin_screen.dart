@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/widgets/app_error_card.dart';
+import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -216,17 +218,17 @@ class _StudioStatsCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _StatItem(
+                  child: MetricStat(
                     label: 'Заработок',
                     value: _formatMoney(s.totalAmount),
-                    color: NebulaColors.successMint,
+                    intent: SemanticIntent.success,
                   ),
                 ),
                 Expanded(
-                  child: _StatItem(
+                  child: MetricStat(
                     label: 'Уроков',
                     value: '${s.totalLessonsDone}',
-                    color: NebulaColors.stellarBlue,
+                    intent: SemanticIntent.primary,
                   ),
                 ),
               ],
@@ -235,17 +237,17 @@ class _StudioStatsCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _StatItem(
+                  child: MetricStat(
                     label: 'Учеников',
                     value: '${s.activeStudents}',
-                    color: NebulaColors.nebulaPurple,
+                    intent: SemanticIntent.info,
                   ),
                 ),
                 Expanded(
-                  child: _StatItem(
+                  child: MetricStat(
                     label: 'Педагогов',
                     value: '${s.activeTeachers}',
-                    color: NebulaColors.warningAmber,
+                    intent: SemanticIntent.warning,
                   ),
                 ),
               ],
@@ -259,43 +261,6 @@ class _StudioStatsCard extends StatelessWidget {
   String _formatMoney(int amount) {
     final formatter = NumberFormat.decimalPattern('ru');
     return '${formatter.format(amount)} ₽';
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: NebulaColors.dimText,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
-    );
   }
 }
 
