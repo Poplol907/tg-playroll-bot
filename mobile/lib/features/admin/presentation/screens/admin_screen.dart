@@ -8,6 +8,7 @@ import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
@@ -51,6 +52,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     final statsAsync = ref.watch(studioStatsProvider);
     final usersAsync = ref.watch(orgUsersProvider);
     final canPop = Navigator.of(context).canPop();
+    final type = NebulaTypography.of(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -80,24 +82,19 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                     ),
                     const SizedBox(width: 14),
                   ],
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Студия',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: NebulaColors.softWhite,
-                          ),
+                          style: type.displayM.copyWith(
+                              color: NebulaColors.softWhite),
                         ),
                         Text(
                           'Обзор и педагоги',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: NebulaColors.dimText,
-                          ),
+                          style: type.labelM
+                              .copyWith(color: NebulaColors.dimText),
                         ),
                       ],
                     ),
@@ -174,6 +171,7 @@ class _StudioStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final type = NebulaTypography.of(context);
     return statsAsync.when(
       loading: () => const NebulaSurface(
         padding: EdgeInsets.symmetric(vertical: 28),
@@ -191,8 +189,7 @@ class _StudioStatsCard extends StatelessWidget {
             Expanded(
               child: Text(
                 parseApiError(e, fallback: 'Не удалось загрузить статистику'),
-                style: const TextStyle(
-                    fontSize: 12, color: NebulaColors.mistWhite),
+                style: type.labelM.copyWith(color: NebulaColors.mistWhite),
               ),
             ),
           ],
@@ -205,14 +202,9 @@ class _StudioStatsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'СТАТИСТИКА СТУДИИ',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: NebulaColors.ghostText,
-                letterSpacing: 0.8,
-              ),
+              style: type.overline.copyWith(color: NebulaColors.ghostText),
             ),
             const SizedBox(height: 12),
             Row(
@@ -473,6 +465,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
     final s = stats;
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     final modalSurface = NebulaSurfaceProfile.modal.resolve(context);
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -516,18 +509,12 @@ class _TeacherProfileDialog extends ConsumerWidget {
                     children: [
                       Text(
                         user.displayName,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: tokens.primaryText,
-                        ),
+                        style: type.titleL.copyWith(color: tokens.primaryText),
                       ),
                       Text(
                         '@${user.login}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: tokens.secondaryText,
-                        ),
+                        style:
+                            type.labelM.copyWith(color: tokens.secondaryText),
                       ),
                     ],
                   ),
@@ -542,14 +529,9 @@ class _TeacherProfileDialog extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ── Stats grid ──
-            const Text(
+            Text(
               'СТАТИСТИКА МЕСЯЦА',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: NebulaColors.ghostText,
-                letterSpacing: 0.8,
-              ),
+              style: type.overline.copyWith(color: NebulaColors.ghostText),
             ),
             const SizedBox(height: 10),
             _DialogStatRow(
@@ -703,6 +685,7 @@ class _DialogStatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -712,18 +695,14 @@ class _DialogStatRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 13,
-                color: tokens.secondaryText,
-              ),
+              style: type.bodyS.copyWith(color: tokens.secondaryText),
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: valueBig ? 18 : 14,
-              fontWeight: valueBig ? FontWeight.w700 : FontWeight.w600,
+            style: (valueBig ? type.titleM : type.bodyM).copyWith(
               color: color,
+              fontWeight: valueBig ? FontWeight.w700 : FontWeight.w600,
             ),
           ),
         ],

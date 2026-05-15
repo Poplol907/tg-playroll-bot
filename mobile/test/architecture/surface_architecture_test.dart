@@ -112,7 +112,8 @@ void main() {
     // RATCHET DOWN — never up. When you migrate a file, drop this number.
     // 2026-05-16: 160 → 153 (MetricStat in admin)
     //             153 → 150 (IconCallout + ActionRow + StatusBadge migrations)
-    const baseline = 150;
+    //             150 → 146 (students NEW/EN badges, admin dialog rows)
+    const baseline = 146;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -151,7 +152,8 @@ void main() {
     // RATCHET DOWN as screens migrate to type.displayL / bodyM / etc.
     // 2026-05-16: 180 → 175 (MetricStat + Settings)
     //             175 → 169 (IconCallout + ActionRow + StatusBadge migrations)
-    const baseline = 169;
+    //             169 → 159 (students badges + admin titles & dialog rows)
+    const baseline = 159;
     expect(
       count,
       lessThanOrEqualTo(baseline),
