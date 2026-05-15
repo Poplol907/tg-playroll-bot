@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_visual_mode.dart';
 import 'cosmo_theme_tokens.dart';
+import 'nebula_alpha.dart';
 import 'nebula_colors.dart';
 import 'nebula_tokens.dart';
 
@@ -186,7 +187,8 @@ class AppTheme {
           borderSide: BorderSide(color: tokens.error),
         ),
         labelStyle: TextStyle(color: tokens.mutedText),
-        hintStyle: TextStyle(color: tokens.mutedText.withValues(alpha: 0.7)),
+        hintStyle:
+            TextStyle(color: tokens.mutedText.withValues(alpha: NebulaAlpha.high)),
         prefixIconColor: tokens.mutedText,
         suffixIconColor: tokens.mutedText,
         contentPadding:

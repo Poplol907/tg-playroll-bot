@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
+import 'nebula_alpha.dart';
 import 'nebula_colors.dart';
 
 abstract class NebulaTokens {
+  // ── Alpha tokens ────────────────────────────────────────────────────────────
+  // Re-exported here so callers that already import NebulaTokens don't need a
+  // second import for opacity values. New code can use either path.
+  static const double alphaWhisper = NebulaAlpha.whisper;
+  static const double alphaMist = NebulaAlpha.mist;
+  static const double alphaSurface = NebulaAlpha.surface;
+  static const double alphaSubtle = NebulaAlpha.subtle;
+  static const double alphaBorder = NebulaAlpha.border;
+  static const double alphaAccent = NebulaAlpha.accent;
+  static const double alphaMedium = NebulaAlpha.medium;
+  static const double alphaStrong = NebulaAlpha.strong;
+  static const double alphaHigh = NebulaAlpha.high;
+  static const double alphaSolid = NebulaAlpha.solid;
+
   // ── Radii ───────────────────────────────────────────────────────────────────
   static const double radiusXS = 8;
   static const double radiusSM = 12;
@@ -46,26 +61,22 @@ abstract class NebulaTokens {
   static const double inputSpotlightAlphaLight = 0.18;
 
   // ── Glow presets — restrained 3-layer light model ───────────────────────────
-  // Keep a white core, colored body, and wide haze, but cap blur/spread so dark
-  // mode stays expressive without turning every state into a neon bloom.
+  // Three intensities share the same structure: a small white core, a colored
+  // signal body, and a wide low-alpha haze. Values come from NebulaAlpha so
+  // global "сделать стекло плотнее/мягче" is a one-line change.
   static List<BoxShadow> glowSoft(Color color) => [
-        // Core highlight
         BoxShadow(
-          color: Colors.white.withValues(alpha: 0.34),
+          color: Colors.white.withValues(alpha: alphaAccent),
           blurRadius: 2,
-          spreadRadius: 0,
           offset: Offset.zero,
         ),
-        // Colored signal
         BoxShadow(
-          color: color.withValues(alpha: 0.42),
+          color: color.withValues(alpha: alphaMedium),
           blurRadius: 8,
-          spreadRadius: 0,
           offset: Offset.zero,
         ),
-        // Ambient falloff
         BoxShadow(
-          color: color.withValues(alpha: 0.10),
+          color: color.withValues(alpha: alphaMist),
           blurRadius: 22,
           spreadRadius: 2,
           offset: Offset.zero,
@@ -74,19 +85,17 @@ abstract class NebulaTokens {
 
   static List<BoxShadow> glowMedium(Color color) => [
         BoxShadow(
-          color: Colors.white.withValues(alpha: 0.44),
+          color: Colors.white.withValues(alpha: alphaMedium),
           blurRadius: 3,
-          spreadRadius: 0,
           offset: Offset.zero,
         ),
         BoxShadow(
-          color: color.withValues(alpha: 0.52),
+          color: color.withValues(alpha: alphaStrong),
           blurRadius: 11,
-          spreadRadius: 0,
           offset: Offset.zero,
         ),
         BoxShadow(
-          color: color.withValues(alpha: 0.14),
+          color: color.withValues(alpha: alphaSurface),
           blurRadius: 31,
           spreadRadius: 5,
           offset: Offset.zero,
@@ -95,19 +104,19 @@ abstract class NebulaTokens {
 
   static List<BoxShadow> glowFocus(Color color) => [
         BoxShadow(
-          color: Colors.white.withValues(alpha: 0.54),
+          color: Colors.white.withValues(alpha: alphaStrong),
           blurRadius: 4,
           spreadRadius: 1,
           offset: Offset.zero,
         ),
         BoxShadow(
-          color: color.withValues(alpha: 0.62),
+          color: color.withValues(alpha: alphaStrong),
           blurRadius: 14,
           spreadRadius: 2,
           offset: Offset.zero,
         ),
         BoxShadow(
-          color: color.withValues(alpha: 0.18),
+          color: color.withValues(alpha: alphaSubtle),
           blurRadius: 40,
           spreadRadius: 8,
           offset: Offset.zero,
@@ -125,12 +134,12 @@ abstract class NebulaTokens {
           {double borderRadius = radiusMD}) =>
       BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: accent.withValues(alpha: 0.45), width: 1),
+        border:
+            Border.all(color: accent.withValues(alpha: alphaMedium), width: 1),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.25),
+            color: accent.withValues(alpha: alphaBorder),
             blurRadius: 12,
-            spreadRadius: 0,
             offset: Offset.zero,
           ),
         ],

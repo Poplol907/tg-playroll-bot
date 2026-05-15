@@ -1,5 +1,6 @@
 import 'package:cosmo_studio/core/theme/app_theme.dart';
 import 'package:cosmo_studio/core/theme/cosmo_theme_tokens.dart';
+import 'package:cosmo_studio/core/theme/nebula_alpha.dart';
 import 'package:cosmo_studio/shared/widgets/glow_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,7 +95,8 @@ void main() {
 
     expect(
       decoration.color,
-      CosmoThemeTokens.lightLite.denseSurface.withValues(alpha: 0.96),
+      CosmoThemeTokens.lightLite.denseSurface
+          .withValues(alpha: NebulaAlpha.solid),
     );
     expect(border.top.color, CosmoThemeTokens.lightLite.surfaceBorder);
   });
