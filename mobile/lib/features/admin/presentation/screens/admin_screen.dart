@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
@@ -16,6 +17,7 @@ import '../../../../shared/widgets/space_page_transition.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
+import '../providers/view_as_teacher_provider.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
 
@@ -664,7 +666,29 @@ class _TeacherProfileDialog extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // ── Actions ──
+            // ── View as teacher (главное действие) ──
+            SizedBox(
+              width: double.infinity,
+              child: NebulaTextButton(
+                label: 'Открыть как педагог',
+                icon: Icons.visibility_outlined,
+                onPressed: () {
+                  Navigator.pop(context);
+                  ref.read(viewAsTeacherProvider.notifier).state =
+                      ViewAsTeacher(
+                    id: user.id,
+                    displayName: user.displayName,
+                  );
+                  // Сбрасываем кэши: пользователь сменился — данные стали другими.
+                  ref.invalidate(studioStatsProvider);
+                  context.go('/calendar');
+                },
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ── Secondary actions ──
             Row(
               children: [
                 Expanded(

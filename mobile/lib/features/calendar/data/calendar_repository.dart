@@ -10,9 +10,11 @@ class CalendarRepository {
 
   Future<List<LessonModel>> getLessons({
     required String monthYear, // 'YYYY-MM'
+    int? teacherId, // опц. — admin view-as
   }) async {
     final response = await _dio.get('/lessons', queryParameters: {
       'month': monthYear,
+      if (teacherId != null) 'teacher_id': teacherId,
     });
     final data = response.data as List<dynamic>;
     return data

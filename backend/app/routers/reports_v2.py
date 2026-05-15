@@ -47,25 +47,45 @@ async def _load_lessons(
 @router.get("/v2/salary", response_model=SalaryV2Out)
 async def salary_report_v2(
     month_year: str = Query(..., description="YYYY-MM, например 2026-04"),
+    teacher_id: int | None = Query(
+        None,
+        description="Опционально: смотреть зарплату конкретного педагога (только админ)",
+    ),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Зарплата текущего педагога за месяц с геймификацией:
+    Зарплата педагога за месяц с геймификацией:
     - goal_amount  = потенциал (все купленные уроки × ставки)
     - earned       = проведённые × ставки (подтверждено)
     - pending      = пропущено учеником × ставки (будет выплачено в конце месяца)
     - debt_lessons = отменено педагогом без отработки
+
+    По умолчанию возвращает зарплату текущего пользователя.
+    Админ может передать ?teacher_id=X — увидит зарплату того педагога (view-as).
     """
     require_admin_or_teacher(current_user)
 
-    teacher_id = current_user.id
+    # Только админ может смотреть зарплату другого педагога.
+    # Педагог всегда видит только свою.
+    if teacher_id is not None and teacher_id != current_user.id:
+        if current_user.role != "ADMIN":
+            raise HTTPException(
+                status_code=403,
+                detail="Только админ может просматривать зарплату другого педагога",
+            )
+        effective_teacher_id = teacher_id
+    else:
+        effective_teacher_id = current_user.id
+
     mr = parse_month(month_year)
     date_from, date_to, date_mid = mr.start, mr.end, mr.midpoint
 
-    teacher = await session.get(User, teacher_id)
-    if teacher is None:
+    teacher = await session.get(User, effective_teacher_id)
+    if teacher is None or teacher.org_id != current_user.org_id:
         raise HTTPException(status_code=404, detail="teacher not found")
+    # Переопределяем для остального кода функции
+    teacher_id = effective_teacher_id
 
     # ── 0. Карта is_foreign + резолвер ставок (одним запросом каждое) ────
     students_result = await session.execute(
