@@ -5,6 +5,7 @@ import '../../../../core/network/server_config.dart';
 import '../../../../core/theme/app_visual_mode.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/nebula_input.dart';
@@ -78,6 +79,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final current = ref.watch(serverUrlProvider);
     final mode = ref.watch(appVisualModeProvider);
     final user = ref.watch(currentUserProvider);
+    final type = NebulaTypography.of(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -94,21 +96,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Title ────────────────────────────────────────────────────
-              const Text(
+              Text(
                 'Настройки',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: NebulaColors.softWhite,
-                ),
+                style: type.displayM.copyWith(color: NebulaColors.softWhite),
               ),
               const SizedBox(height: 4),
               Text(
                 user != null ? '@${user.login}' : '',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: NebulaColors.dimText,
-                ),
+                style: type.labelM.copyWith(color: NebulaColors.dimText),
               ),
               const SizedBox(height: 24),
 
@@ -324,16 +319,12 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final type = NebulaTypography.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         label,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: NebulaColors.ghostText,
-          letterSpacing: 0.8,
-        ),
+        style: type.overline.copyWith(color: NebulaColors.ghostText),
       ),
     );
   }

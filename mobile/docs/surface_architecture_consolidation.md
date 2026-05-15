@@ -6,7 +6,8 @@ without a separate decision.
 
 ## Canonical API
 
-- `CosmoThemeTokens` owns semantic theme colors for light and dark modes.
+- `CosmoThemeTokens` owns semantic theme colors for light and dark modes
+  (background / surface / text / accent / success / warning / error).
 - `NebulaAlpha` owns every opacity value used by the design system. **All**
   glass plate transparency, border, glow and overlay values come from this
   single file. Feature code MUST use `NebulaAlpha.surface` etc., not raw
@@ -14,6 +15,10 @@ without a separate decision.
 - `NebulaTokens` owns spacing, radii, blur limits, motion, and glow constants.
   Alpha constants are re-exported as `NebulaTokens.alphaSurface` etc. for
   call-site convenience.
+- `NebulaTypography` owns the text-style scale (displayL/M, titleL/M/S,
+  bodyL/M/S, labelM/S, overline, mono) **and** the desktop variant. Feature
+  code reads them through `NebulaTypography.of(context).<token>`. To tune
+  desktop sizes, edit `NebulaTypography.desktop` — widgets do not change.
 - `NebulaSurfaceProfile.resolve(context, accent:)` turns theme tokens into a
   concrete surface recipe: fill, border, radius, padding, shadow, sheen, and
   blur policy.

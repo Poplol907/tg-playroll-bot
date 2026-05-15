@@ -2,16 +2,22 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../platform/app_platform.dart';
 import 'app_visual_mode.dart';
 import 'cosmo_theme_tokens.dart';
 import 'nebula_alpha.dart';
 import 'nebula_colors.dart';
 import 'nebula_tokens.dart';
+import 'nebula_typography.dart';
 
 class AppTheme {
-  static const themeExtensions = <ThemeExtension<dynamic>>[
-    CosmoThemeTokens.darkInternals,
-  ];
+  /// Platform-aware list of theme extensions.
+  /// Adding a new extension (component config, layout tokens, …) is the
+  /// only change needed here — no widget knows about this list.
+  static List<ThemeExtension<dynamic>> get themeExtensions => [
+        CosmoThemeTokens.darkInternals,
+        AppPlatform.isDesktop ? NebulaTypography.desktop : NebulaTypography.mobile,
+      ];
 
   static ThemeData get dark => darkInternals;
 
@@ -154,7 +160,12 @@ class AppTheme {
         bodyColor: tokens.primaryText,
         displayColor: tokens.primaryText,
       ),
-      extensions: [tokens],
+      extensions: [
+        tokens,
+        AppPlatform.isDesktop
+            ? NebulaTypography.desktop
+            : NebulaTypography.mobile,
+      ],
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -118,4 +118,28 @@ void main() {
           'lib/core/theme/nebula_alpha.dart, then update the baseline.',
     );
   });
+
+  // Same ratchet for `fontSize: 12`-style magic numbers. Replace with a
+  // `NebulaTypography.of(context).bodyM` (or copyWith) — never invent sizes.
+  test('feature/shared magic fontSize usage stays within budget', () {
+    final pattern = RegExp(r'fontSize: [0-9]+');
+    int count = 0;
+    for (final file in dartFiles()) {
+      if (!file.path.startsWith('lib/features/') &&
+          !file.path.startsWith('lib/shared/widgets/')) {
+        continue;
+      }
+      count += pattern.allMatches(file.readAsStringSync()).length;
+    }
+    // BASELINE captured 2026-05-16 when NebulaTypography was introduced.
+    // RATCHET DOWN as screens migrate to type.displayL / bodyM / etc.
+    const baseline = 180;
+    expect(
+      count,
+      lessThanOrEqualTo(baseline),
+      reason: 'You added new hardcoded fontSize literals. Use '
+          'NebulaTypography.of(context).<token>.copyWith(...) instead, '
+          'then ratchet the baseline down.',
+    );
+  });
 }
