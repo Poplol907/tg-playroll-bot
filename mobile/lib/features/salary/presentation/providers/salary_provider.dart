@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 
 class SalaryData {
@@ -80,10 +81,14 @@ class RateEntry {
 
 final salaryProvider = FutureProvider<SalaryData>((ref) async {
   final monthYear = ref.watch(globalMonthYearProvider);
+  final viewAs = ref.watch(viewAsTeacherProvider);
   final dio = ref.watch(dioProvider);
   final response = await dio.get(
     '/reports/v2/salary',
-    queryParameters: {'month_year': monthYear},
+    queryParameters: {
+      'month_year': monthYear,
+      if (viewAs != null) 'teacher_id': viewAs.id,
+    },
   );
   return SalaryData.fromJson(response.data as Map<String, dynamic>);
 });

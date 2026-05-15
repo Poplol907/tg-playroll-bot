@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../features/admin/presentation/screens/admin_screen.dart';
+import '../../features/admin/presentation/widgets/view_as_banner.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/students/presentation/screens/students_screen.dart';
@@ -40,15 +42,18 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  // Маршруты в порядке вкладок для роли.
-  // Админ: Студия + Настройки.
-  // Педагог: Календарь + Ученики + Зарплата + Настройки.
-  List<String> _routesForRole(bool isAdmin) => isAdmin
-      ? ['/admin', '/settings']
-      : ['/calendar', '/students', '/salary', '/settings'];
+  // Маршруты в порядке вкладок:
+  // - Педагог: Календарь + Ученики + Зарплата + Настройки.
+  // - Админ в обычном режиме: Студия + Настройки.
+  // - Админ в view-as: те же вкладки что у педагога (он смотрит данные педагога).
+  List<String> _routesForRole({required bool isAdmin, required bool viewingAs}) {
+    if (isAdmin && !viewingAs) return ['/admin', '/settings'];
+    return ['/calendar', '/students', '/salary', '/settings'];
+  }
 
-  void _onTabTap(int index, bool isAdmin) {
-    final routes = _routesForRole(isAdmin);
+  void _onTabTap(int index,
+      {required bool isAdmin, required bool viewingAs}) {
+    final routes = _routesForRole(isAdmin: isAdmin, viewingAs: viewingAs);
     if (index < routes.length) context.go(routes[index]);
   }
 
@@ -124,12 +129,13 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
-    // У всех — основные вкладки + "Настройки" в конце.
-    // Кнопки шестерёнки и темы убраны из бара — теперь они на /settings.
-    final navItems = isAdmin
+    final viewingAs = ref.watch(viewAsTeacherProvider) != null;
+    // В режиме view-as админ видит вкладки педагога.
+    final showAdminTabs = isAdmin && !viewingAs;
+    final navItems = showAdminTabs
         ? [_adminMenuItem, _settingsMenuItem]
         : [..._teacherMenuItems, _settingsMenuItem];
-    final sidebarItems = isAdmin
+    final sidebarItems = showAdminTabs
         ? [_adminSidebarItem, _settingsSidebarItem]
         : [..._teacherSidebarItems, _settingsSidebarItem];
 
@@ -137,8 +143,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       child: AppBackgroundHost(
         darkBackground: AppDarkBackground.asciiWater,
         child: AppPlatform.isDesktop
-            ? _buildDesktopLayout(monthBar, sidebarItems, isAdmin)
-            : _buildMobileLayout(monthBar, navItems, isAdmin),
+            ? _buildDesktopLayout(monthBar, sidebarItems, isAdmin, viewingAs)
+            : _buildMobileLayout(monthBar, navItems, isAdmin, viewingAs),
       ),
     );
   }
@@ -148,6 +154,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     Widget monthBar,
     List<DesktopSidebarItem> items,
     bool isAdmin,
+    bool viewingAs,
   ) {
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -155,13 +162,21 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: [
           DesktopSidebar(
             currentIndex: widget.currentIndex,
-            onTap: (i) => _onTabTap(i, isAdmin),
+            onTap: (i) =>
+                _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
             items: items,
           ),
           Expanded(
-            child: DesktopContentFrame(
-              header: monthBar,
-              child: widget.child,
+            child: Column(
+              children: [
+                const ViewAsBanner(),
+                Expanded(
+                  child: DesktopContentFrame(
+                    header: monthBar,
+                    child: widget.child,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -174,18 +189,21 @@ class _AppShellState extends ConsumerState<AppShell> {
     Widget monthBar,
     List<GlowMenuItem> items,
     bool isAdmin,
+    bool viewingAs,
   ) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
+          const ViewAsBanner(),
           monthBar,
           Expanded(child: widget.child),
         ],
       ),
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
-        onTap: (i) => _onTabTap(i, isAdmin),
+        onTap: (i) =>
+            _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
         items: items,
       ),
     );
@@ -372,6 +390,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.status == AuthStatus.loading;
       final onLogin = state.matchedLocation == '/login';
       final isAdmin = authState.user?.isAdmin ?? false;
+      final viewingAs = ref.read(viewAsTeacherProvider) != null;
 
       if (isInit || isLoading) return null;
       if (!isAuth && !onLogin) return '/login';
@@ -381,9 +400,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isAuth && !isAdmin && state.matchedLocation.startsWith('/admin')) {
         return '/calendar';
       }
-      // Админ не может зайти в /calendar, /students, /salary — только /admin
+      // Админ в обычном режиме не может зайти в /calendar, /students, /salary —
+      // только когда в режиме view-as педагога. Тогда — пропускаем.
       if (isAuth &&
           isAdmin &&
+          !viewingAs &&
           (state.matchedLocation.startsWith('/calendar') ||
               state.matchedLocation.startsWith('/students') ||
               state.matchedLocation.startsWith('/salary'))) {
@@ -403,16 +424,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) {
           final loc = state.matchedLocation;
           final isAdmin = authState.user?.isAdmin ?? false;
-          // Индекс вкладки зависит от роли и порядка _routesForRole.
-          final index = isAdmin
-              ? (loc.startsWith('/settings') ? 1 : 0)
-              : loc.startsWith('/students')
-                  ? 1
-                  : loc.startsWith('/salary')
-                      ? 2
-                      : loc.startsWith('/settings')
-                          ? 3
-                          : 0;
+          final viewingAs = ref.watch(viewAsTeacherProvider) != null;
+          // Когда админ в обычном режиме — у него только {Студия, Настройки}.
+          // В view-as — те же вкладки что у педагога.
+          final showAdminTabs = isAdmin && !viewingAs;
+          final int index;
+          if (showAdminTabs) {
+            index = loc.startsWith('/settings') ? 1 : 0;
+          } else {
+            index = loc.startsWith('/students')
+                ? 1
+                : loc.startsWith('/salary')
+                    ? 2
+                    : loc.startsWith('/settings')
+                        ? 3
+                        : 0;
+          }
           return AppShell(currentIndex: index, child: child);
         },
         routes: [

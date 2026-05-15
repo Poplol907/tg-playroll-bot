@@ -10,6 +10,7 @@ import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/utils/error_parser.dart';
+import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../providers/salary_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
@@ -36,6 +37,9 @@ class SalaryScreen extends ConsumerWidget {
     final salaryAsync = ref.watch(salaryProvider);
     final monthYear = ref.watch(globalMonthYearProvider);
     final user = ref.watch(currentUserProvider);
+    final viewAs = ref.watch(viewAsTeacherProvider);
+    // В режиме view-as заголовок показывает имя педагога, чьи данные смотрим.
+    final headerName = viewAs?.displayName ?? user?.displayName ?? '';
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
 
@@ -65,7 +69,7 @@ class SalaryScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                user?.displayName ?? '',
+                headerName,
                 style: TextStyle(
                   fontSize: 14,
                   color: tokens.mutedText,

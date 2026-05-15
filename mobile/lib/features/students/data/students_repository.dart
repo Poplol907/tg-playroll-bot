@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../shared/models/student.dart';
 
 // ── Teacher simple model (for picker) ────────────────────────────────────────
@@ -18,8 +19,12 @@ class StudentsRepository {
 
   StudentsRepository(this._dio);
 
-  Future<List<StudentModel>> getStudents() async {
-    final response = await _dio.get('/students');
+  /// [teacherId] — если задан, возвращает учеников именно этого педагога.
+  /// Используется админом в режиме view-as.
+  Future<List<StudentModel>> getStudents({int? teacherId}) async {
+    final path =
+        teacherId != null ? '/students/teacher/$teacherId' : '/students';
+    final response = await _dio.get(path);
     final data = response.data as List<dynamic>;
     return data
         .map((e) => StudentModel.fromJson(e as Map<String, dynamic>))
@@ -65,7 +70,11 @@ final studentsRepositoryProvider = Provider<StudentsRepository>((ref) {
 });
 
 final studentsProvider = FutureProvider<List<StudentModel>>((ref) async {
-  return ref.watch(studentsRepositoryProvider).getStudents();
+  // В режиме view-as админ видит учеников выбранного педагога.
+  final viewAs = ref.watch(viewAsTeacherProvider);
+  return ref
+      .watch(studentsRepositoryProvider)
+      .getStudents(teacherId: viewAs?.id);
 });
 
 final teachersPickerProvider = FutureProvider<List<TeacherPickerItem>>((ref) async {

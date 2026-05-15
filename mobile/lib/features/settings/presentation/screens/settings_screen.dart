@@ -5,6 +5,7 @@ import '../../../../core/network/server_config.dart';
 import '../../../../core/theme/app_visual_mode.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -67,6 +68,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _logout() async {
     HapticFeedback.lightImpact();
+    // Сбрасываем view-as, чтобы следующий пользователь не наследовал контекст.
+    ref.read(viewAsTeacherProvider.notifier).state = null;
     await ref.read(authProvider.notifier).logout();
   }
 
