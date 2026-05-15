@@ -110,13 +110,28 @@ void main() {
     }
     // BASELINE captured 2026-05-16 when NebulaAlpha was introduced.
     // RATCHET DOWN — never up. When you migrate a file, drop this number.
-    const baseline = 160;
+    // 2026-05-16: 160 → 153 after MetricStat migration in admin screen.
+    const baseline = 153;
     expect(
       count,
       lessThanOrEqualTo(baseline),
       reason: 'You added new hardcoded alpha values. Use NebulaAlpha.* from '
           'lib/core/theme/nebula_alpha.dart, then update the baseline.',
     );
+  });
+
+  // Core single-source-of-truth files must remain registered.
+  // Removing one would silently break the architecture, so we assert they
+  // exist and forbid widgets from reaching past them.
+  test('core theme tokens are present as expected', () {
+    expect(File('lib/core/theme/nebula_alpha.dart').existsSync(), isTrue);
+    expect(File('lib/core/theme/nebula_typography.dart').existsSync(), isTrue);
+    expect(File('lib/core/theme/nebula_layout.dart').existsSync(), isTrue);
+    expect(File('lib/core/theme/nebula_semantic.dart').existsSync(), isTrue);
+    expect(File('lib/core/theme/nebula_component_styles.dart').existsSync(),
+        isTrue);
+    expect(File('lib/core/theme/nebula_surface_profile.dart').existsSync(),
+        isTrue);
   });
 
   // Same ratchet for `fontSize: 12`-style magic numbers. Replace with a
@@ -133,7 +148,8 @@ void main() {
     }
     // BASELINE captured 2026-05-16 when NebulaTypography was introduced.
     // RATCHET DOWN as screens migrate to type.displayL / bodyM / etc.
-    const baseline = 180;
+    // 2026-05-16: 180 → 175 after MetricStat + Settings migration.
+    const baseline = 175;
     expect(
       count,
       lessThanOrEqualTo(baseline),

@@ -6,22 +6,32 @@ without a separate decision.
 
 ## Canonical API
 
-- `CosmoThemeTokens` owns semantic theme colors for light and dark modes
-  (background / surface / text / accent / success / warning / error).
-- `NebulaAlpha` owns every opacity value used by the design system. **All**
-  glass plate transparency, border, glow and overlay values come from this
-  single file. Feature code MUST use `NebulaAlpha.surface` etc., not raw
-  numbers like `0.12`.
-- `NebulaTokens` owns spacing, radii, blur limits, motion, and glow constants.
-  Alpha constants are re-exported as `NebulaTokens.alphaSurface` etc. for
-  call-site convenience.
-- `NebulaTypography` owns the text-style scale (displayL/M, titleL/M/S,
-  bodyL/M/S, labelM/S, overline, mono) **and** the desktop variant. Feature
-  code reads them through `NebulaTypography.of(context).<token>`. To tune
-  desktop sizes, edit `NebulaTypography.desktop` — widgets do not change.
-- `NebulaSurfaceProfile.resolve(context, accent:)` turns theme tokens into a
-  concrete surface recipe: fill, border, radius, padding, shadow, sheen, and
-  blur policy.
+The design system is composed of **independent single-source-of-truth
+files**, each owning one axis of variation. Adding a new platform, brand,
+or compact-mode means editing **one** file — never widget code.
+
+| File | Owns | One-line change unlocks |
+|---|---|---|
+| `cosmo_theme_tokens.dart` | semantic colors per theme (background / surface / text / accent / success / warning / error) | re-brand light or dark mode |
+| `nebula_alpha.dart` | opacity values (whisper → solid, 10 tiers) | "сделать стекло плотнее во всём приложении" |
+| `nebula_tokens.dart` | spacing, radii, blur limits, motion, glow presets | breathing room and curvature |
+| `nebula_typography.dart` | text-style scale (displayL/M, titleL/M/S, bodyL/M/S, labelM/S, overline, mono) **and** mobile/desktop variants | larger headings on desktop, compact mode |
+| `nebula_layout.dart` | shape-and-size policy per platform (sidebar width, content max width, page gutter, prefers-dialogs flag) | add a tablet variant in 10 lines |
+| `nebula_semantic.dart` | semantic role catalogue (`primary` / `info` / `success` / `warning` / `danger` / `neutral`) built from theme tokens + `NebulaAlpha` | shift the meaning of an intent (e.g. "danger" gets a softer pink) |
+| `nebula_component_styles.dart` | per-component geometry configs (BadgeStyle, IconCalloutStyle, ErrorCardStyle, …) | compact density for the whole app |
+| `nebula_surface_profile.dart` | resolved surface recipes (card / panel / modal / input / nav / status / frostedSmall) | change the look of every card |
+
+### Primitives (dumb renderers)
+
+`lib/shared/widgets/primitives/`:
+- `StatusBadge` — chip with icon + label, picks colors from `SemanticIntent`.
+- `IconCallout` — icon-puck + title + subtitle + trailing row.
+- `MetricStat` — big number + small label, intent-coloured.
+- `ActionRow` — tappable settings/menu row with chevron.
+
+These widgets contain **no** numbers. They accept theme-derived styles and
+render layout only. Feature screens should compose them, not invent new
+ones unless a UI pattern truly repeats.
 - `NebulaSurface(profile:)` is the canonical card/panel/content primitive.
 - `MistModal` and `AdaptiveModal` are the canonical modal hosts.
 - `GlowMenuBar` and `DesktopSidebar` use `NebulaSurfaceProfile.nav` for shell

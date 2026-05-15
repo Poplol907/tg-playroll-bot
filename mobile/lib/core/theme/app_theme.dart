@@ -7,17 +7,33 @@ import 'app_visual_mode.dart';
 import 'cosmo_theme_tokens.dart';
 import 'nebula_alpha.dart';
 import 'nebula_colors.dart';
+import 'nebula_component_styles.dart';
+import 'nebula_layout.dart';
+import 'nebula_semantic.dart';
 import 'nebula_tokens.dart';
 import 'nebula_typography.dart';
 
 class AppTheme {
-  /// Platform-aware list of theme extensions.
-  /// Adding a new extension (component config, layout tokens, …) is the
-  /// only change needed here — no widget knows about this list.
-  static List<ThemeExtension<dynamic>> get themeExtensions => [
-        CosmoThemeTokens.darkInternals,
-        AppPlatform.isDesktop ? NebulaTypography.desktop : NebulaTypography.mobile,
-      ];
+  /// Build the platform-aware list of theme extensions for a given color
+  /// token set. Adding a new ThemeExtension type — register it here, all
+  /// widgets pick it up via `Theme.of(context).extension<T>()`.
+  static List<ThemeExtension<dynamic>> _extensionsFor(CosmoThemeTokens tokens) {
+    return [
+      tokens,
+      AppPlatform.isDesktop
+          ? NebulaTypography.desktop
+          : NebulaTypography.mobile,
+      AppPlatform.isDesktop ? NebulaLayout.desktop : NebulaLayout.mobile,
+      NebulaSemantic.fromTokens(tokens),
+      NebulaComponentStyles.regular,
+    ];
+  }
+
+  /// Backward compatibility — most call-sites currently use the dark
+  /// preset's extension list directly. Future code should call
+  /// `_extensionsFor(...)` when building a specific theme.
+  static List<ThemeExtension<dynamic>> get themeExtensions =>
+      _extensionsFor(CosmoThemeTokens.darkInternals);
 
   static ThemeData get dark => darkInternals;
 
@@ -160,12 +176,7 @@ class AppTheme {
         bodyColor: tokens.primaryText,
         displayColor: tokens.primaryText,
       ),
-      extensions: [
-        tokens,
-        AppPlatform.isDesktop
-            ? NebulaTypography.desktop
-            : NebulaTypography.mobile,
-      ],
+      extensions: _extensionsFor(tokens),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

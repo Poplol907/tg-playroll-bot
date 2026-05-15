@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_layout.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -21,9 +22,10 @@ class DesktopSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final surface = NebulaSurfaceProfile.nav.resolve(context);
+    final layout = NebulaLayout.of(context);
     return Container(
       key: const ValueKey('desktop-sidebar-surface'),
-      width: 72,
+      width: layout.sidebarWidth,
       decoration: BoxDecoration(
         color: surface.fill,
         gradient: surface.sheen,
