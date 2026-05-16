@@ -65,15 +65,15 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                 children: [
                   Text(
                     dateStr,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: tokens.primaryText,
-                    ),
+                    style: NebulaTypography.of(context)
+                        .titleL
+                        .copyWith(color: tokens.primaryText),
                   ),
                   Text(
                     '${_localLessons.length} ${_lessonWord(_localLessons.length)}',
-                    style: TextStyle(fontSize: 12, color: tokens.mutedText),
+                    style: NebulaTypography.of(context)
+                        .labelM
+                        .copyWith(color: tokens.mutedText),
                   ),
                 ],
               ),
@@ -152,10 +152,11 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: l.statusColor.withValues(alpha: 0.08),
+                    color: l.statusColor.withValues(alpha: NebulaAlpha.mist),
                     borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
                     border: Border.all(
-                        color: l.statusColor.withValues(alpha: 0.25)),
+                        color: l.statusColor
+                            .withValues(alpha: NebulaAlpha.border)),
                   ),
                   child: Row(
                     children: [
@@ -176,38 +177,38 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                           children: [
                             Text(
                               l.studentName ?? 'Ученик',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: tokens.primaryText,
-                              ),
+                              style: NebulaTypography.of(context)
+                                  .titleS
+                                  .copyWith(color: tokens.primaryText),
                             ),
                             if (l.isMakeup)
-                              const Text('ОТРАБОТКА',
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: NebulaColors.nebulaPurple,
-                                      letterSpacing: 0.5)),
+                              Text('ОТРАБОТКА',
+                                  style: NebulaTypography.of(context)
+                                      .overline
+                                      .copyWith(
+                                          color: NebulaColors.nebulaPurple)),
                             if (!l.isMakeup && l.makeupStatus == 'scheduled')
-                              const Text('⏳ Отработка запланирована',
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      color: NebulaColors.stellarBlue,
-                                      fontWeight: FontWeight.w500)),
+                              Text('⏳ Отработка запланирована',
+                                  style: NebulaTypography.of(context)
+                                      .overline
+                                      .copyWith(
+                                          color: NebulaColors.stellarBlue,
+                                          fontWeight: FontWeight.w500)),
                             if (!l.isMakeup && l.makeupStatus == 'done')
-                              const Text('✓ Урок отработан',
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      color: NebulaColors.successMint,
-                                      fontWeight: FontWeight.w600)),
+                              Text('✓ Урок отработан',
+                                  style: NebulaTypography.of(context)
+                                      .overline
+                                      .copyWith(
+                                          color: NebulaColors.successMint)),
                           ],
                         ),
                       ),
                       if (l.scheduledTime != null)
                         Text(
                           l.scheduledTime!,
-                          style: TextStyle(
-                              fontSize: 12, color: tokens.mutedText),
+                          style: NebulaTypography.of(context)
+                              .labelM
+                              .copyWith(color: tokens.mutedText),
                         ),
                     ],
                   ),
@@ -227,24 +228,25 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                 width: double.infinity,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: NebulaColors.stellarBlue.withValues(alpha: 0.08),
+                  color: NebulaColors.stellarBlue
+                      .withValues(alpha: NebulaAlpha.mist),
                   borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
                   border: Border.all(
-                      color: NebulaColors.stellarBlue.withValues(alpha: 0.3)),
+                      color: NebulaColors.stellarBlue
+                          .withValues(alpha: NebulaAlpha.accent)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_rounded,
+                    const Icon(Icons.add_rounded,
                         color: NebulaColors.stellarBlue, size: 18),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Добавить урок',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: NebulaColors.stellarBlue,
-                      ),
+                      style: NebulaTypography.of(context).bodyM.copyWith(
+                            color: NebulaColors.stellarBlue,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ],
                 ),

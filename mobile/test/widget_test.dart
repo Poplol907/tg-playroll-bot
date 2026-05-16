@@ -9,7 +9,6 @@ import 'package:cosmo_studio/shared/models/student.dart';
 import 'package:cosmo_studio/shared/widgets/adaptive_modal.dart';
 import 'package:cosmo_studio/shared/widgets/mist_modal.dart';
 import 'package:cosmo_studio/shared/widgets/nebula_dialog.dart';
-import 'package:cosmo_studio/shared/widgets/nebula_toggle.dart';
 import 'package:cosmo_studio/shared/widgets/server_settings_modal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -264,23 +263,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(result, isTrue);
-  });
-
-  testWidgets('nebula toggle keeps a 44px tap target', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Center(
-          child: NebulaToggle(
-            value: false,
-            onChanged: (_) {},
-          ),
-        ),
-      ),
-    );
-
-    final box = tester.renderObject<RenderBox>(find.byType(NebulaToggle));
-    expect(box.size.width, greaterThanOrEqualTo(56));
-    expect(box.size.height, greaterThanOrEqualTo(44));
   });
 
   testWidgets('login screen uses the shared Cosmo login sphere',

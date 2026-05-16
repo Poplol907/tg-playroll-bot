@@ -115,7 +115,8 @@ void main() {
     //             150 → 146 (students NEW/EN badges, admin dialog rows)
     //             146 → 110 (student detail components + lesson_modal +
     //                        schedule_builder_modal cleanup pass)
-    const baseline = 110;
+    //             110 →  88 (calendar day-lessons sheet/dialog + add-lesson)
+    const baseline = 88;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -157,7 +158,8 @@ void main() {
     //             169 → 159 (students badges + admin titles & dialog rows)
     //             159 → 118 (student detail components + lesson_modal +
     //                        schedule_builder_modal cleanup pass)
-    const baseline = 118;
+    //             118 →  94 (calendar day-lessons sheet/dialog + add-lesson)
+    const baseline = 94;
     expect(
       count,
       lessThanOrEqualTo(baseline),

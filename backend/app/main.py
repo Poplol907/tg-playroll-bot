@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.routers.reports import router as reports_router
 from backend.app.routers.users import router as users_router
 from backend.app.routers.dev import get_dev_router
 from backend.app.routers.admin import router as admin_router
@@ -65,7 +64,6 @@ app.include_router(subscriptions_router)
 app.include_router(lessons_router)
 app.include_router(teachers_router)
 app.include_router(rates_router)
-app.include_router(reports_router)
 app.include_router(reports_v2_router)
 app.include_router(system_router)
 app.include_router(org_router)
