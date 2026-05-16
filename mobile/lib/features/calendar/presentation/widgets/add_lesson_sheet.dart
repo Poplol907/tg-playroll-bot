@@ -68,36 +68,28 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
     final isDesktop = AppPlatform.isDesktop;
 
     // Build form content (no modal chrome — chrome added per-platform below)
+    final type = NebulaTypography.of(context);
     final formContent = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Добавить урок · $dateStr',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: NebulaColors.softWhite,
-          ),
+          style: type.titleM.copyWith(color: NebulaColors.softWhite),
         ),
         const SizedBox(height: 20),
 
         // ── Student picker ──────────────────────────────────────────────────
-        const Text(
+        Text(
           'УЧЕНИК',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: NebulaColors.ghostText,
-            letterSpacing: 0.9,
-          ),
+          style: type.overline.copyWith(color: NebulaColors.ghostText),
         ),
         const SizedBox(height: 8),
         studentsAsync.when(
           loading: () => const Center(child: OrbitLoader()),
-          error: (_, __) => const Text(
+          error: (_, __) => Text(
             'Ошибка загрузки',
-            style: TextStyle(color: NebulaColors.errorRose, fontSize: 14),
+            style: type.bodyM.copyWith(color: NebulaColors.errorRose),
           ),
           data: (students) {
             final eligible = students
@@ -106,9 +98,9 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                     (s.status == 'active' || s.status == 'ACTIVE'))
                 .toList();
             if (eligible.isEmpty) {
-              return const Text(
+              return Text(
                 'Нет активных учеников',
-                style: TextStyle(color: NebulaColors.ghostText, fontSize: 14),
+                style: type.bodyM.copyWith(color: NebulaColors.ghostText),
               );
             }
             return ConstrainedBox(
@@ -130,13 +122,15 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: selected
-                            ? NebulaColors.stellarBlue.withValues(alpha: 0.15)
+                            ? NebulaColors.stellarBlue
+                                .withValues(alpha: NebulaAlpha.subtle)
                             : NebulaColors.nebulaSurface,
                         borderRadius:
                             BorderRadius.circular(NebulaTokens.radiusSM),
                         border: Border.all(
                           color: selected
-                              ? NebulaColors.stellarBlue.withValues(alpha: 0.5)
+                              ? NebulaColors.stellarBlue
+                                  .withValues(alpha: NebulaAlpha.strong)
                               : NebulaColors.surfaceBorder,
                         ),
                       ),
@@ -150,14 +144,13 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                               color: selected
                                   ? NebulaColors.stellarBlue
                                   : NebulaColors.ghostText
-                                      .withValues(alpha: 0.4),
+                                      .withValues(alpha: NebulaAlpha.medium),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Text(
                             s.fullName,
-                            style: TextStyle(
-                              fontSize: 14,
+                            style: type.bodyM.copyWith(
                               color: selected
                                   ? NebulaColors.softWhite
                                   : NebulaColors.dimText,
@@ -177,14 +170,9 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
         const SizedBox(height: 16),
 
         // ── Time picker ─────────────────────────────────────────────────────
-        const Text(
+        Text(
           'ВРЕМЯ',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: NebulaColors.ghostText,
-            letterSpacing: 0.9,
-          ),
+          style: type.overline.copyWith(color: NebulaColors.ghostText),
         ),
         const SizedBox(height: 8),
         Container(
@@ -197,16 +185,16 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
           ),
           child: DropdownButton<String>(
             value: _selectedTime,
-            hint: const Text(
+            hint: Text(
               'Выбрать время (необязательно)',
-              style: TextStyle(color: NebulaColors.ghostText, fontSize: 14),
+              style: type.bodyM.copyWith(color: NebulaColors.ghostText),
             ),
             isExpanded: true,
             underline: const SizedBox(),
             dropdownColor: NebulaColors.depthNear,
             icon: const Icon(Icons.expand_more_rounded,
                 color: NebulaColors.dimText, size: 20),
-            style: const TextStyle(color: NebulaColors.softWhite, fontSize: 14),
+            style: type.bodyM.copyWith(color: NebulaColors.softWhite),
             items: _timeSlots
                 .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                 .toList(),
@@ -262,7 +250,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: NebulaColors.dimText.withValues(alpha: 0.5),
+                  color: NebulaColors.dimText.withValues(alpha: NebulaAlpha.strong),
                   borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
                 ),
               ),
