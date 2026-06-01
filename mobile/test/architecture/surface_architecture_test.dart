@@ -116,7 +116,10 @@ void main() {
     //             146 → 110 (student detail components + lesson_modal +
     //                        schedule_builder_modal cleanup pass)
     //             110 →  88 (calendar day-lessons sheet/dialog + add-lesson)
-    const baseline = 88;
+    //              88 →  42 (salary_components, server_settings_modal,
+    //                        nebula_dialog, students_screen, view_as_banner,
+    //                        admin+settings residuals)
+    const baseline = 42;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -159,7 +162,10 @@ void main() {
     //             159 → 118 (student detail components + lesson_modal +
     //                        schedule_builder_modal cleanup pass)
     //             118 →  94 (calendar day-lessons sheet/dialog + add-lesson)
-    const baseline = 94;
+    //              94 →  46 (salary_components, server_settings_modal,
+    //                        nebula_dialog, students_screen, view_as_banner,
+    //                        admin+settings residuals)
+    const baseline = 46;
     expect(
       count,
       lessThanOrEqualTo(baseline),
