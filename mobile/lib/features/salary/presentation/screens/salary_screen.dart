@@ -7,8 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -61,19 +63,16 @@ class SalaryScreen extends ConsumerWidget {
             children: [
               Text(
                 'Зарплата',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: tokens.primaryText,
-                ),
+                style: NebulaTypography.of(context)
+                    .displayL
+                    .copyWith(color: tokens.primaryText),
               ),
               const SizedBox(height: 4),
               Text(
                 headerName,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: tokens.mutedText,
-                ),
+                style: NebulaTypography.of(context)
+                    .bodyM
+                    .copyWith(color: tokens.mutedText),
               ),
               const SizedBox(height: 24),
               salaryAsync.when(
@@ -257,26 +256,25 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     // Amount text — glow in dark, clean ink in light
                     Text(
                       '${_fmt((d.totalCurrent * ring).round())} сум',
-                      style: TextStyle(
-                        fontSize: 38,
-                        fontWeight: FontWeight.w700,
+                      style: NebulaTypography.of(context).displayL.copyWith(
+                        fontSize: NebulaTypography.of(context).displayL.fontSize! * 1.35,
                         color: tokens.primaryText,
                         shadows: isLight
                             ? null
                             : [
                                 Shadow(
-                                  color: Colors.white
-                                      .withValues(alpha: 0.60 + breathe * 0.20),
+                                  color: Colors.white.withValues(
+                                      alpha: NebulaAlpha.strong + breathe * 0.20),
                                   blurRadius: 3,
                                 ),
                                 Shadow(
-                                  color: NebulaColors.successMint
-                                      .withValues(alpha: 0.55 + breathe * 0.20),
+                                  color: NebulaColors.successMint.withValues(
+                                      alpha: NebulaAlpha.strong + breathe * 0.20),
                                   blurRadius: 14,
                                 ),
                                 Shadow(
-                                  color: NebulaColors.successMint
-                                      .withValues(alpha: 0.18 + breathe * 0.10),
+                                  color: NebulaColors.successMint.withValues(
+                                      alpha: NebulaAlpha.subtle + breathe * 0.10),
                                   blurRadius: 32,
                                 ),
                               ],
@@ -286,8 +284,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     const SizedBox(height: 6),
                     Text(
                       'из ${_fmt(d.goalAmount)} сум',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: NebulaTypography.of(context).bodyM.copyWith(
                         color: tokens.secondaryText,
                         letterSpacing: 0.2,
                       ),
@@ -311,23 +308,21 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                                   d.goalAmount > 0
                                       ? '${((d.totalCurrent / d.goalAmount) * 100).round()}%'
                                       : '—',
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w700,
+                                  style: NebulaTypography.of(context).displayL.copyWith(
+                                    fontSize: NebulaTypography.of(context).displayL.fontSize! * 1.15,
                                     color: tokens.primaryText,
                                     shadows: isLight
                                         ? null
                                         : [
                                             Shadow(
                                               color: Colors.white.withValues(
-                                                  alpha: 0.5 + breathe * 0.2),
+                                                  alpha: NebulaAlpha.strong + breathe * 0.2),
                                               blurRadius: 4,
                                             ),
                                             Shadow(
                                               color: NebulaColors.successMint
                                                   .withValues(
-                                                      alpha:
-                                                          0.4 + breathe * 0.15),
+                                                      alpha: NebulaAlpha.medium + breathe * 0.15),
                                               blurRadius: 12,
                                             ),
                                           ],
@@ -336,8 +331,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                                 const SizedBox(height: 2),
                                 Text(
                                   'выполнено',
-                                  style: TextStyle(
-                                    fontSize: 11,
+                                  style: NebulaTypography.of(context).labelS.copyWith(
                                     color: tokens.mutedText,
                                     letterSpacing: 0.3,
                                   ),
@@ -437,16 +431,14 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(children: [
-                      Icon(Icons.account_balance_wallet_rounded,
+                    Row(children: [
+                      const Icon(Icons.account_balance_wallet_rounded,
                           color: NebulaColors.stellarBlue, size: 16),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'РАЗБИВКА ВЫПЛАТ',
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: NebulaTypography.of(context).overline.copyWith(
                           color: NebulaColors.stellarBlue,
-                          letterSpacing: 0.8,
                         ),
                       ),
                     ]),
@@ -475,8 +467,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     Center(
                       child: Text(
                         'Куплено уроков: ${d.totalSubscribed}  •  Цель: ${_fmt(d.goalAmount)} сум',
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: NebulaTypography.of(context).labelS.copyWith(
                           color: tokens.mutedText,
                         ),
                         textAlign: TextAlign.center,

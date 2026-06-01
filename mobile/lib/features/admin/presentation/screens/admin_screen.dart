@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_surface_profile.dart';
@@ -113,11 +114,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                        color: NebulaColors.stellarBlue
+                            .withValues(alpha: NebulaAlpha.surface),
                         shape: BoxShape.circle,
                         border: Border.all(
                             color: NebulaColors.stellarBlue
-                                .withValues(alpha: 0.4)),
+                                .withValues(alpha: NebulaAlpha.medium)),
                       ),
                       child: const Icon(Icons.person_add_outlined,
                           color: NebulaColors.stellarBlue, size: 18),
@@ -275,15 +277,20 @@ class _SearchField extends StatelessWidget {
       ),
       child: TextField(
         onChanged: onChanged,
-        style: const TextStyle(fontSize: 14, color: NebulaColors.softWhite),
-        decoration: const InputDecoration(
+        style: NebulaTypography.of(context)
+            .bodyM
+            .copyWith(color: NebulaColors.softWhite),
+        decoration: InputDecoration(
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
           hintText: 'Поиск по имени или логину...',
-          hintStyle: TextStyle(fontSize: 14, color: NebulaColors.ghostText),
-          prefixIcon:
-              Icon(Icons.search_rounded, color: NebulaColors.dimText, size: 18),
+          hintStyle: NebulaTypography.of(context)
+              .bodyM
+              .copyWith(color: NebulaColors.ghostText),
+          prefixIcon: const Icon(Icons.search_rounded,
+              color: NebulaColors.dimText, size: 18),
         ),
       ),
     );
@@ -435,7 +442,7 @@ class _TeacherTile extends ConsumerWidget {
     HapticFeedback.selectionClick();
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
+      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
       builder: (_) => _TeacherProfileDialog(
         user: user,
         stats: stats,
@@ -494,10 +501,12 @@ class _TeacherProfileDialog extends ConsumerWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                    color: NebulaColors.stellarBlue
+                        .withValues(alpha: NebulaAlpha.surface),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: NebulaColors.stellarBlue.withValues(alpha: 0.3)),
+                        color: NebulaColors.stellarBlue
+                            .withValues(alpha: NebulaAlpha.accent)),
                   ),
                   child: const Icon(Icons.school_outlined,
                       color: NebulaColors.stellarBlue, size: 24),

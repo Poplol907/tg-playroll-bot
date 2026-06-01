@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/mist_modal.dart';
 import '../../../../shared/widgets/stellar_button.dart';
@@ -93,17 +95,14 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
 
+    final type = NebulaTypography.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Новый ученик',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: NebulaColors.softWhite,
-          ),
+          style: type.titleL.copyWith(color: NebulaColors.softWhite),
         ),
         const SizedBox(height: 20),
 
@@ -154,12 +153,13 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: _isForeign
-                  ? NebulaColors.warningAmber.withValues(alpha: 0.08)
+                  ? NebulaColors.warningAmber.withValues(alpha: NebulaAlpha.mist)
                   : NebulaColors.nebulaSurface,
               borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
               border: Border.all(
                 color: _isForeign
-                    ? NebulaColors.warningAmber.withValues(alpha: 0.4)
+                    ? NebulaColors.warningAmber
+                        .withValues(alpha: NebulaAlpha.medium)
                     : NebulaColors.surfaceBorder,
               ),
             ),
@@ -176,8 +176,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                 Expanded(
                   child: Text(
                     'Иностранный ученик (EN тариф)',
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: type.bodyM.copyWith(
                       color: _isForeign
                           ? NebulaColors.warningAmber
                           : NebulaColors.dimText,
@@ -191,7 +190,8 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     color: _isForeign
-                        ? NebulaColors.warningAmber.withValues(alpha: 0.3)
+                        ? NebulaColors.warningAmber
+                            .withValues(alpha: NebulaAlpha.accent)
                         : NebulaColors.surfaceBorder,
                   ),
                   child: AnimatedAlign(
@@ -222,10 +222,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
           const SizedBox(height: 12),
           Text(
             _error!,
-            style: const TextStyle(
-              fontSize: 13,
-              color: NebulaColors.errorRose,
-            ),
+            style: type.bodyS.copyWith(color: NebulaColors.errorRose),
           ),
         ],
 
@@ -267,35 +264,32 @@ class _TeacherPicker extends ConsumerWidget {
         'Не удалось загрузить педагогов',
         style: TextStyle(color: NebulaColors.ghostText),
       ),
-      data: (teachers) => Container(
+      data: (teachers) {
+        final type = NebulaTypography.of(context);
+        return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: NebulaColors.nebulaSurface,
           borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
           border: Border.all(
             color: selectedId != null
-                ? NebulaColors.stellarBlue.withValues(alpha: 0.4)
+                ? NebulaColors.stellarBlue
+                    .withValues(alpha: NebulaAlpha.medium)
                 : NebulaColors.surfaceBorder,
           ),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<int>(
             value: selectedId,
-            hint: const Text(
+            hint: Text(
               'Выберите педагога',
-              style: TextStyle(
-                fontSize: 14,
-                color: NebulaColors.ghostText,
-              ),
+              style: type.bodyM.copyWith(color: NebulaColors.ghostText),
             ),
             dropdownColor: NebulaColors.spaceBlack,
             icon: const Icon(Icons.expand_more_rounded,
                 color: NebulaColors.ghostText),
             isExpanded: true,
-            style: const TextStyle(
-              fontSize: 14,
-              color: NebulaColors.softWhite,
-            ),
+            style: type.bodyM.copyWith(color: NebulaColors.softWhite),
             items: teachers
                 .map((t) => DropdownMenuItem(
                       value: t.id,
@@ -305,7 +299,8 @@ class _TeacherPicker extends ConsumerWidget {
             onChanged: onSelected,
           ),
         ),
-      ),
+      );
+      },
     );
   }
 }

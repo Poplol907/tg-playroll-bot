@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/server_config.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_typography.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
@@ -30,7 +32,7 @@ class ServerSettingsModal extends ConsumerStatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
+      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
       useSafeArea: true,
       builder: (_) => const ServerSettingsModal(),
     );
@@ -131,7 +133,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: tokens.mutedText.withValues(alpha: 0.5),
+                    color: tokens.mutedText.withValues(alpha: NebulaAlpha.strong),
                     borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
                   ),
                 ),
@@ -146,11 +148,12 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                     size: 20,
                     shadows: [
                       Shadow(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white.withValues(alpha: NebulaAlpha.strong),
                         blurRadius: 2,
                       ),
                       Shadow(
-                        color: NebulaColors.stellarBlue.withValues(alpha: 0.6),
+                        color: NebulaColors.stellarBlue
+                            .withValues(alpha: NebulaAlpha.strong),
                         blurRadius: 10,
                       ),
                     ],
@@ -158,22 +161,18 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                   const SizedBox(width: 10),
                   Text(
                     'Адрес сервера',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: tokens.primaryText,
-                    ),
+                    style: NebulaTypography.of(context)
+                        .titleL
+                        .copyWith(color: tokens.primaryText),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
                 'Текущий: $current',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: tokens.secondaryText,
-                  letterSpacing: 0.1,
-                ),
+                style: NebulaTypography.of(context)
+                    .labelS
+                    .copyWith(color: tokens.secondaryText),
               ),
               const SizedBox(height: 20),
 
@@ -206,8 +205,8 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                       size: 16,
                       shadows: [
                         Shadow(
-                          color:
-                              NebulaColors.stellarBlue.withValues(alpha: 0.6),
+                          color: NebulaColors.stellarBlue
+                              .withValues(alpha: NebulaAlpha.strong),
                           blurRadius: 8,
                         ),
                       ],
@@ -216,11 +215,9 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                     Expanded(
                       child: Text(
                         'На Mac: ipconfig getifaddr en0',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: tokens.secondaryText,
-                          letterSpacing: 0.1,
-                        ),
+                        style: NebulaTypography.of(context)
+                            .labelS
+                            .copyWith(color: tokens.secondaryText),
                       ),
                     ),
                   ],
@@ -249,12 +246,12 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                         size: 18,
                         shadows: [
                           Shadow(
-                            color: Colors.white.withValues(alpha: 0.4),
+                            color: Colors.white.withValues(alpha: NebulaAlpha.medium),
                             blurRadius: 2,
                           ),
                           Shadow(
                             color: NebulaColors.nebulaPurple
-                                .withValues(alpha: 0.7),
+                                .withValues(alpha: NebulaAlpha.high),
                             blurRadius: 10,
                           ),
                         ],
@@ -262,8 +259,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                       const SizedBox(width: 8),
                       Text(
                         'Управление пользователями',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: NebulaTypography.of(context).bodyM.copyWith(
                           fontWeight: FontWeight.w600,
                           color: tokens.primaryText,
                         ),
@@ -283,20 +279,24 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     color: _saved
-                        ? NebulaColors.successMint.withValues(alpha: 0.10)
-                        : NebulaColors.stellarBlue.withValues(alpha: 0.10),
+                        ? NebulaColors.successMint
+                            .withValues(alpha: NebulaAlpha.surface)
+                        : NebulaColors.stellarBlue
+                            .withValues(alpha: NebulaAlpha.surface),
                     borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
                     border: Border.all(
                       color: _saved
-                          ? NebulaColors.successMint.withValues(alpha: 0.40)
-                          : NebulaColors.stellarBlue.withValues(alpha: 0.35),
+                          ? NebulaColors.successMint
+                              .withValues(alpha: NebulaAlpha.medium)
+                          : NebulaColors.stellarBlue
+                              .withValues(alpha: NebulaAlpha.accent),
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: (_saved
                                 ? NebulaColors.successMint
                                 : NebulaColors.stellarBlue)
-                            .withValues(alpha: 0.15),
+                            .withValues(alpha: NebulaAlpha.subtle),
                         blurRadius: 16,
                         offset: Offset.zero,
                       ),
@@ -318,14 +318,15 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                                 size: 18,
                                 shadows: [
                                   Shadow(
-                                    color: Colors.white.withValues(alpha: 0.5),
+                                    color: Colors.white
+                                        .withValues(alpha: NebulaAlpha.strong),
                                     blurRadius: 2,
                                   ),
                                   Shadow(
                                     color: (_saved
                                             ? NebulaColors.successMint
                                             : NebulaColors.stellarBlue)
-                                        .withValues(alpha: 0.7),
+                                        .withValues(alpha: NebulaAlpha.high),
                                     blurRadius: 10,
                                   ),
                                 ],
@@ -333,13 +334,13 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                               const SizedBox(width: 8),
                               Text(
                                 _saved ? 'Сохранено!' : 'Сохранить',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: _saved
-                                      ? NebulaColors.successMint
-                                      : NebulaColors.stellarBlue,
-                                ),
+                                style: NebulaTypography.of(context)
+                                    .titleS
+                                    .copyWith(
+                                      color: _saved
+                                          ? NebulaColors.successMint
+                                          : NebulaColors.stellarBlue,
+                                    ),
                               ),
                             ],
                           ),

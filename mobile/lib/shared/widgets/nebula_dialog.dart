@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_typography.dart';
 import 'nebula_surface.dart';
 
 class NebulaDialog extends StatelessWidget {
@@ -37,7 +39,7 @@ class NebulaDialog extends StatelessWidget {
         destructive ? NebulaColors.errorRose : NebulaColors.stellarBlue;
     return await showDialog<bool>(
           context: context,
-          barrierColor: Colors.black.withValues(alpha: 0.64),
+          barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
           builder: (ctx) => NebulaDialog(
             title: title,
             message: message,
@@ -83,9 +85,9 @@ class NebulaDialog extends StatelessWidget {
                       height: 42,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: accent.withValues(alpha: 0.12),
+                        color: accent.withValues(alpha: NebulaAlpha.surface),
                         border: Border.all(
-                          color: accent.withValues(alpha: 0.32),
+                          color: accent.withValues(alpha: NebulaAlpha.accent),
                         ),
                         boxShadow: NebulaTokens.glowSoft(accent),
                       ),
@@ -99,10 +101,8 @@ class NebulaDialog extends StatelessWidget {
                         children: [
                           Text(
                             title,
-                            style: TextStyle(
+                            style: NebulaTypography.of(context).titleM.copyWith(
                               color: tokens.primaryText,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(height: NebulaTokens.sp8),
@@ -110,10 +110,8 @@ class NebulaDialog extends StatelessWidget {
                             child: SingleChildScrollView(
                               child: Text(
                                 message,
-                                style: TextStyle(
+                                style: NebulaTypography.of(context).bodyM.copyWith(
                                   color: tokens.secondaryText,
-                                  fontSize: 14,
-                                  height: 1.45,
                                 ),
                               ),
                             ),
@@ -178,12 +176,13 @@ class _NebulaDialogAction extends StatelessWidget {
               vertical: NebulaTokens.sp12,
             ),
             decoration: BoxDecoration(
-              color:
-                  filled ? color.withValues(alpha: 0.12) : Colors.transparent,
+              color: filled
+                  ? color.withValues(alpha: NebulaAlpha.surface)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
               border: Border.all(
                 color: filled
-                    ? color.withValues(alpha: 0.34)
+                    ? color.withValues(alpha: NebulaAlpha.accent)
                     : NebulaColors.surfaceBorder,
               ),
             ),
@@ -193,9 +192,8 @@ class _NebulaDialogAction extends StatelessWidget {
                     CosmoThemeTokens.darkInternals;
                 return Text(
                   label,
-                  style: TextStyle(
+                  style: NebulaTypography.of(ctx).bodyM.copyWith(
                     color: filled ? color : tokens.mutedText,
-                    fontSize: 14,
                     fontWeight: filled ? FontWeight.w700 : FontWeight.w600,
                   ),
                 );

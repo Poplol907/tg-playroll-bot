@@ -20,6 +20,7 @@ class _LegendDot extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -32,18 +33,18 @@ class _LegendDot extends StatelessWidget {
             boxShadow: isLight
                 ? [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.40),
+                      color: color.withValues(alpha: NebulaAlpha.medium),
                       blurRadius: 14,
                       spreadRadius: -2,
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.50),
+                      color: Colors.white.withValues(alpha: NebulaAlpha.strong),
                       blurRadius: 2,
                     ),
                     BoxShadow(
-                      color: color.withValues(alpha: 0.70),
+                      color: color.withValues(alpha: NebulaAlpha.high),
                       blurRadius: 7,
                     ),
                   ],
@@ -55,15 +56,11 @@ class _LegendDot extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                color: tokens.mutedText,
-              ),
+              style: type.labelS.copyWith(color: tokens.mutedText),
             ),
             Text(
               '$value сум',
-              style: TextStyle(
-                fontSize: 12,
+              style: type.labelM.copyWith(
                 fontWeight: FontWeight.w700,
                 color: color,
               ),
@@ -95,13 +92,15 @@ class _StatCard extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
       borderRadius: NebulaTokens.radiusMD,
       accent: color,
       glow: [
         BoxShadow(
-          color: color.withValues(alpha: isLight ? 0.15 : 0.20),
+          color: color.withValues(
+              alpha: isLight ? NebulaAlpha.subtle : NebulaAlpha.border),
           blurRadius: isLight ? 32 : 18,
           spreadRadius: isLight ? -6 : 0,
           offset: Offset.zero,
@@ -118,35 +117,34 @@ class _StatCard extends StatelessWidget {
                 ? null
                 : [
                     Shadow(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: Colors.white.withValues(alpha: NebulaAlpha.strong),
                         blurRadius: 2),
                     Shadow(
-                        color: color.withValues(alpha: 0.7), blurRadius: 10),
+                        color: color.withValues(alpha: NebulaAlpha.high),
+                        blurRadius: 10),
                   ],
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
+            style: type.displayL.copyWith(
               color: color,
               shadows: isLight
                   ? null
                   : [
                       Shadow(
-                          color: Colors.white.withValues(alpha: 0.4),
+                          color: Colors.white.withValues(alpha: NebulaAlpha.medium),
                           blurRadius: 2),
                       Shadow(
-                          color: color.withValues(alpha: 0.5), blurRadius: 8),
+                          color: color.withValues(alpha: NebulaAlpha.strong),
+                          blurRadius: 8),
                     ],
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
+            style: type.labelS.copyWith(
               fontWeight: FontWeight.w600,
               color: tokens.secondaryText,
               letterSpacing: 0.2,
@@ -154,10 +152,7 @@ class _StatCard extends StatelessWidget {
           ),
           Text(
             sublabel,
-            style: TextStyle(
-              fontSize: 10,
-              color: tokens.mutedText,
-            ),
+            style: type.overline.copyWith(color: tokens.mutedText),
           ),
         ],
       ),
@@ -186,10 +181,9 @@ class _MakeupBanner extends StatelessWidget {
           Expanded(
             child: Text(
               'Отработано $count урок${_plural(count)}: педагог закрыл долги ✓',
-              style: const TextStyle(
-                fontSize: 13,
-                color: NebulaColors.auroraCyan,
-              ),
+              style: NebulaTypography.of(context)
+                  .bodyS
+                  .copyWith(color: NebulaColors.auroraCyan),
             ),
           ),
         ],
@@ -227,10 +221,9 @@ class _DebtBanner extends StatelessWidget {
           Expanded(
             child: Text(
               'Долг: $count урок${_plural(count)} отменено педагогом без отработки',
-              style: const TextStyle(
-                fontSize: 13,
-                color: NebulaColors.errorRose,
-              ),
+              style: NebulaTypography.of(context)
+                  .bodyS
+                  .copyWith(color: NebulaColors.errorRose),
             ),
           ),
         ],
@@ -268,10 +261,9 @@ class _PendingBanner extends StatelessWidget {
           Expanded(
             child: Text(
               '$amount сум — пропуски ученика, будут зачислены в конце месяца',
-              style: const TextStyle(
-                fontSize: 13,
-                color: NebulaColors.warningAmber,
-              ),
+              style: NebulaTypography.of(context)
+                  .bodyS
+                  .copyWith(color: NebulaColors.warningAmber),
             ),
           ),
         ],
@@ -297,21 +289,20 @@ class _PayRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: bold ? 16 : 14,
+          style: (bold ? type.titleM : type.bodyM).copyWith(
             fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
             color: bold ? tokens.primaryText : tokens.mutedText,
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: bold ? 18 : 14,
+          style: (bold ? type.titleM : type.bodyM).copyWith(
             fontWeight: FontWeight.w700,
             color: color,
           ),
@@ -330,6 +321,7 @@ class _RatesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(20),
       borderRadius: NebulaTokens.radiusLG,
@@ -341,11 +333,7 @@ class _RatesCard extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'КОНФИГУРАЦИЯ СТАВОК',
-              style: TextStyle(
-                fontSize: 11,
-                color: tokens.primaryAccent,
-                letterSpacing: 0.8,
-              ),
+              style: type.overline.copyWith(color: tokens.primaryAccent),
             ),
           ]),
           const SizedBox(height: 14),
@@ -378,8 +366,7 @@ class _RatesCard extends StatelessWidget {
                       children: [
                         Text(
                           label,
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: type.bodyM.copyWith(
                             fontWeight: FontWeight.w600,
                             color: r.isForeign
                                 ? tokens.warning
@@ -389,18 +376,14 @@ class _RatesCard extends StatelessWidget {
                         if (r.note.isNotEmpty)
                           Text(
                             r.note,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: tokens.mutedText,
-                            ),
+                            style: type.labelS.copyWith(color: tokens.mutedText),
                           ),
                       ],
                     ),
                   ),
                   Text(
                     '${fmt(r.ratePerLesson)} сум',
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: type.bodyM.copyWith(
                       fontWeight: FontWeight.w700,
                       color: dotColor,
                     ),
@@ -450,10 +433,9 @@ class _ErrorCard extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: tokens.secondaryText,
-              fontSize: 13,
-            ),
+            style: NebulaTypography.of(context)
+                .bodyS
+                .copyWith(color: tokens.secondaryText),
           ),
           const SizedBox(height: 12),
           NebulaTextButton(
@@ -492,10 +474,9 @@ class _InlineErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: NebulaColors.mistWhite,
-                fontSize: 12,
-              ),
+              style: NebulaTypography.of(context)
+                  .labelM
+                  .copyWith(color: NebulaColors.mistWhite),
             ),
           ),
           NebulaTextButton(

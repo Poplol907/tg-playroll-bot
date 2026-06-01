@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/server_config.dart';
 import '../../../../core/theme/app_visual_mode.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_tokens.dart';
@@ -118,28 +119,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.wifi_tethering_rounded,
+                        const Icon(Icons.wifi_tethering_rounded,
                             color: NebulaColors.stellarBlue, size: 18),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           'Адрес сервера',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: NebulaColors.softWhite,
-                          ),
+                          style: type.titleS
+                              .copyWith(color: NebulaColors.softWhite),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Текущий: $current',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: NebulaColors.dimText,
-                      ),
+                      style: type.labelS.copyWith(color: NebulaColors.dimText),
                     ),
                     const SizedBox(height: 14),
                     NebulaInput(
@@ -159,17 +154,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: _saved
-                              ? NebulaColors.successMint.withValues(alpha: 0.10)
+                              ? NebulaColors.successMint
+                                  .withValues(alpha: NebulaAlpha.surface)
                               : NebulaColors.stellarBlue
-                                  .withValues(alpha: 0.10),
+                                  .withValues(alpha: NebulaAlpha.surface),
                           borderRadius:
                               BorderRadius.circular(NebulaTokens.radiusMD),
                           border: Border.all(
                             color: _saved
                                 ? NebulaColors.successMint
-                                    .withValues(alpha: 0.40)
+                                    .withValues(alpha: NebulaAlpha.medium)
                                 : NebulaColors.stellarBlue
-                                    .withValues(alpha: 0.35),
+                                    .withValues(alpha: NebulaAlpha.accent),
                           ),
                         ),
                         child: Center(
@@ -190,8 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     const SizedBox(width: 8),
                                     Text(
                                       _saved ? 'Сохранено' : 'Сохранить',
-                                      style: TextStyle(
-                                        fontSize: 14,
+                                      style: type.bodyM.copyWith(
                                         fontWeight: FontWeight.w600,
                                         color: _saved
                                             ? NebulaColors.successMint

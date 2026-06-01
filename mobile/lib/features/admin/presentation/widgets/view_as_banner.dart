@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../providers/view_as_teacher_provider.dart';
 
 /// Узкая полоса сверху, видимая когда админ просматривает данные педагога.
@@ -17,11 +19,13 @@ class ViewAsBanner extends ConsumerWidget {
     final viewAs = ref.watch(viewAsTeacherProvider);
     if (viewAs == null) return const SizedBox.shrink();
 
+    final type = NebulaTypography.of(context);
+
     return Material(
       color: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          color: NebulaColors.warningAmber.withValues(alpha: 0.12),
+          color: NebulaColors.warningAmber.withValues(alpha: NebulaAlpha.surface),
           border: const Border(
             bottom: BorderSide(
               color: NebulaColors.warningAmber,
@@ -45,17 +49,13 @@ class ViewAsBanner extends ConsumerWidget {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const TextSpan(
+                    TextSpan(
                       text: 'Просматриваешь как: ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: NebulaColors.mistWhite,
-                      ),
+                      style: type.labelM.copyWith(color: NebulaColors.mistWhite),
                     ),
                     TextSpan(
                       text: viewAs.displayName,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: type.labelM.copyWith(
                         fontWeight: FontWeight.w700,
                         color: NebulaColors.softWhite,
                       ),
@@ -80,25 +80,26 @@ class ViewAsBanner extends ConsumerWidget {
                   vertical: NebulaTokens.sp4,
                 ),
                 decoration: BoxDecoration(
-                  color: NebulaColors.warningAmber.withValues(alpha: 0.18),
+                  color: NebulaColors.warningAmber
+                      .withValues(alpha: NebulaAlpha.subtle),
                   borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
                   border: Border.all(
-                    color: NebulaColors.warningAmber.withValues(alpha: 0.4),
+                    color: NebulaColors.warningAmber
+                        .withValues(alpha: NebulaAlpha.medium),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.logout_rounded,
                       color: NebulaColors.warningAmber,
                       size: 12,
                     ),
-                    SizedBox(width: NebulaTokens.sp4),
+                    const SizedBox(width: NebulaTokens.sp4),
                     Text(
                       'Выйти',
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: type.labelS.copyWith(
                         fontWeight: FontWeight.w700,
                         color: NebulaColors.warningAmber,
                         letterSpacing: 0.3,

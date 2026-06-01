@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_component_styles.dart';
 import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/models/student.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
@@ -47,9 +49,7 @@ class StudentsScreen extends ConsumerWidget {
                           Theme.of(ctx).brightness == Brightness.light;
                       final titleText = Text(
                         'Ученики',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
+                        style: NebulaTypography.of(ctx).displayL.copyWith(
                           color:
                               isLight ? Colors.white : NebulaColors.softWhite,
                         ),
@@ -71,17 +71,16 @@ class StudentsScreen extends ConsumerWidget {
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: NebulaColors.stellarBlue
-                                  .withValues(alpha: 0.12),
+                                  .withValues(alpha: NebulaAlpha.surface),
                               borderRadius:
                                   BorderRadius.circular(NebulaTokens.radiusSM),
                               border: Border.all(
                                   color: NebulaColors.stellarBlue
-                                      .withValues(alpha: 0.3)),
+                                      .withValues(alpha: NebulaAlpha.accent)),
                             ),
                             child: Text(
                               '${students.length}',
-                              style: const TextStyle(
-                                fontSize: 14,
+                              style: NebulaTypography.of(context).bodyM.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: NebulaColors.stellarBlue,
                               ),
@@ -96,12 +95,12 @@ class StudentsScreen extends ConsumerWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color:
-                              NebulaColors.stellarBlue.withValues(alpha: 0.12),
+                          color: NebulaColors.stellarBlue
+                              .withValues(alpha: NebulaAlpha.surface),
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: NebulaColors.stellarBlue
-                                  .withValues(alpha: 0.4)),
+                                  .withValues(alpha: NebulaAlpha.medium)),
                         ),
                         child: const Icon(
                           Icons.add_rounded,
@@ -248,9 +247,7 @@ class _StudentCard extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         student.initials,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                        style: NebulaTypography.of(context).titleM.copyWith(
                           color: Colors.black,
                         ),
                       ),
@@ -282,8 +279,7 @@ class _StudentCard extends ConsumerWidget {
                         Flexible(
                           child: Text(
                             student.fullName,
-                            style: TextStyle(
-                              fontSize: 16,
+                            style: NebulaTypography.of(context).titleM.copyWith(
                               fontWeight: FontWeight.w600,
                               color: nameColor,
                             ),
@@ -312,10 +308,9 @@ class _StudentCard extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         student.phone!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: subColor,
-                        ),
+                        style: NebulaTypography.of(context)
+                            .labelM
+                            .copyWith(color: subColor),
                       ),
                     ],
                   ],
