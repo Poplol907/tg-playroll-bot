@@ -230,6 +230,9 @@ class _StudentCard extends ConsumerWidget {
           }
         },
         child: NebulaSurface(
+          // Frosted glass: blurs the busy animated background behind the
+          // translucent card so student names/phones stay readable.
+          frosted: true,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           borderRadius: NebulaTokens.radiusMD,
           child: Row(

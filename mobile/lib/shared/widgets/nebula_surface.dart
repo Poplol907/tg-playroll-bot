@@ -46,11 +46,22 @@ class NebulaSurface extends StatelessWidget {
     final selectedProfile = profile ??
         (dense ? NebulaSurfaceProfile.panel : NebulaSurfaceProfile.card);
     final surfaceStyle = selectedProfile.resolve(context, accent: accent);
+    final isFrosted =
+        frosted || selectedProfile == NebulaSurfaceProfile.frostedSmall;
     final blurSigma = selectedProfile == NebulaSurfaceProfile.frostedSmall
         ? surfaceStyle.blurSigma
         : NebulaTokens.blurDense;
     final radius = borderRadius ?? surfaceStyle.radius;
     final br = BorderRadius.circular(radius);
+
+    // Frosted surfaces drop fill opacity so the blurred backdrop reads as
+    // a frosted pane. Without this the blur hides behind a ~90% opaque fill
+    // and the glass effect is invisible. Single source for the frosted look.
+    final fill = isFrosted
+        ? surfaceStyle.fill.withValues(
+            alpha: surfaceStyle.fill.a * NebulaTokens.frostedFillFactor,
+          )
+        : surfaceStyle.fill;
 
     final shadows = [
       ...surfaceStyle.shadows,
@@ -62,7 +73,7 @@ class NebulaSurface extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: surfaceStyle.fill,
+        color: fill,
         borderRadius: br,
         border: Border.all(
           color: surfaceStyle.border,
@@ -102,7 +113,7 @@ class NebulaSurface extends StatelessWidget {
 
     final clipped = ClipRRect(
       borderRadius: br,
-      child: frosted || selectedProfile == NebulaSurfaceProfile.frostedSmall
+      child: isFrosted
           ? BackdropFilter(
               filter: ImageFilter.blur(
                 sigmaX: blurSigma,

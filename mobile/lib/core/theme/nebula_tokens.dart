@@ -50,6 +50,13 @@ abstract class NebulaTokens {
   static const double blurMedium = 8;
   static const double blurDense = 12;
 
+  // Frosted surfaces multiply their base fill alpha by this factor so the
+  // blurred backdrop is visible through the pane. SINGLE source of "how
+  // see-through is frosted glass" across the whole app & all themes.
+  // 1.0 = opaque (no glass), 0.0 = fully clear. 0.7 keeps text readable
+  // while letting the blur read as real frosted glass.
+  static const double frostedFillFactor = 0.7;
+
   // ── Input profile ──────────────────────────────────────────────────────────
   static const double inputBorderWidth = 1;
   static const double inputFocusAlphaLight = 0.34;
