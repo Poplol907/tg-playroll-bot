@@ -53,9 +53,13 @@ abstract class NebulaTokens {
   // Frosted surfaces multiply their base fill alpha by this factor so the
   // blurred backdrop is visible through the pane. SINGLE source of "how
   // see-through is frosted glass" across the whole app & all themes.
-  // 1.0 = opaque (no glass), 0.0 = fully clear. 0.7 keeps text readable
-  // while letting the blur read as real frosted glass.
-  static const double frostedFillFactor = 0.7;
+  // 1.0 = opaque (no glass), 0.0 = fully clear. Lower = more obvious glass
+  // but less text contrast. 0.6 makes the frost clearly visible while the
+  // heavy blur keeps text legible.
+  static const double frostedFillFactor = 0.6;
+  // Blur strength used by frosted NebulaSurfaces. Higher = more obvious
+  // glass + smoother bleed-through (better readability over busy bg).
+  static const double frostedBlurSigma = 18;
 
   // ── Input profile ──────────────────────────────────────────────────────────
   static const double inputBorderWidth = 1;

@@ -50,7 +50,7 @@ class NebulaSurface extends StatelessWidget {
         frosted || selectedProfile == NebulaSurfaceProfile.frostedSmall;
     final blurSigma = selectedProfile == NebulaSurfaceProfile.frostedSmall
         ? surfaceStyle.blurSigma
-        : NebulaTokens.blurDense;
+        : (frosted ? NebulaTokens.frostedBlurSigma : NebulaTokens.blurDense);
     final radius = borderRadius ?? surfaceStyle.radius;
     final br = BorderRadius.circular(radius);
 

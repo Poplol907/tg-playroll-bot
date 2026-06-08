@@ -22,6 +22,7 @@ import '../../core/platform/app_platform.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/services/update_service.dart';
+import '../../core/services/repaint_pulse.dart';
 
 // ─────────────────────────────────────────────
 //  App Shell — адаптируется под мобайл/десктоп
@@ -392,6 +393,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/calendar',
+    // Wakes idle animated backgrounds after any modal/dialog/sheet closes,
+    // so the screen doesn't linger dimmed until the user taps.
+    observers: [RepaintPulseObserver()],
     redirect: (context, state) {
       final isAuth = authState.isAuthenticated;
       final isInit = authState.status == AuthStatus.initial;

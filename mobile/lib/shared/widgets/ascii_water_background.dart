@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../../core/services/repaint_pulse.dart';
 import 'package:flutter/scheduler.dart';
 import '../../core/theme/nebula_colors.dart';
 
@@ -86,6 +87,9 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _ticker = createTicker(_onTick);
+    // Wake & repaint when a modal/dialog/sheet closes, so a stale dimmed
+    // frame can't linger until the user taps. See RepaintPulse.
+    RepaintPulse.notifier.addListener(_onRepaintPulse);
 
     // Fade in fast (80 ms) — first ripple appears without stutter.
     // Fade out slowly (900 ms) for a water-evaporation feel.
@@ -108,8 +112,18 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
     }
   }
 
+  void _onRepaintPulse() {
+    // Force one fresh frame of the whole background subtree. Even though the
+    // base colour is static, repainting recomposites the screen and clears
+    // any stale barrier frame left behind by a just-closed overlay.
+    if (!mounted) return;
+    _repaint.ping();
+    _ensureTickerRunning();
+  }
+
   @override
   void dispose() {
+    RepaintPulse.notifier.removeListener(_onRepaintPulse);
     _fadeOutTimer?.cancel();
     for (final timer in _rippleTimers) {
       timer.cancel();
