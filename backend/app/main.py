@@ -2,9 +2,11 @@ import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from backend.app.services.errors import DomainError
 from backend.app.routers.users import router as users_router
 from backend.app.routers.dev import get_dev_router
 from backend.app.routers.admin import router as admin_router
@@ -53,6 +55,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Domain → HTTP translation ──────────────────────────────────────────────
+# Services raise `DomainError` subclasses (NotFound, Forbidden, Conflict, …)
+# which are framework-agnostic. This handler is the ONLY place that turns
+# them into HTTP responses, keeping services testable without FastAPI.
+@app.exception_handler(DomainError)
+async def _handle_domain_error(_: Request, exc: DomainError) -> JSONResponse:
+    body: dict[str, object] = {"detail": exc.message, "code": exc.code}
+    if exc.details is not None:
+        body["details"] = exc.details
+    return JSONResponse(status_code=exc.status_code, content=body)
 
 app.include_router(health_router)
 app.include_router(auth_router)
