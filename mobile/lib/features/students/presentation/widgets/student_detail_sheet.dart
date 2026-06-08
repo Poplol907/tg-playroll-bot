@@ -38,6 +38,10 @@ class StudentDetailSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useSafeArea: true,
+      // enableDrag:false — Flutter's built-in drag conflicts with our custom
+      // spring dismiss and leaves the barrier stuck mid-fade ("dark overlay
+      // until tap"). We drive the drag ourselves and pop in _onDragEnd.
+      enableDrag: false,
       builder: (_) => StudentDetailSheet(student: student),
     );
   }
@@ -83,47 +87,41 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     } else if (s < 0.97) {
       _hapticOpenFired = false;
     }
-    if (s < 0.05 && !_dismissing) {
-      _dismissing = true;
-      if (mounted) Navigator.of(context).pop();
-    }
+    // Pop is handled directly in _onDragEnd — never from this listener.
+    // Popping mid-spring left the modal barrier stuck half-faded.
   }
 
   void _onSpring() {
+    // Only snaps the sheet back to full size; never dismisses.
     if (!_sheetCtrl.isAttached) return;
-    final v = _springCtrl.value;
-    if (v <= 0.05 && !_dismissing) {
-      _dismissing = true;
-      _springCtrl.stop();
-      HapticFeedback.lightImpact();
-      if (mounted) Navigator.of(context).pop();
-      return;
-    }
-    _sheetCtrl.jumpTo(v.clamp(0.0, 1.0));
+    _sheetCtrl.jumpTo(_springCtrl.value.clamp(0.0, 1.0));
   }
 
   void _onDragUpdate(DragUpdateDetails d) {
-    if (!_sheetCtrl.isAttached) return;
+    if (!_sheetCtrl.isAttached || _dismissing) return;
     _springCtrl.stop();
     final delta = -d.primaryDelta! / MediaQuery.of(context).size.height;
     _sheetCtrl.jumpTo((_sheetCtrl.size + delta).clamp(0.0, 1.0));
   }
 
   void _onDragEnd(DragEndDetails d) {
-    if (!_sheetCtrl.isAttached) return;
+    if (!_sheetCtrl.isAttached || _dismissing) return;
     final screenH = MediaQuery.of(context).size.height;
     final velocity = -(d.primaryVelocity ?? 0) / screenH;
-    final target = (velocity < -1.2 || (_sheetCtrl.size < 0.4 && velocity <= 0))
-        ? 0.0
-        : 1.0;
-    if (target == 1.0) {
-      HapticFeedback.mediumImpact();
-    } else {
+    final shouldClose =
+        velocity < -1.2 || (_sheetCtrl.size < 0.4 && velocity <= 0);
+    if (shouldClose) {
+      // Pop immediately — the route's barrier fades out cleanly because we
+      // don't fight it with a simultaneous spring-to-zero animation.
+      _dismissing = true;
       HapticFeedback.lightImpact();
+      if (mounted) Navigator.of(context).pop();
+      return;
     }
+    HapticFeedback.mediumImpact();
     _springCtrl.value = _sheetCtrl.size;
     _springCtrl.animateWith(
-      SpringSimulation(_spring, _sheetCtrl.size, target, velocity),
+      SpringSimulation(_spring, _sheetCtrl.size, 1.0, velocity),
     );
   }
 

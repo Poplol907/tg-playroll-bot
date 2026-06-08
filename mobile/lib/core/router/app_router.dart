@@ -193,12 +193,20 @@ class _AppShellState extends ConsumerState<AppShell> {
   ) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Column(
-        children: [
-          const ViewAsBanner(),
-          monthBar,
-          Expanded(child: widget.child),
-        ],
+      // SafeArea here is the SINGLE source of the top inset (status bar /
+      // Dynamic Island). Everything below — banner, month bar, screens —
+      // starts beneath the island. Individual widgets must NOT re-apply
+      // MediaQuery.padding.top, or insets double up.
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            const ViewAsBanner(),
+            monthBar,
+            Expanded(child: widget.child),
+          ],
+        ),
       ),
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
@@ -232,11 +240,11 @@ class _GlobalMonthBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = DateFormat('MMMM yyyy', 'ru').format(month);
-    final topPad = MediaQuery.of(context).padding.top;
 
     return Container(
-      padding: EdgeInsets.only(
-        top: topPad + 8,
+      // Top inset is owned by the shell's SafeArea — keep a flat 8px here.
+      padding: const EdgeInsets.only(
+        top: 8,
         bottom: 8,
         left: 16,
         right: 16,
