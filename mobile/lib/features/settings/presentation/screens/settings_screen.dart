@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/server_config.dart';
 import '../../../../core/theme/app_visual_mode.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_semantic.dart';
@@ -83,6 +84,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final mode = ref.watch(appVisualModeProvider);
     final user = ref.watch(currentUserProvider);
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -101,12 +104,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // ── Title ────────────────────────────────────────────────────
               Text(
                 'Настройки',
-                style: type.displayM.copyWith(color: NebulaColors.softWhite),
+                style: type.displayM.copyWith(color: tokens.primaryText),
               ),
               const SizedBox(height: 4),
               Text(
                 user != null ? '@${user.login}' : '',
-                style: type.labelM.copyWith(color: NebulaColors.dimText),
+                style: type.labelM.copyWith(color: tokens.mutedText),
               ),
               const SizedBox(height: 24),
 
@@ -127,14 +130,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Text(
                           'Адрес сервера',
                           style: type.titleS
-                              .copyWith(color: NebulaColors.softWhite),
+                              .copyWith(color: tokens.primaryText),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Текущий: $current',
-                      style: type.labelS.copyWith(color: NebulaColors.dimText),
+                      style: type.labelS.copyWith(color: tokens.mutedText),
                     ),
                     const SizedBox(height: 14),
                     NebulaInput(
@@ -260,11 +263,13 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         label,
-        style: type.overline.copyWith(color: NebulaColors.ghostText),
+        style: type.overline.copyWith(color: tokens.mutedText),
       ),
     );
   }
