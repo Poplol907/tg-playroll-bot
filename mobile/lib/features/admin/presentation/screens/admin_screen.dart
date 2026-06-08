@@ -54,6 +54,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     final usersAsync = ref.watch(orgUsersProvider);
     final canPop = Navigator.of(context).canPop();
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -77,8 +79,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: NebulaColors.surfaceBorder),
                         ),
-                        child: const Icon(Icons.arrow_back_rounded,
-                            color: NebulaColors.dimText, size: 18),
+                        child: Icon(Icons.arrow_back_rounded,
+                            color: tokens.mutedText, size: 18),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -90,12 +92,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                         Text(
                           'Студия',
                           style: type.displayM.copyWith(
-                              color: NebulaColors.softWhite),
+                              color: tokens.primaryText),
                         ),
                         Text(
                           'Обзор и педагоги',
                           style: type.labelM
-                              .copyWith(color: NebulaColors.dimText),
+                              .copyWith(color: tokens.mutedText),
                         ),
                       ],
                     ),
@@ -174,6 +176,8 @@ class _StudioStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return statsAsync.when(
       loading: () => const NebulaSurface(
         padding: EdgeInsets.symmetric(vertical: 28),
@@ -191,7 +195,7 @@ class _StudioStatsCard extends StatelessWidget {
             Expanded(
               child: Text(
                 parseApiError(e, fallback: 'Не удалось загрузить статистику'),
-                style: type.labelM.copyWith(color: NebulaColors.mistWhite),
+                style: type.labelM.copyWith(color: tokens.secondaryText),
               ),
             ),
           ],
@@ -206,7 +210,7 @@ class _StudioStatsCard extends StatelessWidget {
           children: [
             Text(
               'СТАТИСТИКА СТУДИИ',
-              style: type.overline.copyWith(color: NebulaColors.ghostText),
+              style: type.overline.copyWith(color: tokens.mutedText),
             ),
             const SizedBox(height: 12),
             Row(
@@ -269,6 +273,8 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Container(
       decoration: BoxDecoration(
         color: NebulaColors.nebulaSurface,
@@ -279,7 +285,7 @@ class _SearchField extends StatelessWidget {
         onChanged: onChanged,
         style: NebulaTypography.of(context)
             .bodyM
-            .copyWith(color: NebulaColors.softWhite),
+            .copyWith(color: tokens.primaryText),
         decoration: InputDecoration(
           isDense: true,
           contentPadding:
@@ -288,9 +294,9 @@ class _SearchField extends StatelessWidget {
           hintText: 'Поиск по имени или логину...',
           hintStyle: NebulaTypography.of(context)
               .bodyM
-              .copyWith(color: NebulaColors.ghostText),
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: NebulaColors.dimText, size: 18),
+              .copyWith(color: tokens.mutedText),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: tokens.mutedText, size: 18),
         ),
       ),
     );
@@ -540,7 +546,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
             // ── Stats grid ──
             Text(
               'СТАТИСТИКА МЕСЯЦА',
-              style: type.overline.copyWith(color: NebulaColors.ghostText),
+              style: type.overline.copyWith(color: tokens.mutedText),
             ),
             const SizedBox(height: 10),
             _DialogStatRow(
