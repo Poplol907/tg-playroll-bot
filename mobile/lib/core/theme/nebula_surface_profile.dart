@@ -43,6 +43,12 @@ class NebulaSurfaceStyle {
     this.sheen,
     this.paintSpecularBorder = true,
   });
+
+  /// Same material color, but suitable for surfaces that sit above live
+  /// content. Cards in normal page flow may stay translucent; sheets/dialogs
+  /// must occlude the route below so text never bleeds through.
+  Color get occludingFill =>
+      fill.withValues(alpha: NebulaAlpha.occludingSurface);
 }
 
 extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
@@ -59,17 +65,16 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
       NebulaSurfaceProfile.panel => tokens.denseSurface,
       NebulaSurfaceProfile.modal => tokens.denseSurface,
       NebulaSurfaceProfile.input => tokens.denseSurface,
-      NebulaSurfaceProfile.nav =>
-        isLight ? tokens.denseSurface.withValues(alpha: NebulaAlpha.solid)
-                : tokens.surface,
+      NebulaSurfaceProfile.nav => isLight
+          ? tokens.denseSurface.withValues(alpha: NebulaAlpha.solid)
+          : tokens.surface,
       NebulaSurfaceProfile.status =>
         semanticAccent.withValues(alpha: NebulaAlpha.surface),
       NebulaSurfaceProfile.frostedSmall => tokens.denseSurface,
     };
 
     final border = switch (this) {
-      _ when hasAccent =>
-        semanticAccent.withValues(alpha: NebulaAlpha.accent),
+      _ when hasAccent => semanticAccent.withValues(alpha: NebulaAlpha.accent),
       NebulaSurfaceProfile.status =>
         semanticAccent.withValues(alpha: NebulaAlpha.medium),
       NebulaSurfaceProfile.input => tokens.surfaceBorder,
@@ -155,8 +160,9 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
 
     if (this != NebulaSurfaceProfile.status && !hasAccent) return base;
 
-    final accentHaloAlpha = (isLight ? NebulaAlpha.whisper : NebulaAlpha.surface) *
-        (isLight ? 1.0 : tokens.glowIntensity);
+    final accentHaloAlpha =
+        (isLight ? NebulaAlpha.whisper : NebulaAlpha.surface) *
+            (isLight ? 1.0 : tokens.glowIntensity);
 
     return [
       ...base,

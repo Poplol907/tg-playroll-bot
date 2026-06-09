@@ -12,6 +12,7 @@ import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
+import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/pulse_indicator.dart';

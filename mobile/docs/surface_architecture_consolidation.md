@@ -26,6 +26,23 @@ canonical primitive/token below and use it. Do NOT re-implement it locally.**
 If the canonical one doesn't fit, extend the canonical one in ONE place — do
 not fork.
 
+### Occluding surfaces (modals/sheets/dialogs) must hide the route below
+
+Cards in normal page flow may be translucent. But any surface that sits ABOVE
+live content — a bottom sheet, a dialog, a modal — MUST occlude what's behind
+it. If it's too translucent, the busy screen below (calendar grid, student
+list) bleeds through and reads as a *second active UI layer*: "transparency
+pops up, unclear what to tap".
+
+- Build all modal/sheet/dialog chrome with **`NebulaModalSurface`**
+  (`lib/shared/widgets/nebula_modal_surface.dart`), reached via `MistModal.show`
+  / `AdaptiveModal.show`. Never hand-resolve `NebulaSurfaceProfile.modal`.
+- It fills with **`NebulaSurfaceStyle.occludingFill`** = the material colour at
+  **`NebulaAlpha.occludingSurface` (0.92)** — dense enough to block the route
+  below while keeping a hint of material translucency.
+- When a modal "looks transparent / unreadable", the fix is **occlusion
+  (opacity ≥ 0.92)** — NOT frosted glass and NOT background contrast.
+
 ## Canonical API
 
 The design system is composed of **independent single-source-of-truth
