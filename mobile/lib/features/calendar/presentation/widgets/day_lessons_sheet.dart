@@ -138,180 +138,171 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
       BuildContext stateCtx, ScrollController scrollCtrl) {
     final bottomPad = MediaQuery.of(stateCtx).viewPadding.bottom;
     final dateStr = DateFormat('d MMMM', 'ru').format(widget.date);
-    final isLight = Theme.of(stateCtx).brightness == Brightness.light;
     final tokens = Theme.of(stateCtx).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final sheetBg = isLight
-        ? const Color(0xFFF5F8FF)
-        : NebulaColors.denseNebulaSurface;
-    final borderColor = isLight
-        ? const Color(0x30000000)
-        : NebulaColors.surfaceBorder;
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(NebulaTokens.radiusLG),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: sheetBg,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(NebulaTokens.radiusLG),
-          ),
-          border: Border(
-            top: BorderSide(color: borderColor, width: 1),
-            left: BorderSide(color: borderColor, width: 1),
-            right: BorderSide(color: borderColor, width: 1),
-          ),
-        ),
-        child: Column(
-          children: [
-            // ── Handle + header (swipe zone) ──
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onVerticalDragUpdate: _onDragUpdate,
-              onVerticalDragEnd: _onDragEnd,
-              child: Column(
-                children: [
-                  // Handle pill
-                  SizedBox(
-                    width: double.infinity,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 14, bottom: 10),
-                      child: Center(
-                        child: Container(
-                          width: 36,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: tokens.mutedText.withValues(alpha: NebulaAlpha.medium),
-                            borderRadius:
-                                BorderRadius.circular(NebulaTokens.radiusXS),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Date header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          dateStr,
-                          style: NebulaTypography.of(context)
-                              .titleL
-                              .copyWith(color: tokens.primaryText),
-                        ),
-                        const SizedBox(width: 10),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 3),
-                          child: Text(
-                            '${_localLessons.length} ${_lessonWord(_localLessons.length)}',
-                            style: NebulaTypography.of(context)
-                                .labelM
-                                .copyWith(color: tokens.mutedText),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: NebulaColors.surfaceBorder),
-            // Lesson list + add button
-            Expanded(
-              child: ListView.separated(
-                controller: scrollCtrl,
-                physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics()),
-                padding: EdgeInsets.fromLTRB(24, 16, 24, bottomPad + 24),
-                itemCount: _localLessons.length + 1, // +1 for add button
-                separatorBuilder: (_, i) => SizedBox(
-                  height: i == widget.lessons.length - 1 ? 16 : 10,
-                ),
-                itemBuilder: (_, i) {
-                  // Last item: "Add lesson" button
-                  if (i == _localLessons.length) {
-                    return GestureDetector(
-                      onTap: () => _showAddLesson(stateCtx),
+    return NebulaModalSurface(
+      containerKey: const ValueKey('day-lessons-modal-surface'),
+      child: Column(
+        children: [
+          // ── Handle + header (swipe zone) ──
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onVerticalDragUpdate: _onDragUpdate,
+            onVerticalDragEnd: _onDragEnd,
+            child: Column(
+              children: [
+                // Handle pill
+                SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 14, bottom: 10),
+                    child: Center(
                       child: Container(
-                        width: double.infinity,
-                        height: 48,
+                        width: 36,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: NebulaColors.stellarBlue
-                              .withValues(alpha: NebulaAlpha.subtle),
+                          color: tokens.mutedText
+                              .withValues(alpha: NebulaAlpha.medium),
                           borderRadius:
-                              BorderRadius.circular(NebulaTokens.radiusMD),
-                          border: Border.all(
-                            color: NebulaColors.stellarBlue
-                                .withValues(alpha: NebulaAlpha.medium),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.add_rounded,
-                              color: NebulaColors.stellarBlue,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Добавить урок',
-                              style: NebulaTypography.of(context)
-                                  .bodyM
-                                  .copyWith(
-                                      color: NebulaColors.stellarBlue,
-                                      fontWeight: FontWeight.w600),
-                            ),
-                          ],
+                              BorderRadius.circular(NebulaTokens.radiusXS),
                         ),
                       ),
+                    ),
+                  ),
+                ),
+                // Date header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        dateStr,
+                        style: NebulaTypography.of(context)
+                            .titleL
+                            .copyWith(color: tokens.primaryText),
+                      ),
+                      const SizedBox(width: 10),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 3),
+                        child: Text(
+                          '${_localLessons.length} ${_lessonWord(_localLessons.length)}',
+                          style: NebulaTypography.of(context)
+                              .labelM
+                              .copyWith(color: tokens.mutedText),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: NebulaColors.surfaceBorder),
+          // Lesson list + add button
+          Expanded(
+            child: ListView.separated(
+              controller: scrollCtrl,
+              physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics()),
+              padding: EdgeInsets.fromLTRB(24, 16, 24, bottomPad + 24),
+              itemCount: _localLessons.length + 1, // +1 for add button
+              separatorBuilder: (_, i) => SizedBox(
+                height: i == widget.lessons.length - 1 ? 16 : 10,
+              ),
+              itemBuilder: (_, i) {
+                // Last item: "Add lesson" button
+                if (i == _localLessons.length) {
+                  return GestureDetector(
+                    onTap: () => _showAddLesson(stateCtx),
+                    child: Container(
+                      width: double.infinity,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: NebulaColors.stellarBlue
+                            .withValues(alpha: NebulaAlpha.subtle),
+                        borderRadius:
+                            BorderRadius.circular(NebulaTokens.radiusMD),
+                        border: Border.all(
+                          color: NebulaColors.stellarBlue
+                              .withValues(alpha: NebulaAlpha.medium),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.add_rounded,
+                            color: NebulaColors.stellarBlue,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Добавить урок',
+                            style: NebulaTypography.of(context).bodyM.copyWith(
+                                color: NebulaColors.stellarBlue,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final l = _localLessons[i];
+                return JiggleDeleteWrapper(
+                  jiggleIndex: i,
+                  borderRadius: NebulaTokens.radiusSM,
+                  onTap: () {
+                    Navigator.pop(stateCtx);
+                    LessonModal.show(stateCtx, l);
+                  },
+                  onDeleteConfirmed: () async {
+                    // Capture both navigator and messenger BEFORE any
+                    // await — using BuildContext across async gaps is
+                    // a lint error and causes crashes on deactivated
+                    // widget trees.
+                    final nav = Navigator.of(stateCtx);
+                    final confirmed = await NebulaDialog.confirm(
+                      stateCtx,
+                      title: 'Удалить урок?',
+                      message: 'Это действие нельзя отменить.',
+                      confirmLabel: 'Удалить',
+                      destructive: true,
                     );
-                  }
+                    if (confirmed != true) return;
 
-                  final l = _localLessons[i];
-                  return JiggleDeleteWrapper(
-                    jiggleIndex: i,
-                    borderRadius: NebulaTokens.radiusSM,
-                    onTap: () {
-                      Navigator.pop(stateCtx);
-                      LessonModal.show(stateCtx, l);
-                    },
-                    onDeleteConfirmed: () async {
-                      // Capture both navigator and messenger BEFORE any
-                      // await — using BuildContext across async gaps is
-                      // a lint error and causes crashes on deactivated
-                      // widget trees.
-                      final nav = Navigator.of(stateCtx);
-                      final confirmed = await NebulaDialog.confirm(
-                        stateCtx,
-                        title: 'Удалить урок?',
-                        message: 'Это действие нельзя отменить.',
-                        confirmLabel: 'Удалить',
-                        destructive: true,
-                      );
-                      if (confirmed != true) return;
+                    // ── Optimistic deletion ──────────────────────────
+                    // Remove from local list immediately — zero freeze.
+                    // Pop and invalidate happen AFTER the API call so
+                    // that invalidateMonthData is never skipped because
+                    // the widget unmounts before the await completes.
+                    final removedLesson = l;
+                    final removedIdx = _localLessons.indexOf(l);
+                    final lessonMonthYear =
+                        DateFormat('yyyy-MM').format(l.scheduledDate);
+                    HapticFeedback.mediumImpact();
+                    setState(() => _localLessons.remove(removedLesson));
 
-                      // ── Optimistic deletion ──────────────────────────
-                      // Remove from local list immediately — zero freeze.
-                      // Pop and invalidate happen AFTER the API call so
-                      // that invalidateMonthData is never skipped because
-                      // the widget unmounts before the await completes.
-                      final removedLesson = l;
-                      final removedIdx = _localLessons.indexOf(l);
-                      final lessonMonthYear =
-                          DateFormat('yyyy-MM').format(l.scheduledDate);
-                      HapticFeedback.mediumImpact();
-                      setState(() => _localLessons.remove(removedLesson));
-
-                      try {
-                        await ref
-                            .read(calendarRepositoryProvider)
-                            .deleteLesson(removedLesson.id);
-                        // Invalidate calendar + salary BEFORE closing the
-                        // sheet so providers are fresh when it pops.
+                    try {
+                      await ref
+                          .read(calendarRepositoryProvider)
+                          .deleteLesson(removedLesson.id);
+                      // Invalidate calendar + salary BEFORE closing the
+                      // sheet so providers are fresh when it pops.
+                      if (mounted) {
+                        invalidateMonthData(ref, lessonMonthYear);
+                        if (_localLessons.isEmpty) {
+                          _dismissing = true;
+                          nav.pop();
+                        }
+                      }
+                    } catch (e) {
+                      // 404 = lesson already gone from DB (ghost
+                      // lesson). Treat as success.
+                      final is404 =
+                          e is DioException && e.response?.statusCode == 404;
+                      if (is404) {
                         if (mounted) {
                           invalidateMonthData(ref, lessonMonthYear);
                           if (_localLessons.isEmpty) {
@@ -319,119 +310,103 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
                             nav.pop();
                           }
                         }
-                      } catch (e) {
-                        // 404 = lesson already gone from DB (ghost
-                        // lesson). Treat as success.
-                        final is404 =
-                            e is DioException && e.response?.statusCode == 404;
-                        if (is404) {
-                          if (mounted) {
-                            invalidateMonthData(ref, lessonMonthYear);
-                            if (_localLessons.isEmpty) {
-                              _dismissing = true;
-                              nav.pop();
-                            }
-                          }
-                          return;
-                        }
-                        // Real error — rollback the optimistic removal.
-                        if (mounted) {
-                          setState(() => _localLessons.insert(
-                              removedIdx.clamp(0, _localLessons.length),
-                              removedLesson));
-                          showNebulaSnackBar(
-                            context,
-                            title: 'Не удалось удалить урок',
-                            message: parseApiError(
-                              e,
-                              fallback:
-                                  'Проверь подключение и попробуй ещё раз',
-                            ),
-                            tone: NebulaSnackTone.error,
-                          );
-                        }
+                        return;
                       }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: l.statusColor.withValues(alpha: NebulaAlpha.mist),
-                        borderRadius:
-                            BorderRadius.circular(NebulaTokens.radiusSM),
-                        border: Border.all(
-                            color: l.statusColor
-                                .withValues(alpha: NebulaAlpha.border)),
-                      ),
-                      child: Row(
-                        children: [
-                          // PulseIndicator: semantic dot with status animation
-                          l.isMakeup
-                              ? Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: NebulaColors.nebulaPurple,
-                                  ),
-                                )
-                              : PulseIndicator(status: l.status, size: 10),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l.studentName ?? 'Ученик',
-                                  style: NebulaTypography.of(context)
-                                      .titleS
-                                      .copyWith(color: tokens.primaryText),
-                                ),
-                                if (l.isMakeup)
-                                  Text(
-                                    'ОТРАБОТКА',
-                                    style: NebulaTypography.of(context)
-                                        .overline
-                                        .copyWith(
-                                            color: NebulaColors.nebulaPurple),
-                                  ),
-                                // Makeup state badge on original lesson
-                                if (!l.isMakeup &&
-                                    l.makeupStatus == 'scheduled')
-                                  Text(
-                                    '⏳ Отработка запланирована',
-                                    style: NebulaTypography.of(context)
-                                        .overline
-                                        .copyWith(
-                                            color: NebulaColors.stellarBlue,
-                                            fontWeight: FontWeight.w500),
-                                  ),
-                                if (!l.isMakeup && l.makeupStatus == 'done')
-                                  Text(
-                                    '✓ Урок отработан',
-                                    style: NebulaTypography.of(context)
-                                        .overline
-                                        .copyWith(
-                                            color: NebulaColors.successMint),
-                                  ),
-                              ],
-                            ),
+                      // Real error — rollback the optimistic removal.
+                      if (mounted) {
+                        setState(() => _localLessons.insert(
+                            removedIdx.clamp(0, _localLessons.length),
+                            removedLesson));
+                        showNebulaSnackBar(
+                          context,
+                          title: 'Не удалось удалить урок',
+                          message: parseApiError(
+                            e,
+                            fallback: 'Проверь подключение и попробуй ещё раз',
                           ),
-                          if (l.scheduledTime != null)
-                            Text(
-                              l.scheduledTime!,
-                              style: NebulaTypography.of(context)
-                                  .labelM
-                                  .copyWith(color: tokens.mutedText),
-                            ),
-                        ],
-                      ),
+                          tone: NebulaSnackTone.error,
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: l.statusColor.withValues(alpha: NebulaAlpha.mist),
+                      borderRadius:
+                          BorderRadius.circular(NebulaTokens.radiusSM),
+                      border: Border.all(
+                          color: l.statusColor
+                              .withValues(alpha: NebulaAlpha.border)),
                     ),
-                  );
-                },
-              ),
+                    child: Row(
+                      children: [
+                        // PulseIndicator: semantic dot with status animation
+                        l.isMakeup
+                            ? Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: NebulaColors.nebulaPurple,
+                                ),
+                              )
+                            : PulseIndicator(status: l.status, size: 10),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l.studentName ?? 'Ученик',
+                                style: NebulaTypography.of(context)
+                                    .titleS
+                                    .copyWith(color: tokens.primaryText),
+                              ),
+                              if (l.isMakeup)
+                                Text(
+                                  'ОТРАБОТКА',
+                                  style: NebulaTypography.of(context)
+                                      .overline
+                                      .copyWith(
+                                          color: NebulaColors.nebulaPurple),
+                                ),
+                              // Makeup state badge on original lesson
+                              if (!l.isMakeup && l.makeupStatus == 'scheduled')
+                                Text(
+                                  '⏳ Отработка запланирована',
+                                  style: NebulaTypography.of(context)
+                                      .overline
+                                      .copyWith(
+                                          color: NebulaColors.stellarBlue,
+                                          fontWeight: FontWeight.w500),
+                                ),
+                              if (!l.isMakeup && l.makeupStatus == 'done')
+                                Text(
+                                  '✓ Урок отработан',
+                                  style: NebulaTypography.of(context)
+                                      .overline
+                                      .copyWith(
+                                          color: NebulaColors.successMint),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (l.scheduledTime != null)
+                          Text(
+                            l.scheduledTime!,
+                            style: NebulaTypography.of(context)
+                                .labelM
+                                .copyWith(color: tokens.mutedText),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

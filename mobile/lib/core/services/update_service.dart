@@ -5,8 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../network/api_client.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
-import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
+import '../../shared/widgets/nebula_modal_surface.dart';
 
 // ── Текущая версия приложения ─────────────────────────────────────────────────
 // Увеличивай kAppBuild при каждой новой сборке (iOS / Android / Desktop).
@@ -99,25 +99,11 @@ class _UpdateDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final surface = NebulaSurfaceProfile.modal.resolve(context);
-    final radius = BorderRadius.circular(surface.radius);
-
     return Dialog(
       backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: radius),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
+      child: NebulaModalSurface(
+        chrome: NebulaModalChrome.dialog,
         padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: surface.fill,
-          gradient: surface.sheen,
-          borderRadius: radius,
-          border: Border.all(
-            color: surface.border,
-            width: surface.borderWidth,
-          ),
-          boxShadow: surface.shadows,
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

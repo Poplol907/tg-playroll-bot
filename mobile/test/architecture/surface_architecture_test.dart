@@ -53,6 +53,53 @@ void main() {
     ]);
   });
 
+  test('feature code does not resolve modal surface profiles directly', () {
+    final modalProfileFiles =
+        filesContaining('NebulaSurfaceProfile.modal.resolve');
+
+    expect(
+      modalProfileFiles,
+      isEmpty,
+      reason: 'Feature sheets must not build their own modal transparency. '
+          'Use NebulaModalSurface, which intentionally shares the same card '
+          'material as salary/calendar surfaces.',
+    );
+  });
+
+  test('student detail content does not use whisper or mist surface fills', () {
+    final content = File(
+      'lib/features/students/presentation/widgets/student_detail_components.dart',
+    ).readAsStringSync();
+
+    expect(
+      content,
+      isNot(contains('NebulaAlpha.whisper')),
+      reason: 'Student detail cards must read as dense matte surfaces, not '
+          'near-transparent overlays.',
+    );
+    expect(
+      content,
+      isNot(contains('withValues(alpha: NebulaAlpha.mist)')),
+      reason: 'Student detail cards must use NebulaSurface/card profiles '
+          'instead of ultra-light raw fills.',
+    );
+  });
+
+  test('student detail stats are one grouped surface, not separate islands',
+      () {
+    final content = File(
+      'lib/features/students/presentation/widgets/student_detail_components.dart',
+    ).readAsStringSync();
+
+    expect(content, contains('class _StatsBlock'));
+    expect(
+      content,
+      isNot(contains('class _StatTile')),
+      reason: 'Stats inside the student profile are part of one profile card. '
+          'Separate NebulaSurface islands are reserved for separated widgets.',
+    );
+  });
+
   test('legacy warm glass token usage stays allowlisted', () {
     final warmGlassFiles = {
       ...filesContaining('warmGlass'),
@@ -74,7 +121,8 @@ void main() {
     final pattern = RegExp(r'withValues\(alpha: [0-9]+\.[0-9]+\)');
     final offenders = <String>[];
 
-    for (final file in dartFiles().where((f) => f.path.startsWith('lib/core/theme'))) {
+    for (final file
+        in dartFiles().where((f) => f.path.startsWith('lib/core/theme'))) {
       // The token file itself is allowed to have numeric literals (those ARE
       // the source of truth) and the doc-comments in nebula_alpha.dart.
       if (file.path == 'lib/core/theme/nebula_alpha.dart') continue;

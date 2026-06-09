@@ -2,6 +2,7 @@ import 'package:cosmo_studio/core/platform/app_platform.dart';
 import 'package:cosmo_studio/core/storage/app_storage.dart';
 import 'package:cosmo_studio/core/theme/app_theme.dart';
 import 'package:cosmo_studio/core/theme/cosmo_theme_tokens.dart';
+import 'package:cosmo_studio/core/theme/nebula_alpha.dart';
 import 'package:cosmo_studio/features/auth/presentation/screens/login_screen.dart';
 import 'package:cosmo_studio/features/auth/presentation/widgets/cosmo_login_sphere.dart';
 import 'package:cosmo_studio/features/students/presentation/widgets/schedule_builder_modal.dart';
@@ -95,8 +96,7 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
-  testWidgets(
-      'adaptive desktop modal uses modal surface profile in light theme',
+  testWidgets('adaptive desktop modal uses card surface profile in light theme',
       (tester) async {
     AppPlatform.debugOverrideIsDesktop = true;
 
@@ -125,11 +125,52 @@ void main() {
     );
     final decoration = container.decoration! as BoxDecoration;
 
-    expect(decoration.color, CosmoThemeTokens.lightLite.denseSurface);
+    expect(
+      decoration.color,
+      CosmoThemeTokens.lightLite.surface.withValues(
+        alpha: NebulaAlpha.occludingSurface,
+      ),
+    );
     expect(
       (decoration.border! as Border).top.color,
       CosmoThemeTokens.lightLite.surfaceBorder,
     );
+    expect(find.byType(BackdropFilter), findsNothing);
+  });
+
+  testWidgets(
+      'adaptive desktop modal uses occluding card material in dark theme',
+      (tester) async {
+    AppPlatform.debugOverrideIsDesktop = true;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.darkInternals,
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => AdaptiveModal.show<void>(
+                context,
+                builder: (_) => const Text('modal content'),
+              ),
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final container = tester.widget<Container>(
+      find.byKey(const ValueKey('adaptive-modal-desktop-surface')),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+
+    expect(decoration.color, isNot(CosmoThemeTokens.darkInternals.surface));
+    expect(decoration.color!.a, NebulaAlpha.occludingSurface);
+    expect(decoration.gradient, isNull);
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
@@ -163,7 +204,7 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
-  testWidgets('server settings modal uses modal surface profile in light theme',
+  testWidgets('server settings modal uses card surface profile in light theme',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -182,7 +223,12 @@ void main() {
     final decoration = container.decoration! as BoxDecoration;
     final border = decoration.border! as Border;
 
-    expect(decoration.color, CosmoThemeTokens.lightLite.denseSurface);
+    expect(
+      decoration.color,
+      CosmoThemeTokens.lightLite.surface.withValues(
+        alpha: NebulaAlpha.occludingSurface,
+      ),
+    );
     expect(border.top.color, CosmoThemeTokens.lightLite.surfaceBorder);
     expect(find.byType(BackdropFilter), findsNothing);
   });

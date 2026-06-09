@@ -39,28 +39,90 @@ class _Avatar extends StatelessWidget {
       );
 }
 
-class _StatTile extends StatelessWidget {
-  final String label, value;
-  final SemanticIntent intent;
-  const _StatTile(
-      {required this.label, required this.value, required this.intent});
+class _StatsBlock extends StatelessWidget {
+  final int attended;
+  final int missed;
+  final int cancelled;
+  final int scheduled;
+
+  const _StatsBlock({
+    required this.attended,
+    required this.missed,
+    required this.cancelled,
+    required this.scheduled,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final role = NebulaSemantic.of(context).byIntent(intent);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: role.base.withValues(alpha: NebulaAlpha.mist),
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-          border: Border.all(
-              color: role.base.withValues(alpha: NebulaAlpha.border)),
-        ),
-        child: Column(children: [
-          Center(child: MetricStat(label: label, value: value, intent: intent)),
-        ]),
+    return NebulaSurface(
+      padding: EdgeInsets.zero,
+      borderRadius: NebulaTokens.radiusMD,
+      child: Row(
+        children: [
+          _StatItem(
+            label: 'Проведено',
+            value: '$attended',
+            intent: SemanticIntent.success,
+          ),
+          const _StatDivider(),
+          _StatItem(
+            label: 'Пропуски',
+            value: '$missed',
+            intent: SemanticIntent.danger,
+          ),
+          const _StatDivider(),
+          _StatItem(
+            label: 'Отменено',
+            value: '$cancelled',
+            intent: SemanticIntent.warning,
+          ),
+          const _StatDivider(),
+          _StatItem(
+            label: 'Впереди',
+            value: '$scheduled',
+            intent: SemanticIntent.primary,
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final SemanticIntent intent;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.intent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 6),
+        child: Center(
+          child: MetricStat(label: label, value: value, intent: intent),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    return Container(
+      width: 1,
+      height: 42,
+      color: tokens.surfaceBorder,
     );
   }
 }
@@ -101,8 +163,7 @@ class _ScheduleRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Text(time,
-            style: type.titleS.copyWith(color: NebulaColors.softWhite)),
+        Text(time, style: type.titleS.copyWith(color: NebulaColors.softWhite)),
         const Spacer(),
         Text('$count ${_word(count)}',
             style: type.labelM.copyWith(color: NebulaColors.ghostText)),
@@ -247,7 +308,6 @@ class _ProgressBar extends StatelessWidget {
   }
 }
 
-
 class _DateChip extends StatelessWidget {
   final LessonModel lesson;
   const _DateChip({required this.lesson});
@@ -265,8 +325,8 @@ class _DateChip extends StatelessWidget {
       ),
       child: Column(children: [
         Text('${lesson.scheduledDate.day}',
-            style: type.bodyM
-                .copyWith(color: color, fontWeight: FontWeight.w700)),
+            style:
+                type.bodyM.copyWith(color: color, fontWeight: FontWeight.w700)),
         Text(DateFormat('EE', 'ru').format(lesson.scheduledDate),
             style: type.overline.copyWith(color: NebulaColors.ghostText)),
       ]),
@@ -292,13 +352,11 @@ class _LessonRow extends StatelessWidget {
     final type = NebulaTypography.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
+      child: NebulaSurface(
+        dense: true,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: NebulaAlpha.whisper),
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-          border: Border.all(color: color.withValues(alpha: NebulaAlpha.border)),
-        ),
+        borderRadius: NebulaTokens.radiusSM,
+        accent: color,
         child: Row(children: [
           Container(
               width: 8,
@@ -361,11 +419,13 @@ class _AddScheduleButton extends ConsumerWidget {
           ),
           borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
           border: Border.all(
-            color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.medium),
+            color:
+                NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.medium),
           ),
           boxShadow: [
             BoxShadow(
-              color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.mist),
+              color: NebulaColors.stellarBlue
+                  .withValues(alpha: NebulaAlpha.surface),
               blurRadius: 12,
               offset: Offset.zero,
             ),

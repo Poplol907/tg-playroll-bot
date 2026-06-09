@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
-import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/platform/app_platform.dart';
@@ -13,6 +12,7 @@ import '../../../../shared/models/student.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
+import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
@@ -285,70 +285,49 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
     required String monthLabel,
     required List<DateTime> preview,
   }) {
-    final surface = NebulaSurfaceProfile.modal.resolve(context);
-    return ClipRRect(
+    return NebulaModalSurface(
+      containerKey: const ValueKey('schedule-builder-modal-surface'),
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(NebulaTokens.radiusXL),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: surface.fill,
-          gradient: surface.sheen,
-          border: Border(
-            top: BorderSide(
-              color: surface.border,
-              width: surface.borderWidth,
-            ),
-            left: BorderSide(
-              color: surface.border,
-              width: surface.borderWidth,
-            ),
-            right: BorderSide(
-              color: surface.border,
-              width: surface.borderWidth,
+      child: Column(
+        children: [
+          _Header(
+            studentName: widget.student.fullName,
+            monthLabel: monthLabel,
+            showHandle: true,
+          ),
+          const Divider(height: 16, color: NebulaColors.surfaceBorder),
+          // Label — static, never scrolls
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: _GridLabel(),
+          ),
+          // Grid — fills remaining height; header row is pinned inside
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: _WeekGrid(
+                selected: _selected,
+                onToggle: _toggleSlot,
+                scrollController: scrollCtrl,
+              ),
             ),
           ),
-          boxShadow: surface.shadows,
-        ),
-        child: Column(
-          children: [
-            _Header(
-              studentName: widget.student.fullName,
+          // Action area — always visible below the grid
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+            child: _ActionArea(
+              selected: _selected,
+              preview: preview,
               monthLabel: monthLabel,
-              showHandle: true,
+              isForeign: widget.student.isForeign,
+              errorMsg: _errorMsg,
+              loading: _loading,
+              onSubmit: () => _submit(monthYear),
             ),
-            const Divider(height: 16, color: NebulaColors.surfaceBorder),
-            // Label — static, never scrolls
-            const Padding(
-              padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
-              child: _GridLabel(),
-            ),
-            // Grid — fills remaining height; header row is pinned inside
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _WeekGrid(
-                  selected: _selected,
-                  onToggle: _toggleSlot,
-                  scrollController: scrollCtrl,
-                ),
-              ),
-            ),
-            // Action area — always visible below the grid
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              child: _ActionArea(
-                selected: _selected,
-                preview: preview,
-                monthLabel: monthLabel,
-                isForeign: widget.student.isForeign,
-                errorMsg: _errorMsg,
-                loading: _loading,
-                onSubmit: () => _submit(monthYear),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -497,11 +476,12 @@ class _ActionArea extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: NebulaColors.errorRose.withValues(alpha: NebulaAlpha.surface),
+              color:
+                  NebulaColors.errorRose.withValues(alpha: NebulaAlpha.surface),
               borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
               border: Border.all(
-                color:
-                    NebulaColors.errorRose.withValues(alpha: NebulaAlpha.accent),
+                color: NebulaColors.errorRose
+                    .withValues(alpha: NebulaAlpha.accent),
               ),
             ),
             child: Row(children: [
@@ -639,9 +619,8 @@ class _WeekGrid extends StatelessWidget {
                                   margin: EdgeInsets.all(compact ? 1.5 : 2),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? NebulaColors.stellarBlue
-                                            .withValues(
-                                                alpha: NebulaAlpha.border)
+                                        ? NebulaColors.stellarBlue.withValues(
+                                            alpha: NebulaAlpha.border)
                                         : isWeekend
                                             ? NebulaColors.nebulaPurple
                                                 .withValues(
@@ -867,11 +846,10 @@ class _Total extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: type.overline
-                    .copyWith(color: NebulaColors.ghostText)),
+                style: type.overline.copyWith(color: NebulaColors.ghostText)),
             Text(value,
-                style: type.bodyS.copyWith(
-                    fontWeight: FontWeight.w700, color: color)),
+                style: type.bodyS
+                    .copyWith(fontWeight: FontWeight.w700, color: color)),
           ],
         ),
       ]),

@@ -116,27 +116,12 @@ class _Body extends StatelessWidget {
 
           _label('Статистика'),
           const SizedBox(height: 10),
-          Row(children: [
-            _StatTile(
-                label: 'Проведено',
-                value: '$attended',
-                intent: SemanticIntent.success),
-            const SizedBox(width: 8),
-            _StatTile(
-                label: 'Пропуски',
-                value: '$missed',
-                intent: SemanticIntent.danger),
-            const SizedBox(width: 8),
-            _StatTile(
-                label: 'Отменено',
-                value: '$cancelled',
-                intent: SemanticIntent.warning),
-            const SizedBox(width: 8),
-            _StatTile(
-                label: 'Впереди',
-                value: '$scheduled',
-                intent: SemanticIntent.primary),
-          ]),
+          _StatsBlock(
+            attended: attended,
+            missed: missed,
+            cancelled: cancelled,
+            scheduled: scheduled,
+          ),
           const SizedBox(height: 22),
 
           _label('Расписание'),
@@ -172,10 +157,12 @@ class _Body extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.subtle),
+                color: NebulaColors.stellarBlue
+                    .withValues(alpha: NebulaAlpha.subtle),
                 borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
                 border: Border.all(
-                    color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.medium)),
+                    color: NebulaColors.stellarBlue
+                        .withValues(alpha: NebulaAlpha.medium)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

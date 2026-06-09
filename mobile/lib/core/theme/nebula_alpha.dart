@@ -58,4 +58,12 @@ abstract class NebulaAlpha {
   /// foreground surfaces, never for accents.
   /// (~0.95)
   static const double solid = 0.95;
+
+  /// Route-occluding sheets/dialogs that sit above readable content.
+  /// Slightly translucent, but dense enough that the route below does not read
+  /// as a second active UI layer.
+  static const double occludingSurface = 0.92;
+
+  /// Fully opaque — rare hard canvas with no material translucency.
+  static const double opaque = 1.0;
 }

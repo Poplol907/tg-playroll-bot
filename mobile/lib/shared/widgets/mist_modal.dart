@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
-import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
+import 'nebula_modal_surface.dart';
 
 /// Canonical bottom sheet surface using the modal surface profile.
 ///
@@ -62,71 +62,42 @@ class MistModal extends StatelessWidget {
     final media = MediaQuery.of(context);
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final profile = NebulaSurfaceProfile.modal.resolve(context);
-    const br = BorderRadius.vertical(
-      top: Radius.circular(NebulaTokens.radiusLG),
-    );
-    return ClipRRect(
-      borderRadius: br,
-      child: Container(
-        decoration: BoxDecoration(
-          color: profile.fill,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(NebulaTokens.radiusLG),
-          ),
-          border: Border(
-            top: BorderSide(
-              color: profile.border,
-              width: profile.borderWidth,
-            ),
-            left: BorderSide(
-              color: profile.border,
-              width: profile.borderWidth,
-            ),
-            right: BorderSide(
-              color: profile.border,
-              width: profile.borderWidth,
-            ),
-          ),
-          boxShadow: profile.shadows,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (showHandle) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: tokens.mutedText.withValues(alpha: 0.42),
-                  borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            Flexible(
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                padding: padding ??
-                    AppSafeInsets.modal(
-                      context,
-                      top: showHandle ? 0 : NebulaTokens.sp20,
-                    ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: media.viewInsets.bottom > 0 ? 0 : 1,
-                  ),
-                  child: child,
-                ),
+    return NebulaModalSurface(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showHandle) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: tokens.mutedText.withValues(alpha: 0.42),
+                borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
               ),
             ),
+            const SizedBox(height: 8),
           ],
-        ),
+          Flexible(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              padding: padding ??
+                  AppSafeInsets.modal(
+                    context,
+                    top: showHandle ? 0 : NebulaTokens.sp20,
+                  ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: media.viewInsets.bottom > 0 ? 0 : 1,
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

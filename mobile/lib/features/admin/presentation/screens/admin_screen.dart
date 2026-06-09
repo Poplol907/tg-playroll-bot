@@ -7,12 +7,12 @@ import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_semantic.dart';
-import '../../../../core/theme/nebula_surface_profile.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
+import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/nebula_text_button.dart';
@@ -91,13 +91,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       children: [
                         Text(
                           'Студия',
-                          style: type.displayM.copyWith(
-                              color: tokens.primaryText),
+                          style:
+                              type.displayM.copyWith(color: tokens.primaryText),
                         ),
                         Text(
                           'Обзор и педагоги',
-                          style: type.labelM
-                              .copyWith(color: tokens.mutedText),
+                          style: type.labelM.copyWith(color: tokens.mutedText),
                         ),
                       ],
                     ),
@@ -295,8 +294,8 @@ class _SearchField extends StatelessWidget {
           hintStyle: NebulaTypography.of(context)
               .bodyM
               .copyWith(color: tokens.mutedText),
-          prefixIcon: Icon(Icons.search_rounded,
-              color: tokens.mutedText, size: 18),
+          prefixIcon:
+              Icon(Icons.search_rounded, color: tokens.mutedText, size: 18),
         ),
       ),
     );
@@ -479,22 +478,13 @@ class _TeacherProfileDialog extends ConsumerWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
-    final modalSurface = NebulaSurfaceProfile.modal.resolve(context);
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(24),
-      child: Container(
+      child: NebulaModalSurface(
+        containerKey: const ValueKey('teacher-profile-modal-surface'),
+        chrome: NebulaModalChrome.dialog,
         constraints: const BoxConstraints(maxWidth: 460),
-        decoration: BoxDecoration(
-          color: modalSurface.fill,
-          gradient: modalSurface.sheen,
-          borderRadius: BorderRadius.circular(modalSurface.radius),
-          border: Border.all(
-            color: modalSurface.border,
-            width: modalSurface.borderWidth,
-          ),
-          boxShadow: modalSurface.shadows,
-        ),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
