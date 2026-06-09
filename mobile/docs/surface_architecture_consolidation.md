@@ -4,6 +4,28 @@ This document tracks the current Nebula surface architecture and the remaining
 migration debt. It is intentionally scoped: legacy code is not removed here
 without a separate decision.
 
+## ⛔ THE PRIME RULE: one mechanism per visual concept
+
+**If two places look like the same thing, they MUST be built from the same
+widget/token — never hand-rolled copies.**
+
+This is non-negotiable. The whole reason this design system exists is to kill
+inconsistency bugs like:
+
+> "Salary and calendar cards have nice readable surfaces, but the student
+> cards and the student-detail buttons are weirdly transparent and you can't
+> tell what to tap."
+
+That happened because the same concept (a card / a tappable button) was
+implemented two different ways: salary/calendar used the canonical
+`NebulaSurface`, while students used a hand-rolled `Container` with an
+8%-alpha fill. Two mechanisms → two looks → confusion.
+
+**Before building any surface, button, badge, sheet, or text style, find the
+canonical primitive/token below and use it. Do NOT re-implement it locally.**
+If the canonical one doesn't fit, extend the canonical one in ONE place — do
+not fork.
+
 ## Canonical API
 
 The design system is composed of **independent single-source-of-truth
