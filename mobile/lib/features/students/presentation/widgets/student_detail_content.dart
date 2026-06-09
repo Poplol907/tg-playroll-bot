@@ -172,10 +172,10 @@ class _Body extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: NebulaColors.stellarBlue.withValues(alpha: 0.08),
+                color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.subtle),
                 borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
                 border: Border.all(
-                    color: NebulaColors.stellarBlue.withValues(alpha: 0.3)),
+                    color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.medium)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
