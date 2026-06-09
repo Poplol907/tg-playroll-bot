@@ -240,12 +240,12 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
                         height: 48,
                         decoration: BoxDecoration(
                           color: NebulaColors.stellarBlue
-                              .withValues(alpha: NebulaAlpha.mist),
+                              .withValues(alpha: NebulaAlpha.subtle),
                           borderRadius:
                               BorderRadius.circular(NebulaTokens.radiusMD),
                           border: Border.all(
                             color: NebulaColors.stellarBlue
-                                .withValues(alpha: NebulaAlpha.accent),
+                                .withValues(alpha: NebulaAlpha.medium),
                           ),
                         ),
                         child: Row(

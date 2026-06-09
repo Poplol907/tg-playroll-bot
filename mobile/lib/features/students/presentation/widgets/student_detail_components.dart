@@ -355,13 +355,13 @@ class _AddScheduleButton extends ConsumerWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.surface),
-              NebulaColors.nebulaPurple.withValues(alpha: NebulaAlpha.mist),
+              NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.accent),
+              NebulaColors.nebulaPurple.withValues(alpha: NebulaAlpha.subtle),
             ],
           ),
           borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
           border: Border.all(
-            color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.accent),
+            color: NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.medium),
           ),
           boxShadow: [
             BoxShadow(
