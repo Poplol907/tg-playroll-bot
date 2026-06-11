@@ -52,6 +52,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.watch(authProvider);
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next.isAuthenticated) context.go('/calendar');
@@ -80,11 +81,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   children: [
                     const SizedBox(height: 60),
-                    // ── ASCII Planet — dark blurred core backdrop ──
+                    // ── ASCII Planet — theme-aware blurred core backdrop ──
                     Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Blurred dark oval — pushes ASCII water behind the planet
+                        // Blurred oval — separates the symbol sphere from the
+                        // page without turning light mode into a dark spot.
                         ClipOval(
                           child: SizedBox(
                             width: 230,
@@ -93,16 +95,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               filter:
                                   ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                               child: Container(
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
-                                    colors: [
-                                      Color(0xDD0B1838), // deep void 87%
-                                      Color(0xAA0B1838), // 67%
-                                      Color(0x660B1838), // 40%
-                                      Color(0x000B1838), // transparent
-                                    ],
-                                    stops: [0.0, 0.38, 0.65, 1.0],
+                                    colors: isLight
+                                        ? [
+                                            tokens.surface
+                                                .withValues(alpha: 0.92),
+                                            tokens.focusAccent
+                                                .withValues(alpha: 0.16),
+                                            tokens.primaryAccent
+                                                .withValues(alpha: 0.07),
+                                            Colors.transparent,
+                                          ]
+                                        : const [
+                                            Color(0xDD0B1838),
+                                            Color(0xAA0B1838),
+                                            Color(0x660B1838),
+                                            Color(0x000B1838),
+                                          ],
+                                    stops: const [0.0, 0.38, 0.65, 1.0],
                                   ),
                                 ),
                               ),

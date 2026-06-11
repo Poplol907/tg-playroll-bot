@@ -163,16 +163,16 @@ class _CosmoLoginSpherePainter extends CustomPainter {
     final radius = size.shortestSide * 0.39;
     final auraRadius = radius * 2.15;
 
-    final auraAccent = _isLight ? tokens.primaryText : tokens.focusAccent;
+    final auraAccent = tokens.focusAccent;
     canvas.drawCircle(
       center,
       auraRadius,
       Paint()
         ..shader = RadialGradient(
           colors: [
-            auraAccent.withValues(alpha: (_isLight ? 0.07 : 0.18) * glow),
+            auraAccent.withValues(alpha: (_isLight ? 0.13 : 0.18) * glow),
             tokens.secondaryAccent
-                .withValues(alpha: (_isLight ? 0.035 : 0.08) * glow),
+                .withValues(alpha: (_isLight ? 0.06 : 0.08) * glow),
             Colors.transparent,
           ],
           stops: const [0.0, 0.50, 1.0],
@@ -214,11 +214,11 @@ class _CosmoLoginSpherePainter extends CustomPainter {
 
     for (final point in points) {
       final color = _isLight
-          ? Color.lerp(tokens.mutedText, tokens.primaryText, point.depth)!
+          ? Color.lerp(tokens.focusAccent, tokens.primaryAccent, point.depth)!
           : Color.lerp(
               tokens.secondaryAccent, tokens.focusAccent, point.depth)!;
       final alpha =
-          (_isLight ? 0.18 + point.depth * 0.42 : 0.22 + point.depth * 0.58)
+          (_isLight ? 0.22 + point.depth * 0.48 : 0.22 + point.depth * 0.58)
               .clamp(0.0, 1.0);
       _drawChar(canvas, point.char, point.x, point.y, color, alpha * glow);
     }
