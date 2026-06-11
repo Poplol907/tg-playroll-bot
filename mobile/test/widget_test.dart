@@ -322,5 +322,11 @@ void main() {
     );
 
     expect(find.byType(CosmoLoginSphere), findsOneWidget);
+    expect(
+      tester
+          .widget<CosmoLoginSphere>(find.byType(CosmoLoginSphere))
+          .enableAmbientMotion,
+      isTrue,
+    );
   });
 }
