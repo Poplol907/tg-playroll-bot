@@ -60,24 +60,28 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
           // ── Header ──────────────────────────────────────────────────────────
           Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    dateStr,
-                    style: NebulaTypography.of(context)
-                        .titleL
-                        .copyWith(color: tokens.primaryText),
-                  ),
-                  Text(
-                    '${_localLessons.length} ${_lessonWord(_localLessons.length)}',
-                    style: NebulaTypography.of(context)
-                        .labelM
-                        .copyWith(color: tokens.mutedText),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dateStr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: NebulaTypography.of(context)
+                          .titleL
+                          .copyWith(color: tokens.primaryText),
+                    ),
+                    Text(
+                      '${_localLessons.length} ${_lessonWord(_localLessons.length)}',
+                      style: NebulaTypography.of(context)
+                          .labelM
+                          .copyWith(color: tokens.mutedText),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               IconButton(
                 icon: Icon(Icons.close_rounded,
                     color: tokens.mutedText, size: 20),

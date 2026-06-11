@@ -29,11 +29,26 @@ class SemanticRole {
 
   /// Build a role from a single base color and the global alpha tokens.
   /// Call sites get cohesive surfaces without ever picking an alpha value.
-  factory SemanticRole.fromBase(Color base, {Color? contrast}) => SemanticRole(
+  ///
+  /// On a LIGHT background a saturated accent at the dark-tuned alpha (0.12
+  /// fill / 0.35 border) washes out into pastel mush. Light therefore uses
+  /// a denser tint + crisper border so the accent actually *accents* — this
+  /// matches the reference pill spec (≈0.18 fill, ≈0.60 border, saturated
+  /// text). Dark keeps its tuned, subtle values. Same recipe, theme-aware
+  /// density — the philosophy holds, only the alpha tier shifts.
+  factory SemanticRole.fromBase(
+    Color base, {
+    Color? contrast,
+    bool isLight = false,
+  }) =>
+      SemanticRole(
         base: base,
-        tint: base.withValues(alpha: NebulaAlpha.surface),
-        border: base.withValues(alpha: NebulaAlpha.accent),
-        glow: base.withValues(alpha: NebulaAlpha.subtle),
+        tint: base.withValues(
+            alpha: isLight ? NebulaAlpha.subtle : NebulaAlpha.surface),
+        border: base.withValues(
+            alpha: isLight ? NebulaAlpha.strong : NebulaAlpha.accent),
+        glow: base.withValues(
+            alpha: isLight ? NebulaAlpha.accent : NebulaAlpha.subtle),
         contrast: contrast ?? base,
       );
 }
@@ -67,18 +82,21 @@ class NebulaSemantic extends ThemeExtension<NebulaSemantic> {
   /// Build the role catalogue out of the active `CosmoThemeTokens`.
   /// This keeps light and dark themes in sync automatically.
   factory NebulaSemantic.fromTokens(CosmoThemeTokens t) {
+    // Dark theme uses NebulaColors.dimText as its muted token; the light
+    // themes substitute their own muted grey. That single difference is a
+    // reliable, context-free brightness probe so accent density tracks theme.
+    final isLight = t.mutedText != NebulaColors.dimText;
     return NebulaSemantic(
-      primary: SemanticRole.fromBase(t.primaryAccent),
-      info: SemanticRole.fromBase(t.focusAccent),
-      success: SemanticRole.fromBase(t.success),
-      warning: SemanticRole.fromBase(t.warning),
-      danger: SemanticRole.fromBase(t.error),
+      primary: SemanticRole.fromBase(t.primaryAccent, isLight: isLight),
+      info: SemanticRole.fromBase(t.focusAccent, isLight: isLight),
+      success: SemanticRole.fromBase(t.success, isLight: isLight),
+      warning: SemanticRole.fromBase(t.warning, isLight: isLight),
+      danger: SemanticRole.fromBase(t.error, isLight: isLight),
       neutral: SemanticRole.fromBase(
         // mistWhite for dark, mutedText for light — picked by the active token
-        t.mutedText == NebulaColors.dimText
-            ? NebulaColors.mistWhite
-            : t.mutedText,
+        isLight ? t.mutedText : NebulaColors.mistWhite,
         contrast: t.mutedText,
+        isLight: isLight,
       ),
     );
   }

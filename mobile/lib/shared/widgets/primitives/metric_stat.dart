@@ -44,12 +44,20 @@ class MetricStat extends StatelessWidget {
           ),
         ),
         SizedBox(height: style.valueToLabelGap),
-        Text(
-          value,
-          style: type.titleM.copyWith(
-            color: role.contrast,
-            fontSize: type.titleM.fontSize! * style.valueSizeBoost,
-            fontWeight: FontWeight.w700,
+        // Values like money ("1 234 567 ₽") use non-breaking spaces and can't
+        // wrap — scaleDown shrinks an oversized number to fit its column
+        // instead of overflowing the row.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: type.titleM.copyWith(
+              color: role.contrast,
+              fontSize: type.titleM.fontSize! * style.valueSizeBoost,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],

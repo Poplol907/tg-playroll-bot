@@ -67,7 +67,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.read(appVisualModeProvider.notifier).state = switch (mode) {
       AppVisualMode.darkInternals => AppVisualMode.lightLite,
       AppVisualMode.lightLite => AppVisualMode.darkInternals,
-      _ => AppVisualMode.darkInternals,
     };
   }
 
@@ -213,8 +212,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 padding: EdgeInsets.zero,
                 borderRadius: NebulaTokens.radiusMD,
                 child: IconCallout(
-                  icon: mode == AppVisualMode.lightLite ||
-                          mode == AppVisualMode.lightShader
+                  icon: mode == AppVisualMode.lightLite
                       ? Icons.light_mode_rounded
                       : Icons.dark_mode_rounded,
                   title: 'Тема',
@@ -252,7 +250,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _modeLabel(AppVisualMode mode) => switch (mode) {
         AppVisualMode.darkInternals => 'ТЁМНАЯ',
         AppVisualMode.lightLite => 'СВЕТЛАЯ',
-        AppVisualMode.lightShader => 'СВЕТЛАЯ+',
       };
 }
 

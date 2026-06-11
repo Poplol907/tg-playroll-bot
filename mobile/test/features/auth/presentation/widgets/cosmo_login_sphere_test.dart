@@ -34,7 +34,7 @@ void main() {
           data: MediaQueryData(disableAnimations: true),
           child: Center(
             child: CosmoLoginSphere(
-              tokens: CosmoThemeTokens.lightShader,
+              tokens: CosmoThemeTokens.lightLite,
             ),
           ),
         ),
@@ -45,7 +45,7 @@ void main() {
       find.byType(CosmoLoginSphere),
     );
 
-    expect(sphere.tokens, CosmoThemeTokens.lightShader);
+    expect(sphere.tokens, CosmoThemeTokens.lightLite);
     expect(
       find.descendant(
         of: find.byType(CosmoLoginSphere),

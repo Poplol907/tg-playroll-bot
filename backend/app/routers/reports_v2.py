@@ -299,7 +299,9 @@ async def studio_report(
         )
     )
     active_students = active_students_result.scalar() or 0
-    active_teachers = len([t for t in teachers if t.id in by_teacher])
+    # Counter shows the studio's whole teacher roster, not just those who
+    # happened to have lessons in the selected month.
+    active_teachers = len(teachers)
 
     # Загружаем ставки сразу для всех педагогов одним запросом → нет N+1
     teacher_ids = [t.id for t in teachers]

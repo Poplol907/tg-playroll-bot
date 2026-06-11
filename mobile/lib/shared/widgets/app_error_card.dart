@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_tokens.dart';
 import 'nebula_surface.dart';
 import 'nebula_text_button.dart';
@@ -20,19 +20,21 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: NebulaColors.ghostText, size: 48),
+            Icon(icon, color: tokens.mutedText, size: 48),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: NebulaColors.dimText,
+              style: TextStyle(
+                color: tokens.mutedText,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
@@ -42,8 +44,8 @@ class AppEmptyState extends StatelessWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: NebulaColors.ghostText,
+                style: TextStyle(
+                  color: tokens.mutedText,
                   fontSize: 13,
                 ),
               ),
@@ -72,6 +74,8 @@ class AppErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(24),
       borderRadius: NebulaTokens.radiusLG,
@@ -82,14 +86,14 @@ class AppErrorCard extends StatelessWidget {
             isConnectionError
                 ? Icons.wifi_off_rounded
                 : Icons.error_outline_rounded,
-            color: NebulaColors.ghostText,
+            color: tokens.mutedText,
             size: 48,
           ),
           const SizedBox(height: 12),
           Text(
             isConnectionError ? 'Нет соединения' : 'Ошибка загрузки',
-            style: const TextStyle(
-              color: NebulaColors.errorRose,
+            style: TextStyle(
+              color: tokens.error,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
@@ -98,8 +102,8 @@ class AppErrorCard extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: NebulaColors.mistWhite,
+            style: TextStyle(
+              color: tokens.secondaryText,
               fontSize: 13,
             ),
           ),
@@ -128,22 +132,24 @@ class AppInlineErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
       borderRadius: NebulaTokens.radiusMD,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: NebulaColors.warningAmber,
+            color: tokens.warning,
             size: 18,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: NebulaColors.mistWhite,
+              style: TextStyle(
+                color: tokens.secondaryText,
                 fontSize: 12,
               ),
             ),

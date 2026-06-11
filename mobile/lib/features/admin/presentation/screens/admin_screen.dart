@@ -613,15 +613,31 @@ class _TeacherProfileDialog extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: NebulaTextButton(
-                    label: 'Удалить',
-                    icon: Icons.person_remove_outlined,
+                    label: 'Отключить',
+                    icon: Icons.archive_outlined,
                     onPressed: () async {
                       Navigator.pop(context);
-                      await _confirmAndDelete(context, ref);
+                      await _confirmAndDisable(context, ref);
                     },
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // ── Destructive: permanent delete ──
+            SizedBox(
+              width: double.infinity,
+              child: NebulaTextButton(
+                label: 'Удалить навсегда',
+                icon: Icons.delete_forever_outlined,
+                color: NebulaColors.errorRose,
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _confirmAndDelete(context, ref);
+                },
+              ),
             ),
           ],
         ),
@@ -634,12 +650,47 @@ class _TeacherProfileDialog extends ConsumerWidget {
     return '${formatter.format(amount)} ₽';
   }
 
+  Future<void> _confirmAndDisable(BuildContext context, WidgetRef ref) async {
+    final confirm = await NebulaDialog.confirm(
+      context,
+      title: 'Отключить педагога?',
+      message:
+          '${user.displayName} больше не сможет войти и исчезнет из списка, но все уроки, ставки и история выплат сохранятся в базе.',
+      confirmLabel: 'Отключить',
+      cancelLabel: 'Отмена',
+    );
+    if (!confirm) return;
+
+    try {
+      await ref.read(adminRepositoryProvider).disableUser(user.id);
+      HapticFeedback.mediumImpact();
+      onUpdated();
+      if (context.mounted) {
+        showNebulaSnackBar(
+          context,
+          title: 'Отключено',
+          message: '${user.displayName} архивирован, история сохранена',
+          tone: NebulaSnackTone.success,
+        );
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        showNebulaSnackBar(
+          context,
+          title: 'Не удалось отключить',
+          message: parseApiError(e),
+          tone: NebulaSnackTone.error,
+        );
+      }
+    }
+  }
+
   Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
     final confirm = await NebulaDialog.confirm(
       context,
-      title: 'Удалить педагога?',
+      title: 'Удалить навсегда?',
       message:
-          'Это действие нельзя отменить. Все связанные с ${user.displayName} данные останутся в базе, но войти под этим логином будет невозможно.',
+          'Педагог ${user.displayName} и ВСЕ его данные — уроки, ставки, подписки — будут удалены безвозвратно. Чтобы сохранить историю, используй «Отключить».',
       confirmLabel: 'Удалить',
       cancelLabel: 'Отмена',
       destructive: true,
@@ -654,7 +705,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
         showNebulaSnackBar(
           context,
           title: 'Удалено',
-          message: '${user.displayName} больше не имеет доступа',
+          message: '${user.displayName} и все данные удалены',
           tone: NebulaSnackTone.success,
         );
       }
@@ -700,14 +751,24 @@ class _DialogStatRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: type.bodyS.copyWith(color: tokens.secondaryText),
             ),
           ),
-          Text(
-            value,
-            style: (valueBig ? type.titleM : type.bodyM).copyWith(
-              color: color,
-              fontWeight: valueBig ? FontWeight.w700 : FontWeight.w600,
+          const SizedBox(width: 10),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: (valueBig ? type.titleM : type.bodyM).copyWith(
+                  color: color,
+                  fontWeight: valueBig ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ],

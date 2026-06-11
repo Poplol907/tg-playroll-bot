@@ -69,27 +69,29 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
 
     // Build form content (no modal chrome — chrome added per-platform below)
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     final formContent = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Добавить урок · $dateStr',
-          style: type.titleM.copyWith(color: NebulaColors.softWhite),
+          style: type.titleM.copyWith(color: tokens.primaryText),
         ),
         const SizedBox(height: 20),
 
         // ── Student picker ──────────────────────────────────────────────────
         Text(
           'УЧЕНИК',
-          style: type.overline.copyWith(color: NebulaColors.ghostText),
+          style: type.overline.copyWith(color: tokens.mutedText),
         ),
         const SizedBox(height: 8),
         studentsAsync.when(
           loading: () => const Center(child: OrbitLoader()),
           error: (_, __) => Text(
             'Ошибка загрузки',
-            style: type.bodyM.copyWith(color: NebulaColors.errorRose),
+            style: type.bodyM.copyWith(color: tokens.error),
           ),
           data: (students) {
             final eligible = students
@@ -100,7 +102,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
             if (eligible.isEmpty) {
               return Text(
                 'Нет активных учеников',
-                style: type.bodyM.copyWith(color: NebulaColors.ghostText),
+                style: type.bodyM.copyWith(color: tokens.mutedText),
               );
             }
             return ConstrainedBox(
@@ -122,16 +124,16 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: selected
-                            ? NebulaColors.stellarBlue
+                            ? tokens.primaryAccent
                                 .withValues(alpha: NebulaAlpha.subtle)
-                            : NebulaColors.nebulaSurface,
+                            : tokens.surface,
                         borderRadius:
                             BorderRadius.circular(NebulaTokens.radiusSM),
                         border: Border.all(
                           color: selected
-                              ? NebulaColors.stellarBlue
+                              ? tokens.primaryAccent
                                   .withValues(alpha: NebulaAlpha.strong)
-                              : NebulaColors.surfaceBorder,
+                              : tokens.surfaceBorder,
                         ),
                       ),
                       child: Row(
@@ -142,8 +144,8 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: selected
-                                  ? NebulaColors.stellarBlue
-                                  : NebulaColors.ghostText
+                                  ? tokens.primaryAccent
+                                  : tokens.mutedText
                                       .withValues(alpha: NebulaAlpha.medium),
                             ),
                           ),
@@ -152,8 +154,8 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                             s.fullName,
                             style: type.bodyM.copyWith(
                               color: selected
-                                  ? NebulaColors.softWhite
-                                  : NebulaColors.dimText,
+                                  ? tokens.primaryText
+                                  : tokens.mutedText,
                               fontWeight:
                                   selected ? FontWeight.w600 : FontWeight.w400,
                             ),
@@ -172,29 +174,29 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
         // ── Time picker ─────────────────────────────────────────────────────
         Text(
           'ВРЕМЯ',
-          style: type.overline.copyWith(color: NebulaColors.ghostText),
+          style: type.overline.copyWith(color: tokens.mutedText),
         ),
         const SizedBox(height: 8),
         Container(
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: NebulaColors.nebulaSurface,
+            color: tokens.surface,
             borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-            border: Border.all(color: NebulaColors.surfaceBorder),
+            border: Border.all(color: tokens.surfaceBorder),
           ),
           child: DropdownButton<String>(
             value: _selectedTime,
             hint: Text(
               'Выбрать время (необязательно)',
-              style: type.bodyM.copyWith(color: NebulaColors.ghostText),
+              style: type.bodyM.copyWith(color: tokens.mutedText),
             ),
             isExpanded: true,
             underline: const SizedBox(),
-            dropdownColor: NebulaColors.depthNear,
-            icon: const Icon(Icons.expand_more_rounded,
-                color: NebulaColors.dimText, size: 20),
-            style: type.bodyM.copyWith(color: NebulaColors.softWhite),
+            dropdownColor: tokens.denseSurface,
+            icon: Icon(Icons.expand_more_rounded,
+                color: tokens.mutedText, size: 20),
+            style: type.bodyM.copyWith(color: tokens.primaryText),
             items: _timeSlots
                 .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                 .toList(),
@@ -229,15 +231,15 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
       ),
       child: Container(
         padding: EdgeInsets.fromLTRB(24, 20, 24, bottomPad + 24),
-        decoration: const BoxDecoration(
-          color: NebulaColors.denseNebulaSurface,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: tokens.denseSurface,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(NebulaTokens.radiusLG),
           ),
           border: Border(
-            top: BorderSide(color: NebulaColors.surfaceBorder, width: 1),
-            left: BorderSide(color: NebulaColors.surfaceBorder, width: 1),
-            right: BorderSide(color: NebulaColors.surfaceBorder, width: 1),
+            top: BorderSide(color: tokens.surfaceBorder, width: 1),
+            left: BorderSide(color: tokens.surfaceBorder, width: 1),
+            right: BorderSide(color: tokens.surfaceBorder, width: 1),
           ),
         ),
         child: Column(
@@ -250,7 +252,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: NebulaColors.dimText.withValues(alpha: NebulaAlpha.strong),
+                  color: tokens.mutedText.withValues(alpha: NebulaAlpha.strong),
                   borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
                 ),
               ),

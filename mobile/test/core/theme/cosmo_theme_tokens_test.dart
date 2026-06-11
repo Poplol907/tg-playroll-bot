@@ -27,28 +27,26 @@ void main() {
   });
 
   test('light placeholder tokens use bright canvas values', () {
-    expect(CosmoThemeTokens.lightShader.background, const Color(0xFFF8FAFF));
     expect(CosmoThemeTokens.lightLite.background, const Color(0xFFFFFFFF));
-    expect(CosmoThemeTokens.lightShader.primaryText, const Color(0xFF111827));
+    expect(CosmoThemeTokens.lightLite.primaryText, const Color(0xFF0D1117));
   });
 
   test('light tokens stay cool and avoid beige surfaces', () {
-    final shaderBg = CosmoThemeTokens.lightShader.background;
+    final liteBg = CosmoThemeTokens.lightLite.background;
     final liteSurface = CosmoThemeTokens.lightLite.surface;
 
     int red(Color color) => (color.r * 255).round();
     int green(Color color) => (color.g * 255).round();
     int blue(Color color) => (color.b * 255).round();
 
-    expect(blue(shaderBg), greaterThanOrEqualTo(red(shaderBg)));
-    expect(green(shaderBg), greaterThanOrEqualTo(red(shaderBg)));
+    expect(blue(liteBg), greaterThanOrEqualTo(red(liteBg)));
+    expect(green(liteBg), greaterThanOrEqualTo(red(liteBg)));
     expect(blue(liteSurface), greaterThan(red(liteSurface)));
   });
 
   test('light theme tokens keep glow intensity restrained', () {
     expect(CosmoThemeTokens.darkInternals.glowIntensity, 1.0);
-    expect(CosmoThemeTokens.lightShader.glowIntensity, lessThan(0.35));
     expect(CosmoThemeTokens.lightLite.glowIntensity,
-        lessThan(CosmoThemeTokens.lightShader.glowIntensity));
+        lessThan(CosmoThemeTokens.darkInternals.glowIntensity));
   });
 }

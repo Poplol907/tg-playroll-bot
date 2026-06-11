@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_component_styles.dart';
@@ -28,6 +29,8 @@ class StudentsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(studentsProvider);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -70,19 +73,19 @@ class StudentsScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: NebulaColors.stellarBlue
+                              color: tokens.primaryAccent
                                   .withValues(alpha: NebulaAlpha.surface),
                               borderRadius:
                                   BorderRadius.circular(NebulaTokens.radiusSM),
                               border: Border.all(
-                                  color: NebulaColors.stellarBlue
+                                  color: tokens.primaryAccent
                                       .withValues(alpha: NebulaAlpha.accent)),
                             ),
                             child: Text(
                               '${students.length}',
                               style: NebulaTypography.of(context).bodyM.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: NebulaColors.stellarBlue,
+                                color: tokens.primaryAccent,
                               ),
                             ),
                           ),
@@ -95,16 +98,16 @@ class StudentsScreen extends ConsumerWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: NebulaColors.stellarBlue
+                          color: tokens.primaryAccent
                               .withValues(alpha: NebulaAlpha.surface),
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color: NebulaColors.stellarBlue
+                              color: tokens.primaryAccent
                                   .withValues(alpha: NebulaAlpha.medium)),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.add_rounded,
-                          color: NebulaColors.stellarBlue,
+                          color: tokens.primaryAccent,
                           size: 20,
                         ),
                       ),
@@ -201,6 +204,8 @@ class _StudentCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     final nameColor =
         isLight ? const Color(0xFF0D1117) : NebulaColors.softWhite;
     final subColor = isLight ? const Color(0xFF4B5563) : NebulaColors.dimText;
@@ -263,7 +268,7 @@ class _StudentCard extends ConsumerWidget {
                         width: 14,
                         height: 14,
                         decoration: BoxDecoration(
-                          color: NebulaColors.successMint,
+                          color: tokens.success,
                           shape: BoxShape.circle,
                           border: Border.all(color: newBadgeBorder, width: 2),
                         ),
@@ -325,8 +330,8 @@ class _StudentCard extends ConsumerWidget {
                   shape: BoxShape.circle,
                   color:
                       student.status == 'active' || student.status == 'ACTIVE'
-                          ? NebulaColors.successMint
-                          : NebulaColors.ghostText,
+                          ? tokens.success
+                          : tokens.mutedText,
                 ),
               ),
               const SizedBox(width: 4),

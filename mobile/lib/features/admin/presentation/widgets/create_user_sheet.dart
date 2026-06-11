@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/widgets/mist_modal.dart';
 import '../../../../shared/widgets/nebula_input.dart';
@@ -70,16 +70,18 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Новый пользователь',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: NebulaColors.softWhite,
+            color: tokens.primaryText,
           ),
         ),
         const SizedBox(height: 20),
@@ -109,7 +111,7 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
           suffix: IconButton(
             icon: Icon(
               _showPass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: NebulaColors.ghostText, size: 18,
+              color: tokens.mutedText, size: 18,
             ),
             onPressed: () => setState(() => _showPass = !_showPass),
           ),
@@ -119,22 +121,22 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
         // Role picker
         Row(
           children: [
-            const Text(
+            Text(
               'Роль:',
-              style: TextStyle(color: NebulaColors.dimText),
+              style: TextStyle(color: tokens.mutedText),
             ),
             const SizedBox(width: 12),
             _RoleChip(
               label: 'Педагог',
               selected: _role == 'TEACHER',
-              color: NebulaColors.stellarBlue,
+              color: tokens.primaryAccent,
               onTap: () => setState(() => _role = 'TEACHER'),
             ),
             const SizedBox(width: 8),
             _RoleChip(
               label: 'Админ',
               selected: _role == 'ADMIN',
-              color: NebulaColors.nebulaPurple,
+              color: tokens.secondaryAccent,
               onTap: () => setState(() => _role = 'ADMIN'),
             ),
           ],
@@ -144,7 +146,7 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
           const SizedBox(height: 12),
           Text(
             _error!,
-            style: const TextStyle(fontSize: 13, color: NebulaColors.errorRose),
+            style: TextStyle(fontSize: 13, color: tokens.error),
           ),
         ],
         const SizedBox(height: 20),
@@ -155,7 +157,7 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
           loading: _loading,
           onPressed: _loading ? null : _submit,
           icon: Icons.person_add_rounded,
-          color: NebulaColors.stellarBlue,
+          color: tokens.primaryAccent,
         ),
       ],
     );
@@ -199,6 +201,8 @@ class _RoleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return GestureDetector(
       onTap: () { HapticFeedback.selectionClick(); onTap(); },
       child: AnimatedContainer(
@@ -208,14 +212,14 @@ class _RoleChip extends StatelessWidget {
           color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
           border: Border.all(
-            color: selected ? color.withValues(alpha: 0.5) : NebulaColors.surfaceBorder,
+            color: selected ? color.withValues(alpha: 0.5) : tokens.surfaceBorder,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: selected ? color : NebulaColors.ghostText,
+            color: selected ? color : tokens.mutedText,
           ),
         ),
       ),

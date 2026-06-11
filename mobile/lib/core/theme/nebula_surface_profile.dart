@@ -68,15 +68,21 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
       NebulaSurfaceProfile.nav => isLight
           ? tokens.denseSurface.withValues(alpha: NebulaAlpha.solid)
           : tokens.surface,
-      NebulaSurfaceProfile.status =>
-        semanticAccent.withValues(alpha: NebulaAlpha.surface),
+      // Status fills sit on the page background. On light, the dark-tuned
+      // 0.12 tint washes a saturated accent into pastel — bump to subtle
+      // (0.18) so the chip actually reads as that accent. Dark stays subtle.
+      NebulaSurfaceProfile.status => semanticAccent.withValues(
+          alpha: isLight ? NebulaAlpha.subtle : NebulaAlpha.surface),
       NebulaSurfaceProfile.frostedSmall => tokens.denseSurface,
     };
 
     final border = switch (this) {
-      _ when hasAccent => semanticAccent.withValues(alpha: NebulaAlpha.accent),
-      NebulaSurfaceProfile.status =>
-        semanticAccent.withValues(alpha: NebulaAlpha.medium),
+      // Crisper accent edges on light so the surface doesn't dissolve into
+      // the white page; dark keeps its softer, tuned borders.
+      _ when hasAccent => semanticAccent.withValues(
+          alpha: isLight ? NebulaAlpha.medium : NebulaAlpha.accent),
+      NebulaSurfaceProfile.status => semanticAccent.withValues(
+          alpha: isLight ? NebulaAlpha.strong : NebulaAlpha.medium),
       NebulaSurfaceProfile.input => tokens.surfaceBorder,
       NebulaSurfaceProfile.frostedSmall => tokens.surfaceBorder,
       _ => tokens.surfaceBorder,

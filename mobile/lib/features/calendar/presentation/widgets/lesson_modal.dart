@@ -176,24 +176,27 @@ class _LessonModalState extends ConsumerState<LessonModal>
       locale: const Locale('ru'),
       builder: (context, child) {
         final base = Theme.of(context).colorScheme;
+        final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+            CosmoThemeTokens.darkInternals;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: base.copyWith(
-              primary: NebulaColors.stellarBlue,
-              onPrimary: Colors.black,
-              surface: NebulaColors.spaceBlack,
-              onSurface: NebulaColors.softWhite,
-              surfaceContainer: NebulaColors.depthMid,
-              surfaceContainerHigh: NebulaColors.depthMid,
-              surfaceContainerHighest: NebulaColors.depthNear,
-              onSurfaceVariant: NebulaColors.dimText,
-              outline: NebulaColors.surfaceBorder,
-              secondaryContainer: NebulaColors.stellarBlue
+              primary: tokens.primaryAccent,
+              onPrimary: isDark ? Colors.black : Colors.white,
+              surface: tokens.backgroundMid,
+              onSurface: tokens.primaryText,
+              surfaceContainer: tokens.backgroundNear,
+              surfaceContainerHigh: tokens.backgroundNear,
+              surfaceContainerHighest: tokens.surface,
+              onSurfaceVariant: tokens.mutedText,
+              outline: tokens.surfaceBorder,
+              secondaryContainer: tokens.primaryAccent
                   .withValues(alpha: NebulaAlpha.border),
-              onSecondaryContainer: NebulaColors.stellarBlue,
+              onSecondaryContainer: tokens.primaryAccent,
             ),
-            dialogTheme: const DialogThemeData(
-              backgroundColor: NebulaColors.spaceBlack,
+            dialogTheme: DialogThemeData(
+              backgroundColor: tokens.backgroundMid,
             ),
           ),
           child: child!,
@@ -391,7 +394,7 @@ class _LessonModalState extends ConsumerState<LessonModal>
                           ],
                           StellarButton(
                             label: 'Вернуть как запланированный',
-                            color: NebulaColors.ghostText,
+                            color: tokens.mutedText,
                             icon: Icons.restore_rounded,
                             onPressed: () => _updateStatus('scheduled'),
                           ),
@@ -786,7 +789,7 @@ class _LessonModalDesktopState extends ConsumerState<_LessonModalDesktop> {
               ],
               StellarButton(
                 label: 'Вернуть как запланированный',
-                color: NebulaColors.ghostText,
+                color: tokens.mutedText,
                 icon: Icons.restore_rounded,
                 onPressed: () => _updateStatus('scheduled'),
               ),

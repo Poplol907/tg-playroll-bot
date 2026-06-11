@@ -15,8 +15,8 @@ void main() {
     addTearDown(container.dispose);
 
     container.read(appVisualModeProvider.notifier).state =
-        AppVisualMode.lightShader;
+        AppVisualMode.lightLite;
 
-    expect(container.read(appVisualModeProvider), AppVisualMode.lightShader);
+    expect(container.read(appVisualModeProvider), AppVisualMode.lightLite);
   });
 }
