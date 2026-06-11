@@ -347,6 +347,10 @@ async def studio_report(
 @router.delete("/v2/reset-month", status_code=200)
 async def reset_month(
     month_year: str = Query(..., description="YYYY-MM, например 2026-05"),
+    teacher_id: int | None = Query(
+        None,
+        description="Опционально: сбросить месяц конкретного педагога (только админ)",
+    ),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -355,7 +359,12 @@ async def reset_month(
     Используется для отладки алгоритма расчёта зарплаты.
     """
     require_admin_or_teacher(current_user)
-    teacher_id = current_user.id
+    effective_teacher_id = teacher_id or current_user.id
+    require_teacher_self_or_admin(current_user, effective_teacher_id)
+
+    teacher = await session.get(User, effective_teacher_id)
+    if teacher is None or teacher.org_id != current_user.org_id:
+        raise HTTPException(status_code=404, detail="teacher not found")
 
     mr = parse_month(month_year)
     date_from, date_to = mr.start, mr.end
@@ -367,7 +376,7 @@ async def reset_month(
         select(Lesson)
         .join(StudentTeacher, StudentTeacher.id == Lesson.student_teacher_id)
         .where(
-            StudentTeacher.teacher_user_id == teacher_id,
+            StudentTeacher.teacher_user_id == effective_teacher_id,
             StudentTeacher.org_id == current_user.org_id,
             Lesson.scheduled_date >= date_from,
             Lesson.scheduled_date <= date_to,
@@ -422,7 +431,7 @@ async def reset_month(
     subs_result = await session.execute(
         select(Subscription).where(
             Subscription.org_id == current_user.org_id,
-            Subscription.teacher_user_id == teacher_id,
+            Subscription.teacher_user_id == effective_teacher_id,
             Subscription.month_year == month_year,
         )
     )
@@ -435,6 +444,7 @@ async def reset_month(
 
     return {
         "month_year": month_year,
+        "teacher_id": effective_teacher_id,
         "lessons_deleted": lessons_deleted,
         "subscriptions_deleted": subs_deleted,
     }
