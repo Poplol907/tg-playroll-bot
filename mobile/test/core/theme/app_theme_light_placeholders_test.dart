@@ -9,7 +9,7 @@ void main() {
     final tokens = theme.extension<CosmoThemeTokens>();
 
     expect(theme.brightness, Brightness.light);
-    expect(theme.scaffoldBackgroundColor, const Color(0xFFFFFFFF));
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFFFF8EC));
     expect(tokens, CosmoThemeTokens.lightLite);
   });
 }

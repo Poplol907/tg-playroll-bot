@@ -83,6 +83,12 @@ class _PathFieldBackgroundState extends State<PathFieldBackground>
 class _PathFieldPainter extends CustomPainter {
   static const _viewBox = Size(696, 316);
 
+  // Specular glints gliding along the stripes — ambient, never interactive.
+  // Tuned low so they read as light catching the glass, not as motion noise.
+  static const double _glintHaloAlpha = 0.10;
+  static const double _glintCoreAlpha = 0.22;
+  static const double _glintLengthFrac = 0.085;
+
   final Animation<double> progress;
   final CosmoThemeTokens tokens;
 
@@ -107,8 +113,47 @@ class _PathFieldPainter extends CustomPainter {
 
     _paintPaths(canvas, position: 1, progress: t);
     _paintPaths(canvas, position: -1, progress: (t + 0.35) % 1.0);
+    _paintGlints(canvas, position: 1, t: t);
+    _paintGlints(canvas, position: -1, t: (t + 0.5) % 1.0);
 
     canvas.restore();
+  }
+
+  /// Soft accent glints that travel along a handful of stripes. Two passes:
+  /// a blurred halo for diffusion + a thin brighter core. Integer speeds keep
+  /// the loop seamless when the controller wraps.
+  void _paintGlints(Canvas canvas, {required int position, required double t}) {
+    final accent = tokens.focusAccent;
+    for (var k = 0; k < 6; k++) {
+      final i = 5 + k * 6; // which stripe carries this glint
+      final speed = 1 + (k % 2);
+      final phase = (t * speed + k * 0.1618) % 1.0;
+      final path = _buildReferencePath(i, position);
+      for (final metric in path.computeMetrics()) {
+        final glintLen = metric.length * _glintLengthFrac;
+        final start = metric.length * phase;
+        final end = math.min(start + glintLen, metric.length);
+        if (end - start < 1) continue;
+        final seg = metric.extractPath(start, end);
+        canvas.drawPath(
+          seg,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeWidth = 2.6
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5)
+            ..color = accent.withValues(alpha: _glintHaloAlpha),
+        );
+        canvas.drawPath(
+          seg,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeWidth = 1.0
+            ..color = accent.withValues(alpha: _glintCoreAlpha),
+        );
+      }
+    }
   }
 
   void _paintPaths(

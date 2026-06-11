@@ -119,6 +119,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
   late AnimationController _ringCtrl;
   late AnimationController _breatheCtrl;
   late AnimationController _enterCtrl;
+  late AnimationController _waveCtrl;
   late Animation<double> _ringAnim;
   late Animation<double> _breatheAnim;
 
@@ -142,6 +143,13 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
     _breatheAnim =
         CurvedAnimation(parent: _breatheCtrl, curve: Curves.easeInOut);
 
+    // Liquid circulation inside the light-theme bubble. Runs only when the
+    // bubble is actually shown (gated in didChangeDependencies).
+    _waveCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4200),
+    );
+
     _enterCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -149,6 +157,20 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
 
     _ringCtrl.forward();
     _enterCtrl.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (isLight && !reduceMotion) {
+      if (!_waveCtrl.isAnimating) _waveCtrl.repeat();
+    } else {
+      _waveCtrl
+        ..stop()
+        ..value = 0.0;
+    }
   }
 
   @override
@@ -164,12 +186,14 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
   void dispose() {
     _ringCtrl.dispose();
     _breatheCtrl.dispose();
+    _waveCtrl.dispose();
     _enterCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _resetMonth() async {
     final monthYear = ref.read(globalMonthYearProvider);
+    final viewAs = ref.read(viewAsTeacherProvider);
     final month = DateFormat('yyyy-MM').parse(monthYear);
     final monthLabel = DateFormat('MMMM yyyy', 'ru').format(month);
 
@@ -189,7 +213,10 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
       final dio = ref.read(dioProvider);
       await dio.delete(
         '/reports/v2/reset-month',
-        queryParameters: {'month_year': monthYear},
+        queryParameters: {
+          'month_year': monthYear,
+          if (viewAs != null) 'teacher_id': viewAs.id,
+        },
       );
       if (!mounted) return;
       invalidateMonthData(ref, monthYear);
@@ -224,7 +251,8 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
     final pendingFrac = d.goalAmount > 0 ? d.pendingAmount / d.goalAmount : 0.0;
 
     return AnimatedBuilder(
-      animation: Listenable.merge([_ringAnim, _breatheAnim, _enterCtrl]),
+      animation:
+          Listenable.merge([_ringAnim, _breatheAnim, _enterCtrl, _waveCtrl]),
       builder: (context, _) {
         final ring = _ringAnim.value;
         final breathe = _breatheAnim.value;
@@ -262,28 +290,36 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                         '${_fmt((d.totalCurrent * ring).round())} сум',
                         maxLines: 1,
                         style: NebulaTypography.of(context).displayL.copyWith(
-                          fontSize: NebulaTypography.of(context).displayL.fontSize! * 1.35,
-                          color: tokens.primaryText,
-                          shadows: isLight
-                              ? null
-                              : [
-                                  Shadow(
-                                    color: Colors.white.withValues(
-                                        alpha: NebulaAlpha.strong + breathe * 0.20),
-                                    blurRadius: 3,
-                                  ),
-                                  Shadow(
-                                    color: NebulaColors.successMint.withValues(
-                                        alpha: NebulaAlpha.strong + breathe * 0.20),
-                                    blurRadius: 14,
-                                  ),
-                                  Shadow(
-                                    color: NebulaColors.successMint.withValues(
-                                        alpha: NebulaAlpha.subtle + breathe * 0.10),
-                                    blurRadius: 32,
-                                  ),
-                                ],
-                        ),
+                              fontSize: NebulaTypography.of(context)
+                                      .displayL
+                                      .fontSize! *
+                                  1.35,
+                              color: tokens.primaryText,
+                              shadows: isLight
+                                  ? null
+                                  : [
+                                      Shadow(
+                                        color: Colors.white.withValues(
+                                            alpha: NebulaAlpha.strong +
+                                                breathe * 0.20),
+                                        blurRadius: 3,
+                                      ),
+                                      Shadow(
+                                        color: NebulaColors.successMint
+                                            .withValues(
+                                                alpha: NebulaAlpha.strong +
+                                                    breathe * 0.20),
+                                        blurRadius: 14,
+                                      ),
+                                      Shadow(
+                                        color: NebulaColors.successMint
+                                            .withValues(
+                                                alpha: NebulaAlpha.subtle +
+                                                    breathe * 0.10),
+                                        blurRadius: 32,
+                                      ),
+                                    ],
+                            ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -291,9 +327,9 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     Text(
                       'из ${_fmt(d.goalAmount)} сум',
                       style: NebulaTypography.of(context).bodyM.copyWith(
-                        color: tokens.secondaryText,
-                        letterSpacing: 0.2,
-                      ),
+                            color: tokens.secondaryText,
+                            letterSpacing: 0.2,
+                          ),
                     ),
                     const SizedBox(height: 32),
                     RepaintBoundary(
@@ -301,11 +337,23 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                         width: 300,
                         height: 300,
                         child: CustomPaint(
-                          painter: _RingPainter(
-                            earnedFrac: earnedFrac * ring,
-                            pendingFrac: pendingFrac * ring,
-                            breathe: breathe,
-                          ),
+                          // Light: a glass bubble with liquid circulating
+                          // inside — the fill level IS the progress.
+                          // Dark: the signature ASCII glow ring.
+                          painter: isLight
+                              ? _LiquidBubblePainter(
+                                  earnedFrac: earnedFrac * ring,
+                                  pendingFrac: pendingFrac * ring,
+                                  wave: _waveCtrl.value,
+                                  success: tokens.success,
+                                  warning: tokens.warning,
+                                  ink: tokens.primaryText,
+                                )
+                              : _RingPainter(
+                                  earnedFrac: earnedFrac * ring,
+                                  pendingFrac: pendingFrac * ring,
+                                  breathe: breathe,
+                                ),
                           child: Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -314,33 +362,46 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                                   d.goalAmount > 0
                                       ? '${((d.totalCurrent / d.goalAmount) * 100).round()}%'
                                       : '—',
-                                  style: NebulaTypography.of(context).displayL.copyWith(
-                                    fontSize: NebulaTypography.of(context).displayL.fontSize! * 1.15,
-                                    color: tokens.primaryText,
-                                    shadows: isLight
-                                        ? null
-                                        : [
-                                            Shadow(
-                                              color: Colors.white.withValues(
-                                                  alpha: NebulaAlpha.strong + breathe * 0.2),
-                                              blurRadius: 4,
-                                            ),
-                                            Shadow(
-                                              color: NebulaColors.successMint
-                                                  .withValues(
-                                                      alpha: NebulaAlpha.medium + breathe * 0.15),
-                                              blurRadius: 12,
-                                            ),
-                                          ],
-                                  ),
+                                  style: NebulaTypography.of(context)
+                                      .displayL
+                                      .copyWith(
+                                        fontSize: NebulaTypography.of(context)
+                                                .displayL
+                                                .fontSize! *
+                                            1.15,
+                                        color: tokens.primaryText,
+                                        shadows: isLight
+                                            ? null
+                                            : [
+                                                Shadow(
+                                                  color: Colors.white
+                                                      .withValues(
+                                                          alpha: NebulaAlpha
+                                                                  .strong +
+                                                              breathe * 0.2),
+                                                  blurRadius: 4,
+                                                ),
+                                                Shadow(
+                                                  color: NebulaColors
+                                                      .successMint
+                                                      .withValues(
+                                                          alpha: NebulaAlpha
+                                                                  .medium +
+                                                              breathe * 0.15),
+                                                  blurRadius: 12,
+                                                ),
+                                              ],
+                                      ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'выполнено',
-                                  style: NebulaTypography.of(context).labelS.copyWith(
-                                    color: tokens.mutedText,
-                                    letterSpacing: 0.3,
-                                  ),
+                                  style: NebulaTypography.of(context)
+                                      .labelS
+                                      .copyWith(
+                                        color: tokens.mutedText,
+                                        letterSpacing: 0.3,
+                                      ),
                                 ),
                               ],
                             ),
@@ -354,7 +415,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                       children: [
                         Flexible(
                           child: _LegendDot(
-                            color: NebulaColors.successMint,
+                            color: tokens.success,
                             label: 'Проведено',
                             value: _fmt(d.earnedAmount),
                           ),
@@ -362,7 +423,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                         const SizedBox(width: 20),
                         Flexible(
                           child: _LegendDot(
-                            color: NebulaColors.warningAmber,
+                            color: tokens.warning,
                             label: 'Пропуски',
                             value: _fmt(d.pendingAmount),
                           ),
@@ -387,7 +448,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                       label: 'Проведено',
                       value: '${d.lessonsDone}',
                       sublabel: 'уроков',
-                      color: NebulaColors.successMint,
+                      color: tokens.success,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -397,7 +458,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                       label: 'Пропуски',
                       value: '${d.lessonsMissed}',
                       sublabel: 'ученик',
-                      color: NebulaColors.warningAmber,
+                      color: tokens.warning,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -407,7 +468,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                       label: 'Долг',
                       value: '${d.lessonsDebt}',
                       sublabel: 'педагог',
-                      color: NebulaColors.errorRose,
+                      color: tokens.error,
                     ),
                   ),
                 ],
@@ -442,35 +503,33 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      const Icon(Icons.account_balance_wallet_rounded,
-                          color: NebulaColors.stellarBlue, size: 16),
+                      Icon(Icons.account_balance_wallet_rounded,
+                          color: tokens.primaryAccent, size: 16),
                       const SizedBox(width: 8),
                       Text(
                         'РАЗБИВКА ВЫПЛАТ',
                         style: NebulaTypography.of(context).overline.copyWith(
-                          color: NebulaColors.stellarBlue,
-                        ),
+                              color: tokens.primaryAccent,
+                            ),
                       ),
                     ]),
                     const SizedBox(height: 16),
                     _PayRow(
                       label: 'Аванс (1–15)',
                       value: '${_fmt(d.advanceAmount)} сум',
-                      color: NebulaColors.stellarBlue,
+                      color: tokens.primaryAccent,
                     ),
-                    const Divider(
-                        color: NebulaColors.surfaceBorder, height: 24),
+                    Divider(color: tokens.surfaceBorder, height: 24),
                     _PayRow(
                       label: 'Доплата (16–конец)',
                       value: '${_fmt(d.finalAmount)} сум',
-                      color: NebulaColors.nebulaPurple,
+                      color: tokens.secondaryAccent,
                     ),
-                    const Divider(
-                        color: NebulaColors.surfaceBorder, height: 24),
+                    Divider(color: tokens.surfaceBorder, height: 24),
                     _PayRow(
                       label: 'Итого к выплате',
                       value: '${_fmt(d.totalAmount)} сум',
-                      color: NebulaColors.successMint,
+                      color: tokens.success,
                       bold: true,
                     ),
                     const SizedBox(height: 12),
@@ -478,8 +537,8 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                       child: Text(
                         'Куплено уроков: ${d.totalSubscribed}  •  Цель: ${_fmt(d.goalAmount)} сум',
                         style: NebulaTypography.of(context).labelS.copyWith(
-                          color: tokens.mutedText,
-                        ),
+                              color: tokens.mutedText,
+                            ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -518,7 +577,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                 child: NebulaTextButton(
                   label: 'Сбросить данные месяца',
                   icon: Icons.delete_sweep_rounded,
-                  color: NebulaColors.errorRose,
+                  color: tokens.error,
                   filled: true,
                   compact: true,
                   onPressed: _resetMonth,

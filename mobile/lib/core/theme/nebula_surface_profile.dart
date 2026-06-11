@@ -185,9 +185,12 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: isLight
+          // Matte glass: a gentle top-light instead of a glossy hot streak.
+          // The highlight is dimmer and falls off smoothly, so light surfaces
+          // read as frosted/satin rather than polished.
           ? [
-              Colors.white.withValues(alpha: NebulaAlpha.high),
-              Colors.white.withValues(alpha: NebulaAlpha.mist),
+              Colors.white.withValues(alpha: NebulaAlpha.medium),
+              Colors.white.withValues(alpha: NebulaAlpha.whisper),
               Colors.transparent,
               Colors.black.withValues(alpha: NebulaAlpha.whisper),
             ]

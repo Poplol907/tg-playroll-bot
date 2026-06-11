@@ -19,6 +19,8 @@ import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/providers/data_refresh_provider.dart';
+import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
 import '../providers/view_as_teacher_provider.dart';
@@ -486,160 +488,205 @@ class _TeacherProfileDialog extends ConsumerWidget {
         chrome: NebulaModalChrome.dialog,
         constraints: const BoxConstraints(maxWidth: 460),
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header ──
-            Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: NebulaColors.stellarBlue
-                        .withValues(alpha: NebulaAlpha.surface),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: NebulaColors.stellarBlue
-                            .withValues(alpha: NebulaAlpha.accent)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: NebulaColors.stellarBlue
+                          .withValues(alpha: NebulaAlpha.surface),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: NebulaColors.stellarBlue
+                              .withValues(alpha: NebulaAlpha.accent)),
+                    ),
+                    child: const Icon(Icons.school_outlined,
+                        color: NebulaColors.stellarBlue, size: 24),
                   ),
-                  child: const Icon(Icons.school_outlined,
-                      color: NebulaColors.stellarBlue, size: 24),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.displayName,
-                        style: type.titleL.copyWith(color: tokens.primaryText),
-                      ),
-                      Text(
-                        '@${user.login}',
-                        style:
-                            type.labelM.copyWith(color: tokens.secondaryText),
-                      ),
-                    ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.displayName,
+                          style:
+                              type.titleL.copyWith(color: tokens.primaryText),
+                        ),
+                        Text(
+                          '@${user.login}',
+                          style:
+                              type.labelM.copyWith(color: tokens.secondaryText),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close_rounded,
-                      color: tokens.mutedText, size: 20),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // ── Stats grid ──
-            Text(
-              'СТАТИСТИКА МЕСЯЦА',
-              style: type.overline.copyWith(color: tokens.mutedText),
-            ),
-            const SizedBox(height: 10),
-            _DialogStatRow(
-              icon: Icons.check_circle_outline_rounded,
-              label: 'Проведено',
-              value: '${s?.lessonsDone ?? 0}',
-              color: NebulaColors.successMint,
-            ),
-            _DialogStatRow(
-              icon: Icons.warning_amber_rounded,
-              label: 'Пропусков',
-              value: '${s?.lessonsMissed ?? 0}',
-              color: NebulaColors.errorRose,
-            ),
-            _DialogStatRow(
-              icon: Icons.repeat_rounded,
-              label: 'Отработок',
-              value: '${s?.lessonsCancelledMakeup ?? 0}',
-              color: NebulaColors.auroraCyan,
-            ),
-            _DialogStatRow(
-              icon: Icons.cancel_outlined,
-              label: 'Долгов педагога',
-              value: '${s?.lessonsDebt ?? 0}',
-              color: NebulaColors.warningAmber,
-            ),
-            const Divider(color: NebulaColors.surfaceBorder, height: 24),
-            _DialogStatRow(
-              icon: Icons.payments_outlined,
-              label: 'К выплате',
-              value: _formatMoney(s?.totalAmount ?? 0),
-              color: NebulaColors.stellarBlue,
-              valueBig: true,
-            ),
-
-            const SizedBox(height: 24),
-
-            // ── View as teacher (главное действие) ──
-            SizedBox(
-              width: double.infinity,
-              child: NebulaTextButton(
-                label: 'Открыть как педагог',
-                icon: Icons.visibility_outlined,
-                onPressed: () {
-                  Navigator.pop(context);
-                  ref.read(viewAsTeacherProvider.notifier).state =
-                      ViewAsTeacher(
-                    id: user.id,
-                    displayName: user.displayName,
-                  );
-                  // Сбрасываем кэши: пользователь сменился — данные стали другими.
-                  ref.invalidate(studioStatsProvider);
-                  context.go('/calendar');
-                },
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close_rounded,
+                        color: tokens.mutedText, size: 20),
+                  ),
+                ],
               ),
-            ),
+              const SizedBox(height: 18),
 
-            const SizedBox(height: 10),
-
-            // ── Secondary actions ──
-            Row(
-              children: [
-                Expanded(
-                  child: NebulaTextButton(
-                    label: 'Сменить пароль',
-                    icon: Icons.lock_outline_rounded,
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final ok = await SetPasswordSheet.show(context, user);
-                      if (ok) onUpdated();
-                    },
-                  ),
+              // ── Stats island — grouped so the numbers read as one block ──
+              NebulaSurface(
+                dense: true,
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                borderRadius: NebulaTokens.radiusMD,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'СТАТИСТИКА МЕСЯЦА',
+                      style: type.overline.copyWith(color: tokens.mutedText),
+                    ),
+                    const SizedBox(height: 8),
+                    _DialogStatRow(
+                      icon: Icons.check_circle_outline_rounded,
+                      label: 'Проведено',
+                      value: '${s?.lessonsDone ?? 0}',
+                      color: tokens.success,
+                    ),
+                    _DialogStatRow(
+                      icon: Icons.warning_amber_rounded,
+                      label: 'Пропусков',
+                      value: '${s?.lessonsMissed ?? 0}',
+                      color: tokens.error,
+                    ),
+                    _DialogStatRow(
+                      icon: Icons.repeat_rounded,
+                      label: 'Отработок',
+                      value: '${s?.lessonsCancelledMakeup ?? 0}',
+                      color: tokens.focusAccent,
+                    ),
+                    _DialogStatRow(
+                      icon: Icons.cancel_outlined,
+                      label: 'Долгов педагога',
+                      value: '${s?.lessonsDebt ?? 0}',
+                      color: tokens.warning,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: NebulaTextButton(
-                    label: 'Отключить',
-                    icon: Icons.archive_outlined,
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await _confirmAndDisable(context, ref);
-                    },
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // ── Destructive: permanent delete ──
-            SizedBox(
-              width: double.infinity,
-              child: NebulaTextButton(
-                label: 'Удалить навсегда',
-                icon: Icons.delete_forever_outlined,
-                color: NebulaColors.errorRose,
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await _confirmAndDelete(context, ref);
-                },
               ),
-            ),
-          ],
+
+              const SizedBox(height: 10),
+
+              // ── Payout island — the headline number gets its own surface ──
+              NebulaSurface(
+                dense: true,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                borderRadius: NebulaTokens.radiusMD,
+                accent: tokens.success,
+                child: Row(
+                  children: [
+                    Icon(Icons.payments_outlined,
+                        color: tokens.success, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'К выплате',
+                        style: type.bodyM.copyWith(color: tokens.secondaryText),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          _formatMoney(s?.totalAmount ?? 0),
+                          maxLines: 1,
+                          style: type.titleM.copyWith(
+                            color: tokens.success,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // ── View as teacher (главное действие) ──
+              SizedBox(
+                width: double.infinity,
+                child: NebulaTextButton(
+                  label: 'Открыть как педагог',
+                  icon: Icons.visibility_outlined,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ref.read(viewAsTeacherProvider.notifier).state =
+                        ViewAsTeacher(
+                      id: user.id,
+                      displayName: user.displayName,
+                    );
+                    // Сбрасываем кэши: пользователь сменился — данные стали другими.
+                    ref.invalidate(studioStatsProvider);
+                    invalidateMonthData(ref, ref.read(globalMonthYearProvider));
+                    context.go('/calendar');
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── Secondary actions ──
+              Row(
+                children: [
+                  Expanded(
+                    child: NebulaTextButton(
+                      label: 'Сменить пароль',
+                      icon: Icons.lock_outline_rounded,
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final ok = await SetPasswordSheet.show(context, user);
+                        if (ok) onUpdated();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: NebulaTextButton(
+                      label: 'Отключить',
+                      icon: Icons.archive_outlined,
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _confirmAndDisable(context, ref);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── Destructive: permanent delete ──
+              SizedBox(
+                width: double.infinity,
+                child: NebulaTextButton(
+                  label: 'Удалить навсегда',
+                  icon: Icons.delete_forever_outlined,
+                  color: tokens.error,
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _confirmAndDelete(context, ref);
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -727,14 +774,12 @@ class _DialogStatRow extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  final bool valueBig;
 
   const _DialogStatRow({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
-    this.valueBig = false,
   });
 
   @override
@@ -764,9 +809,9 @@ class _DialogStatRow extends StatelessWidget {
               child: Text(
                 value,
                 maxLines: 1,
-                style: (valueBig ? type.titleM : type.bodyM).copyWith(
+                style: type.bodyM.copyWith(
                   color: color,
-                  fontWeight: valueBig ? FontWeight.w700 : FontWeight.w600,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

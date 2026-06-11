@@ -304,12 +304,11 @@ class _LessonModalState extends ConsumerState<LessonModal>
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 5),
+                                horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: NebulaColors.nebulaPurple
                                   .withValues(alpha: NebulaAlpha.subtle),
-                              borderRadius:
-                                  BorderRadius.circular(NebulaTokens.radiusSM),
+                              borderRadius: BorderRadius.circular(999),
                               border: Border.all(
                                   color: NebulaColors.nebulaPurple
                                       .withValues(alpha: NebulaAlpha.medium)),
@@ -579,10 +578,10 @@ class _StatusBadge extends StatelessWidget {
 
     final type = NebulaTypography.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: NebulaAlpha.subtle),
-        borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: NebulaAlpha.medium)),
       ),
       child: Text(

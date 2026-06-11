@@ -108,7 +108,6 @@ void main() {
       ..sort();
 
     expect(warmGlassFiles, [
-      'lib/core/router/app_router.dart',
       'lib/core/theme/nebula_colors.dart',
     ]);
   });

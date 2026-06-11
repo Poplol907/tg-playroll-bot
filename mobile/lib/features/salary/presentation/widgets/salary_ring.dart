@@ -27,6 +27,12 @@ class _RingPainter extends CustomPainter {
   final double pendingFrac;
   final double breathe;
 
+  // Dark-theme-only painter (light renders _LiquidBubblePainter instead),
+  // so the signature mint/amber/white palette stays hardcoded here.
+  static const Color success = NebulaColors.successMint;
+  static const Color warning = NebulaColors.warningAmber;
+  static const Color ink = Colors.white;
+
   static final _pLg = ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 14.0);
   static final _pMd = ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 11.0);
   static final _pSm = ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 9.0);
@@ -45,16 +51,16 @@ class _RingPainter extends CustomPainter {
     if (frac < earnedFrac) {
       final isLead = earnedFrac > 0.02 && frac > earnedFrac - 2.5 / 100;
       if (isLead) {
-        return ('@', NebulaColors.successMint, (0.95 + breathe * 0.05) * scale);
+        return ('@', success, (0.95 + breathe * 0.05) * scale);
       }
       final sh = math.sin(i * 0.71);
       final c = sh > 0.3 ? '#' : (sh > -0.3 ? '*' : '+');
-      return (c, NebulaColors.successMint, (0.85 + breathe * 0.15) * scale);
+      return (c, success, (0.85 + breathe * 0.15) * scale);
     } else if (frac < earnedFrac + pendingFrac) {
       final sh = math.sin(i * 0.85);
-      return (sh > 0.2 ? '+' : '~', NebulaColors.warningAmber, 0.80 * scale);
+      return (sh > 0.2 ? '+' : '~', warning, 0.80 * scale);
     } else {
-      return ('.', Colors.white, 0.18 * scale);
+      return ('.', ink, 0.18 * scale);
     }
   }
 
@@ -105,13 +111,12 @@ class _RingPainter extends CustomPainter {
 
     // ══ PASS 1 — soft halo/glow under the ASCII body ════════════════════════
 
-    // Track — very dim white halo so the empty arc reads without becoming solid.
+    // Track — very dim ink halo so the empty arc reads without becoming solid.
     canvas.drawCircle(
       Offset(cx, cy),
       midR,
       Paint()
-        ..color =
-            Colors.white.withValues(alpha: SalaryRingVisualProfile.trackAlpha)
+        ..color = ink.withValues(alpha: SalaryRingVisualProfile.trackAlpha)
         ..style = PaintingStyle.stroke
         ..strokeWidth = sw,
     );
@@ -125,7 +130,7 @@ class _RingPainter extends CustomPainter {
         sweep,
         false,
         Paint()
-          ..color = NebulaColors.successMint.withValues(
+          ..color = success.withValues(
             alpha: SalaryRingVisualProfile.earnedBloomAlpha +
                 breathe * SalaryRingVisualProfile.earnedBloomBreatheAlpha,
           )
@@ -146,7 +151,7 @@ class _RingPainter extends CustomPainter {
         sweep,
         false,
         Paint()
-          ..color = NebulaColors.warningAmber
+          ..color = warning
               .withValues(alpha: SalaryRingVisualProfile.pendingBloomAlpha)
           ..style = PaintingStyle.stroke
           ..strokeWidth = sw + 8
@@ -163,8 +168,7 @@ class _RingPainter extends CustomPainter {
         dot,
         9,
         Paint()
-          ..color =
-              NebulaColors.successMint.withValues(alpha: 0.70 + breathe * 0.30)
+          ..color = success.withValues(alpha: 0.70 + breathe * 0.30)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
       );
       canvas.drawCircle(dot, 4, Paint()..color = Colors.white);
@@ -183,4 +187,181 @@ class _RingPainter extends CustomPainter {
       old.earnedFrac != earnedFrac ||
       old.pendingFrac != pendingFrac ||
       old.breathe != breathe;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Liquid bubble painter — light theme progress visual
+//
+//  A glass bubble (vial) filled with translucent liquid: the liquid level IS
+//  the salary progress. Two layers — earned (green) below, pending (amber)
+//  floating on top — each with a gently waving surface. A few bubbles rise
+//  through the liquid for the "circulating" feel. Liquid stays translucent so
+//  the % label in the centre remains readable through it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LiquidBubblePainter extends CustomPainter {
+  final double earnedFrac;
+  final double pendingFrac;
+
+  /// 0..1 looping phase of the circulation animation.
+  final double wave;
+
+  final Color success;
+  final Color warning;
+  final Color ink;
+
+  static const double _bodyAlpha = 0.20;
+  static const double _crestAlpha = 0.85;
+  static const double _shellAlpha = 0.12;
+
+  _LiquidBubblePainter({
+    required this.earnedFrac,
+    required this.pendingFrac,
+    required this.wave,
+    required this.success,
+    required this.warning,
+    required this.ink,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = (size.width / 2) - 26;
+    final center = Offset(cx, cy);
+    final circle = Path()..addOval(Rect.fromCircle(center: center, radius: r));
+
+    final earned = earnedFrac.clamp(0.0, 1.0);
+    final total = (earnedFrac + pendingFrac).clamp(0.0, 1.0);
+    double levelY(double frac) => cy + r - 2 * r * frac;
+
+    // ── Liquid (clipped to the bubble) ─────────────────────────────────────
+    canvas.save();
+    canvas.clipPath(circle);
+
+    // Pending (amber) — fills from its level down; the green layer painted
+    // after will cover everything below the earned level.
+    if (total > earned + 0.005) {
+      _liquidLayer(
+        canvas,
+        cx: cx,
+        r: r,
+        bottom: cy + r,
+        surfaceY: levelY(total),
+        color: warning,
+        amp: 4.5,
+        phase: 2.1,
+        dir: -1,
+      );
+    }
+    if (earned > 0.005) {
+      _liquidLayer(
+        canvas,
+        cx: cx,
+        r: r,
+        bottom: cy + r,
+        surfaceY: levelY(earned),
+        color: success,
+        amp: 5.5,
+        phase: 0.0,
+        dir: 1,
+      );
+
+      // Rising bubbles — the "circulation". Deterministic phases, looping.
+      final liquidTop = levelY(earned);
+      final liquidH = (cy + r) - liquidTop;
+      if (liquidH > 18) {
+        for (var k = 0; k < 5; k++) {
+          final prog = (wave * (0.6 + 0.2 * (k % 3)) + k * 0.37) % 1.0;
+          final y = (cy + r - 6) - prog * (liquidH - 14);
+          final x = cx +
+              math.sin(prog * math.pi * 3 + k * 2.1) * r * (0.18 + 0.09 * k);
+          final fade = (1.0 - prog) * 0.30 + 0.06;
+          canvas.drawCircle(
+            Offset(x, y),
+            1.8 + (k % 3),
+            Paint()..color = success.withValues(alpha: fade),
+          );
+        }
+      }
+    }
+
+    canvas.restore();
+
+    // ── Glass shell ────────────────────────────────────────────────────────
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = ink.withValues(alpha: _shellAlpha),
+    );
+    // Specular highlight — short arc top-left, softly blurred: glass, not wire.
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: r - 5),
+      -math.pi * 0.80,
+      math.pi * 0.34,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5)
+        ..color = Colors.white.withValues(alpha: 0.55),
+    );
+  }
+
+  /// One liquid layer: translucent body fill + brighter waving crest line.
+  void _liquidLayer(
+    Canvas canvas, {
+    required double cx,
+    required double r,
+    required double bottom,
+    required double surfaceY,
+    required Color color,
+    required double amp,
+    required double phase,
+    required int dir,
+  }) {
+    final left = cx - r;
+    final width = 2 * r;
+    const n = 28;
+
+    final crest = Path()..moveTo(left, _waveY(surfaceY, 0, amp, phase, dir));
+    for (var i = 1; i <= n; i++) {
+      final f = i / n;
+      crest.lineTo(left + width * f, _waveY(surfaceY, f, amp, phase, dir));
+    }
+
+    final body = Path.from(crest)
+      ..lineTo(left + width, bottom)
+      ..lineTo(left, bottom)
+      ..close();
+
+    canvas.drawPath(
+      body,
+      Paint()..color = color.withValues(alpha: _bodyAlpha),
+    );
+    canvas.drawPath(
+      crest,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round
+        ..color = color.withValues(alpha: _crestAlpha),
+    );
+  }
+
+  double _waveY(double base, double f, double amp, double phase, int dir) =>
+      base + amp * math.sin(f * math.pi * 2 * 1.6 + wave * math.pi * 2 * dir + phase);
+
+  @override
+  bool shouldRepaint(_LiquidBubblePainter old) =>
+      old.earnedFrac != earnedFrac ||
+      old.pendingFrac != pendingFrac ||
+      old.wave != wave ||
+      old.success != success ||
+      old.warning != warning ||
+      old.ink != ink;
 }

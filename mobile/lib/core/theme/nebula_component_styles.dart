@@ -31,23 +31,26 @@ class BadgeStyle {
     required this.borderRadius,
   });
 
+  // Badges are full pills (stadium shape) — per the Nebula reference spec.
+  // Small fixed radii on chips clashed with the larger radii of their host
+  // surfaces and looked cheap; a stadium can never mismatch.
   static const BadgeStyle compact = BadgeStyle(
     height: 22,
-    padding: EdgeInsets.symmetric(horizontal: NebulaTokens.sp8),
+    padding: EdgeInsets.symmetric(horizontal: NebulaTokens.sp8 + 2),
     iconSize: 12,
     iconGap: NebulaTokens.sp4,
-    borderRadius: BorderRadius.all(Radius.circular(NebulaTokens.radiusXS)),
+    borderRadius: BorderRadius.all(Radius.circular(999)),
   );
 
   static const BadgeStyle regular = BadgeStyle(
     height: 28,
     padding: EdgeInsets.symmetric(
-      horizontal: NebulaTokens.sp12,
+      horizontal: NebulaTokens.sp12 + 2,
       vertical: 4,
     ),
     iconSize: 14,
     iconGap: NebulaTokens.sp4 + 2,
-    borderRadius: BorderRadius.all(Radius.circular(NebulaTokens.radiusSM)),
+    borderRadius: BorderRadius.all(Radius.circular(999)),
   );
 }
 

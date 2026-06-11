@@ -19,8 +19,9 @@ import '../../shared/widgets/glow_menu_bar.dart';
 import '../../shared/widgets/desktop_sidebar.dart';
 import '../../shared/widgets/desktop_content_frame.dart';
 import '../../core/platform/app_platform.dart';
-import '../../core/theme/nebula_colors.dart';
-import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_alpha.dart';
+import '../../shared/widgets/nebula_surface.dart';
 import '../../core/services/update_service.dart';
 import '../../core/services/repaint_pulse.dart';
 
@@ -58,35 +59,39 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (index < routes.length) context.go(routes[index]);
   }
 
-  static const _settingsMenuItem = GlowMenuItem(
-    icon: Icons.settings_outlined,
-    label: 'Настройки',
-    glowColor: NebulaColors.warmPearlBorder,
-  );
+  // Nav glow colours come from theme tokens so both themes get the SAME
+  // semantic hue at the right saturation. The old static consts mixed a
+  // legacy dim off-orange border token with dark pastels that washed out
+  // on white.
+  GlowMenuItem _settingsMenuItem(CosmoThemeTokens t) => GlowMenuItem(
+        icon: Icons.settings_outlined,
+        label: 'Настройки',
+        glowColor: t.warning,
+      );
 
-  static const _adminMenuItem = GlowMenuItem(
-    icon: Icons.shield_outlined,
-    label: 'Студия',
-    glowColor: NebulaColors.warningAmber,
-  );
+  GlowMenuItem _adminMenuItem(CosmoThemeTokens t) => GlowMenuItem(
+        icon: Icons.shield_outlined,
+        label: 'Студия',
+        glowColor: t.primaryAccent,
+      );
 
-  static const _teacherMenuItems = [
-    GlowMenuItem(
-      icon: Icons.calendar_month_rounded,
-      label: 'Календарь',
-      glowColor: NebulaColors.stellarBlue,
-    ),
-    GlowMenuItem(
-      icon: Icons.people_outline_rounded,
-      label: 'Ученики',
-      glowColor: NebulaColors.nebulaPurple,
-    ),
-    GlowMenuItem(
-      icon: Icons.payments_outlined,
-      label: 'Зарплата',
-      glowColor: NebulaColors.successMint,
-    ),
-  ];
+  List<GlowMenuItem> _teacherMenuItems(CosmoThemeTokens t) => [
+        GlowMenuItem(
+          icon: Icons.calendar_month_rounded,
+          label: 'Календарь',
+          glowColor: t.primaryAccent,
+        ),
+        GlowMenuItem(
+          icon: Icons.people_outline_rounded,
+          label: 'Ученики',
+          glowColor: t.secondaryAccent,
+        ),
+        GlowMenuItem(
+          icon: Icons.payments_outlined,
+          label: 'Зарплата',
+          glowColor: t.success,
+        ),
+      ];
 
   static const _settingsSidebarItem =
       DesktopSidebarItem(icon: Icons.settings_outlined, label: 'Настройки');
@@ -133,9 +138,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     final viewingAs = ref.watch(viewAsTeacherProvider) != null;
     // В режиме view-as админ видит вкладки педагога.
     final showAdminTabs = isAdmin && !viewingAs;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     final navItems = showAdminTabs
-        ? [_adminMenuItem, _settingsMenuItem]
-        : [..._teacherMenuItems, _settingsMenuItem];
+        ? [_adminMenuItem(tokens), _settingsMenuItem(tokens)]
+        : [..._teacherMenuItems(tokens), _settingsMenuItem(tokens)];
     final sidebarItems = showAdminTabs
         ? [_adminSidebarItem, _settingsSidebarItem]
         : [..._teacherSidebarItems, _settingsSidebarItem];
@@ -168,15 +175,13 @@ class _AppShellState extends ConsumerState<AppShell> {
             items: items,
           ),
           Expanded(
-            child: Column(
+            child: Stack(
               children: [
-                const ViewAsBanner(),
-                Expanded(
-                  child: DesktopContentFrame(
-                    header: monthBar,
-                    child: widget.child,
-                  ),
+                DesktopContentFrame(
+                  header: monthBar,
+                  child: widget.child,
                 ),
+                const ViewAsOverlay(),
               ],
             ),
           ),
@@ -198,16 +203,22 @@ class _AppShellState extends ConsumerState<AppShell> {
       // Dynamic Island). Everything below — banner, month bar, screens —
       // starts beneath the island. Individual widgets must NOT re-apply
       // MediaQuery.padding.top, or insets double up.
-      body: SafeArea(
-        top: true,
-        bottom: false,
-        child: Column(
-          children: [
-            const ViewAsBanner(),
-            monthBar,
-            Expanded(child: widget.child),
-          ],
-        ),
+      body: Stack(
+        children: [
+          SafeArea(
+            top: true,
+            bottom: false,
+            child: Column(
+              children: [
+                monthBar,
+                Expanded(child: widget.child),
+              ],
+            ),
+          ),
+          // Поверх всего: оранжевая окантовка экрана + овальная кнопка
+          // выхода из режима «смотрю как педагог».
+          const ViewAsOverlay(),
+        ],
       ),
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
@@ -241,82 +252,63 @@ class _GlobalMonthBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = DateFormat('MMMM yyyy', 'ru').format(month);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
-    return Container(
-      // Top inset is owned by the shell's SafeArea — keep a flat 8px here.
-      padding: const EdgeInsets.only(
-        top: 8,
-        bottom: 8,
-        left: 16,
-        right: 16,
-      ),
-      decoration: BoxDecoration(
-        // Frosted glass: white tint base + specular sheen
-        color: const Color(0x18FFFFFF),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.10),
-            Colors.white.withValues(alpha: 0.03),
-            Colors.black.withValues(alpha: 0.06),
-          ],
-          stops: const [0.0, 0.4, 1.0],
-        ),
-        border: Border(
-          // Bright top edge (specular) + dim bottom separator
-          top: BorderSide(
-              color: Colors.white.withValues(alpha: 0.20), width: 0.8),
-          bottom: BorderSide(
-              color: Colors.white.withValues(alpha: 0.08), width: 0.5),
-        ),
-      ),
+    // Floating glass islands instead of a full-width strip: an oval month
+    // pill in the middle, circular arrow pucks on the sides. The bar chrome
+    // itself is transparent — the background breathes between the islands.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
         children: [
           _MonthArrow(icon: Icons.chevron_left_rounded, onTap: onPrev),
-          const SizedBox(width: 12),
 
-          // Month label — tappable to jump to today
+          // Month pill — tappable to jump to today
           Expanded(
-            child: MouseRegion(
-              cursor: isCurrentMonth
-                  ? SystemMouseCursors.basic
-                  : SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: isCurrentMonth ? null : onToday,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: NebulaColors.softWhite,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    if (!isCurrentMonth) ...[
-                      const SizedBox(height: 1),
+            child: Center(
+              child: MouseRegion(
+                cursor: isCurrentMonth
+                    ? SystemMouseCursors.basic
+                    : SystemMouseCursors.click,
+                child: NebulaSurface(
+                  borderRadius: 999,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
+                  onTap: isCurrentMonth ? null : onToday,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        'нажмите для возврата',
+                        label,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 9,
-                          color:
-                              NebulaColors.stellarBlue.withValues(alpha: 0.7),
-                          letterSpacing: 0.2,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.primaryText,
+                          letterSpacing: -0.3,
                         ),
                       ),
+                      if (!isCurrentMonth) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          'нажмите для возврата',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: tokens.primaryAccent
+                                .withValues(alpha: NebulaAlpha.high),
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          const SizedBox(width: 12),
           _MonthArrow(icon: Icons.chevron_right_rounded, onTap: onNext),
         ],
       ),
@@ -341,41 +333,36 @@ class _MonthArrowState extends State<_MonthArrow> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+
+    // Circular glass puck — same canonical surface as the month pill, with a
+    // soft diffused accent halo on hover (wide blur, low alpha = scattered
+    // light, not a hard ring).
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
+      child: NebulaSurface(
+        borderRadius: 999,
+        width: 38,
+        height: 38,
+        padding: EdgeInsets.zero,
         onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: NebulaTokens.tapRelease,
-          curve: Curves.easeInOut,
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: _hovered
-                ? NebulaColors.nebulaSurface.withValues(alpha: 0.3)
-                : NebulaColors.nebulaSurface,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: _hovered
-                  ? NebulaColors.auroraCyan.withValues(alpha: 0.45)
-                  : NebulaColors.surfaceBorder,
-              width: 0.8,
-            ),
-            boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      color: NebulaColors.auroraCyan.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                    ),
-                  ]
-                : null,
-          ),
+        glow: _hovered
+            ? [
+                BoxShadow(
+                  color: tokens.focusAccent
+                      .withValues(alpha: NebulaAlpha.subtle),
+                  blurRadius: 18,
+                  spreadRadius: -2,
+                ),
+              ]
+            : null,
+        child: Center(
           child: Icon(
             widget.icon,
-            color: _hovered ? NebulaColors.auroraCyan : NebulaColors.dimText,
+            color: _hovered ? tokens.focusAccent : tokens.mutedText,
             size: 20,
           ),
         ),

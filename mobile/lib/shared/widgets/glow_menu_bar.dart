@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
@@ -82,109 +83,141 @@ class _GlowBarBody extends StatelessWidget {
         ? (currentIndex == 0 ? 0.5 : 0.9)
         : (tabCount > 0 ? (currentIndex + 0.5) / tabCount : 0.5);
 
-    return Container(
-      key: const ValueKey('glow-menu-bar-surface'),
-      decoration: BoxDecoration(
-        color: surface.fill,
-        gradient: surface.sheen,
-        border: Border(
-          top: BorderSide(
+    // Floating oval island: one stadium-shaped glass capsule holding every
+    // tab, lifted off the screen edge. The area around the pill stays
+    // transparent so the app background flows beneath it.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 6, 16, bottomInset + 10),
+      child: Container(
+        key: const ValueKey('glow-menu-bar-surface'),
+        decoration: BoxDecoration(
+          color: surface.fill,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
             color: surface.border,
             width: surface.borderWidth,
           ),
+          boxShadow: isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: NebulaAlpha.border),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : [
+                  // Soft diffused lift on white — wide blur, low alpha.
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: NebulaAlpha.mist),
+                    blurRadius: 24,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
-      ),
-      child: Stack(
-        children: [
-          // ── Nav-wide ambient bloom ──────────────────────────────────
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _NavAmbientPainter(
-                  color: activeColor,
-                  xFraction: activeFrac,
-                  isDark: isDark,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: Stack(
+            children: [
+              // ── Matte sheen over the fill ───────────────────────────
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(gradient: surface.sheen),
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // ── Tab row ─────────────────────────────────────────────────
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: NebulaTokens.sp8,
-                vertical: NebulaTokens.sp8,
-              ),
-              child: isAdminPair
-                  ? LayoutBuilder(
-                      builder: (context, constraints) {
-                        const tabWidth = 76.0;
-                        final centerLeft =
-                            constraints.maxWidth / 2 - tabWidth / 2;
-                        return SizedBox(
-                          height: 58,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Positioned(
-                                left: centerLeft,
-                                width: tabWidth,
-                                top: 0,
-                                bottom: 0,
-                                child: _GlowNavTab(
-                                  item: items[0],
-                                  selected: currentIndex == 0,
-                                  isDark: isDark,
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    onTap(0);
-                                  },
-                                ),
-                              ),
-                              Positioned(
-                                right: 0,
-                                width: tabWidth,
-                                top: 0,
-                                bottom: 0,
-                                child: _GlowNavTab(
-                                  item: items[1],
-                                  selected: currentIndex == 1,
-                                  isDark: isDark,
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    onTap(1);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ...items.asMap().entries.map(
-                              (e) => SizedBox(
-                                width: 76,
-                                child: _GlowNavTab(
-                                  item: e.value,
-                                  selected: e.key == currentIndex,
-                                  isDark: isDark,
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    onTap(e.key);
-                                  },
-                                ),
-                              ),
-                            ),
-                      ],
+              // ── Nav-wide ambient bloom ──────────────────────────────
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _NavAmbientPainter(
+                      color: activeColor,
+                      xFraction: activeFrac,
+                      isDark: isDark,
                     ),
-            ),
+                  ),
+                ),
+              ),
+
+              // ── Tab row ─────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: NebulaTokens.sp8,
+                  vertical: NebulaTokens.sp8,
+                ),
+                child: isAdminPair
+                    ? LayoutBuilder(
+                        builder: (context, constraints) {
+                          final tabWidth = math.min(76.0,
+                              math.max(58.0, constraints.maxWidth * 0.34));
+                          final centerLeft =
+                              constraints.maxWidth / 2 - tabWidth / 2;
+                          return SizedBox(
+                            height: 58,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Positioned(
+                                  left: centerLeft,
+                                  width: tabWidth,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: _GlowNavTab(
+                                    item: items[0],
+                                    selected: currentIndex == 0,
+                                    isDark: isDark,
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      onTap(0);
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  width: tabWidth,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: _GlowNavTab(
+                                    item: items[1],
+                                    selected: currentIndex == 1,
+                                    isDark: isDark,
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      onTap(1);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ...items.asMap().entries.map(
+                                (e) => Expanded(
+                                  child: _GlowNavTab(
+                                    item: e.value,
+                                    selected: e.key == currentIndex,
+                                    isDark: isDark,
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      onTap(e.key);
+                                    },
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -388,13 +421,28 @@ class _TabContent extends StatelessWidget {
           item.icon,
           color: color,
           size: active ? 23.0 : 22.0,
-          shadows: (active && isDark)
-              ? [
-                  Shadow(
-                    color: item.glowColor.withValues(alpha: 0.55),
-                    blurRadius: 14,
-                  ),
-                ]
+          shadows: active
+              ? (isDark
+                  ? [
+                      Shadow(
+                        color: item.glowColor.withValues(alpha: 0.55),
+                        blurRadius: 14,
+                      ),
+                    ]
+                  // Light: soft scattered light — wide blur, low alpha, so
+                  // the icon glows gently instead of casting a hard halo.
+                  : [
+                      Shadow(
+                        color: item.glowColor
+                            .withValues(alpha: NebulaAlpha.accent),
+                        blurRadius: 10,
+                      ),
+                      Shadow(
+                        color: item.glowColor
+                            .withValues(alpha: NebulaAlpha.subtle),
+                        blurRadius: 22,
+                      ),
+                    ])
               : null,
         ),
         const SizedBox(height: 3),
@@ -432,17 +480,18 @@ class _RadialGlowPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) * 0.72;
 
-    // In light mode use a near-black ring so it reads against the white bar.
-    final ringColor = isDark ? color : const Color(0xFF111827);
+    // Light mode: the tab's own accent as soft scattered light (wider falloff,
+    // lower alpha) — diffused colour instead of a hard near-black puck.
+    final ringColor = color;
 
     final paint = Paint()
       ..shader = RadialGradient(
         colors: [
-          ringColor.withValues(alpha: isDark ? 0.22 : 0.20),
-          ringColor.withValues(alpha: isDark ? 0.09 : 0.07),
+          ringColor.withValues(alpha: isDark ? 0.22 : 0.14),
+          ringColor.withValues(alpha: isDark ? 0.09 : 0.05),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.48, 1.0],
+        stops: isDark ? const [0.0, 0.48, 1.0] : const [0.0, 0.55, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..blendMode = isDark ? BlendMode.plus : BlendMode.srcOver;
 

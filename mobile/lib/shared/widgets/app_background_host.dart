@@ -37,9 +37,12 @@ class AppBackgroundHost extends ConsumerWidget {
             ),
           AppDarkBackground.asciiWater => AsciiWaterBackground(child: child),
         },
+      // Ambient (non-interactive) animation: the stripes drift slowly and
+      // soft glints glide along them — mirrors the dark theme's living
+      // background. Reduce-motion freezes it via PathFieldBackground itself.
       AppVisualMode.lightLite => PathFieldBackground(
           tokens: CosmoThemeTokens.lightLite,
-          animated: false,
+          animated: true,
           child: child,
         ),
     };
