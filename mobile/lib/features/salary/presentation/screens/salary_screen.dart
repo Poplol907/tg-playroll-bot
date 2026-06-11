@@ -564,9 +564,8 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                 0.55,
                 1.0,
               ),
-              data: (rates) => rates.isEmpty
-                  ? const SizedBox.shrink()
-                  : entered(_RatesCard(rates: rates, fmt: _fmt), 0.55, 1.0),
+              data: (rates) =>
+                  entered(_RatesCard(rates: rates, fmt: _fmt), 0.55, 1.0),
             ),
 
             const SizedBox(height: 24),
