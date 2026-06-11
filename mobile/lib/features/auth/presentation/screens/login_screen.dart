@@ -109,7 +109,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                         ),
-                        CosmoLoginSphere(tokens: tokens, size: 220),
+                        CosmoLoginSphere(
+                          tokens: tokens,
+                          size: 220,
+                          enableAmbientMotion: true,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -193,19 +197,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: tokens.error
-                                      .withValues(alpha: 0.10),
+                                  color: tokens.error.withValues(alpha: 0.10),
                                   borderRadius: BorderRadius.circular(
                                       NebulaTokens.radiusSM),
                                   border: Border.all(
-                                      color: tokens.error
-                                          .withValues(alpha: 0.3)),
+                                      color:
+                                          tokens.error.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   children: [
                                     Icon(Icons.error_outline,
-                                        color: tokens.error,
-                                        size: 18),
+                                        color: tokens.error, size: 18),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
