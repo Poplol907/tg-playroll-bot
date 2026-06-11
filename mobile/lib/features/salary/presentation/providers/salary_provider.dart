@@ -94,9 +94,18 @@ final salaryProvider = FutureProvider<SalaryData>((ref) async {
 });
 
 final ratesProvider = FutureProvider<List<RateEntry>>((ref) async {
+  final viewAs = ref.watch(viewAsTeacherProvider);
   final dio = ref.watch(dioProvider);
-  final response = await dio.get('/rates/v2/my');
-  final list = response.data as List;
+
+  final response = viewAs == null
+      ? await dio.get('/rates/v2/my')
+      : await dio.get('/rates/teacher/${viewAs.id}');
+
+  final data = response.data;
+  final list = viewAs == null
+      ? data as List
+      : (data as Map<String, dynamic>)['rates'] as List;
+
   return list
       .map((e) => RateEntry.fromJson(e as Map<String, dynamic>))
       .toList();

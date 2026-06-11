@@ -137,7 +137,8 @@ class _StatCard extends StatelessWidget {
                   ]
                 : [
                     Shadow(
-                        color: Colors.white.withValues(alpha: NebulaAlpha.strong),
+                        color:
+                            Colors.white.withValues(alpha: NebulaAlpha.strong),
                         blurRadius: 2),
                     Shadow(
                         color: color.withValues(alpha: NebulaAlpha.high),
@@ -157,7 +158,8 @@ class _StatCard extends StatelessWidget {
                     ? null
                     : [
                         Shadow(
-                            color: Colors.white.withValues(alpha: NebulaAlpha.medium),
+                            color: Colors.white
+                                .withValues(alpha: NebulaAlpha.medium),
                             blurRadius: 2),
                         Shadow(
                             color: color.withValues(alpha: NebulaAlpha.strong),
@@ -379,6 +381,11 @@ class _RatesCard extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 14),
+          if (rates.isEmpty)
+            Text(
+              'Ставки пока не настроены',
+              style: type.bodyM.copyWith(color: tokens.mutedText),
+            ),
           ...rates.asMap().entries.map((e) {
             final i = e.key;
             final r = e.value;
@@ -389,8 +396,7 @@ class _RatesCard extends StatelessWidget {
                 : (r.instrumentName ?? 'Базовая ставка');
             return Column(
               children: [
-                if (i > 0)
-                  Divider(color: tokens.surfaceBorder, height: 16),
+                if (i > 0) Divider(color: tokens.surfaceBorder, height: 16),
                 Row(children: [
                   Container(
                     width: 8,
@@ -417,7 +423,8 @@ class _RatesCard extends StatelessWidget {
                         if (r.note.isNotEmpty)
                           Text(
                             r.note,
-                            style: type.labelS.copyWith(color: tokens.mutedText),
+                            style:
+                                type.labelS.copyWith(color: tokens.mutedText),
                           ),
                       ],
                     ),
