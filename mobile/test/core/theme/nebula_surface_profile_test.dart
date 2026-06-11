@@ -85,7 +85,7 @@ void main() {
     expect(style.blurSigma, greaterThan(0));
   });
 
-  testWidgets('light surface profiles stay cool instead of beige',
+  testWidgets('light surface profiles use clean warm sand material',
       (tester) async {
     final styles = await resolveWith(
       tester,
@@ -100,8 +100,9 @@ void main() {
     );
 
     for (final style in styles) {
-      expect(blue(style.fill), greaterThanOrEqualTo(red(style.fill)));
-      expect(green(style.fill), greaterThanOrEqualTo(red(style.fill)));
+      expect(red(style.fill), greaterThanOrEqualTo(green(style.fill)));
+      expect(green(style.fill), greaterThan(blue(style.fill)));
+      expect(blue(style.fill), greaterThan(235));
     }
   });
 }

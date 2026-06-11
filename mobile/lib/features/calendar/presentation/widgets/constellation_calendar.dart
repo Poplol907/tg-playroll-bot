@@ -1,5 +1,6 @@
 import 'dart:math' show min;
 import 'package:flutter/material.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../shared/models/lesson.dart';
 
@@ -182,6 +183,8 @@ class _CalendarBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
     final firstWeekday = DateTime(month.year, month.month, 1).weekday;
     final leadingEmpty = firstWeekday - 1;
@@ -234,6 +237,8 @@ class _CalendarBody extends StatelessWidget {
                         dayCentres: dayCentres,
                         glow: glow,
                         isLight: isLight,
+                        lineA: tokens.primaryAccent,
+                        lineB: tokens.secondaryAccent,
                       ),
                     ),
                     GridView.builder(
@@ -346,15 +351,27 @@ class _DayCell extends StatelessWidget {
     final isUnfilled =
         isPast && hasLessons && lessons.any((l) => l.status == 'scheduled');
 
-    Color starColor = NebulaColors.ghostText;
+    // Theme-aware status palette. Dark tokens map 1:1 onto the legacy
+    // NebulaColors, light gets saturated accents that read on white.
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    Color statusColorOf(LessonModel l) => switch (l.status.toLowerCase()) {
+          'attended' => tokens.success,
+          'missed' => tokens.error,
+          'cancelled' => tokens.warning,
+          _ => tokens.primaryAccent,
+        };
+
+    Color starColor = isLight ? tokens.mutedText : NebulaColors.ghostText;
     if (hasLessons) {
       if (isUnfilled) {
-        starColor = NebulaColors.warningAmber;
+        starColor = tokens.warning;
       } else {
-        starColor = lessons.first.statusColor;
+        starColor =
+            isLight ? statusColorOf(lessons.first) : lessons.first.statusColor;
       }
     }
-    if (isToday) starColor = NebulaColors.auroraCyan;
+    if (isToday) starColor = tokens.focusAccent;
 
     final warnOpacity = isUnfilled ? warn : 0.0;
 
@@ -367,7 +384,7 @@ class _DayCell extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Today pulse ring
+            // Today pulse ring — light pulses via border opacity, no glow.
             if (isToday)
               Container(
                 width: 36 * pulse,
@@ -375,14 +392,14 @@ class _DayCell extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color:
-                        NebulaColors.auroraCyan.withValues(alpha: 0.4 * glow),
+                    color: tokens.focusAccent.withValues(alpha: 0.4 * glow),
                     width: 1,
                   ),
                 ),
               ),
 
-            // Warn pulse ring
+            // Warn pulse ring — light: pure opacity pulsation of the border,
+            // no shadows; dark keeps its single soft glow.
             if (isUnfilled)
               Container(
                 width: 34 + 6 * warn,
@@ -390,31 +407,12 @@ class _DayCell extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: NebulaColors.warningAmber
-                        .withValues(alpha: (isLight ? 0.7 : 0.55) * warnOpacity),
+                    color: tokens.warning.withValues(
+                        alpha: (isLight ? 0.7 : 0.55) * warnOpacity),
                     width: 1.5,
                   ),
                   boxShadow: isLight
-                      ? [
-                          BoxShadow(
-                            color: NebulaColors.warningAmber
-                                .withValues(alpha: 0.60 * warnOpacity),
-                            blurRadius: 8,
-                            spreadRadius: 0,
-                          ),
-                          BoxShadow(
-                            color: NebulaColors.warningAmber
-                                .withValues(alpha: 0.30 * warnOpacity),
-                            blurRadius: 28,
-                            spreadRadius: -5,
-                          ),
-                          BoxShadow(
-                            color: NebulaColors.warningAmber
-                                .withValues(alpha: 0.12 * warnOpacity),
-                            blurRadius: 56,
-                            spreadRadius: -10,
-                          ),
-                        ]
+                      ? null
                       : [
                           BoxShadow(
                             color: NebulaColors.warningAmber
@@ -427,58 +425,49 @@ class _DayCell extends StatelessWidget {
               ),
 
             // Star node
+            // Light: "lighting" is a solid colour FILL whose opacity pulses
+            // with the glow animation — no shadows at all. Dark keeps its
+            // radial glow.
             Container(
               width: hasLessons ? 28 : (isToday ? 26 : 22),
               height: hasLessons ? 28 : (isToday ? 26 : 22),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isUnfilled
-                    ? NebulaColors.warningAmber
-                        .withValues(alpha: 0.08 + 0.07 * warnOpacity)
+                    ? tokens.warning.withValues(
+                        alpha: isLight
+                            ? 0.10 + 0.22 * warnOpacity
+                            : 0.08 + 0.07 * warnOpacity)
                     : (hasLessons
-                        ? starColor.withValues(alpha: 0.12)
+                        ? starColor.withValues(
+                            alpha: isLight ? 0.16 + 0.22 * glow : 0.12)
                         : (isToday
-                            ? NebulaColors.auroraCyan.withValues(alpha: 0.15)
+                            ? tokens.focusAccent.withValues(
+                                alpha: isLight ? 0.12 + 0.18 * glow : 0.15)
                             : Colors.transparent)),
                 border: Border.all(
                   color: isUnfilled
-                      ? NebulaColors.warningAmber
+                      ? tokens.warning
                           .withValues(alpha: 0.4 + 0.4 * warnOpacity)
                       : (isToday
-                          ? NebulaColors.auroraCyan.withValues(alpha: 0.85)
+                          ? tokens.focusAccent.withValues(alpha: 0.85)
                           : (hasLessons
-                              ? starColor.withValues(alpha: isLight ? 0.75 : 0.6)
-                              : NebulaColors.ghostText.withValues(alpha: 0.2))),
+                              ? starColor.withValues(alpha: isLight ? 0.9 : 0.6)
+                              : (isLight
+                                  ? tokens.mutedText.withValues(alpha: 0.25)
+                                  : NebulaColors.ghostText
+                                      .withValues(alpha: 0.2)))),
                   width: isToday || isUnfilled ? 1.5 : 1,
                 ),
-                boxShadow: (isToday || hasLessons)
-                    ? isLight
-                        // Spreading paint: clear core + wide soft bleed outward
-                        ? [
-                            BoxShadow(
-                              color: starColor.withValues(alpha: 0.65 * glow),
-                              blurRadius: 6,
-                              spreadRadius: 0,
-                            ),
-                            BoxShadow(
-                              color: starColor.withValues(alpha: 0.30 * glow),
-                              blurRadius: 22,
-                              spreadRadius: -4,
-                            ),
-                            BoxShadow(
-                              color: starColor.withValues(alpha: 0.12 * glow),
-                              blurRadius: 44,
-                              spreadRadius: -8,
-                            ),
-                          ]
-                        // Dark: focused radial glow
-                        : [
-                            BoxShadow(
-                              color: starColor.withValues(alpha: 0.45 * glow),
-                              blurRadius: 14,
-                              spreadRadius: 2,
-                            ),
-                          ]
+                boxShadow: (isToday || hasLessons) && !isLight
+                    // Dark: focused radial glow
+                    ? [
+                        BoxShadow(
+                          color: starColor.withValues(alpha: 0.45 * glow),
+                          blurRadius: 14,
+                          spreadRadius: 2,
+                        ),
+                      ]
                     : null,
               ),
               child: Center(
@@ -489,14 +478,17 @@ class _DayCell extends StatelessWidget {
                           fontFamily: 'SpaceMono',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: NebulaColors.warningAmber
+                          color: tokens.warning
                               .withValues(alpha: 0.6 + 0.4 * warnOpacity),
-                          shadows: [
-                            Shadow(
-                              color: NebulaColors.warningAmber.withValues(alpha: 0.8),
-                              blurRadius: 4,
-                            )
-                          ],
+                          shadows: isLight
+                              ? null
+                              : [
+                                  Shadow(
+                                    color: NebulaColors.warningAmber
+                                        .withValues(alpha: 0.8),
+                                    blurRadius: 4,
+                                  )
+                                ],
                         ),
                       )
                     : Text(
@@ -507,20 +499,18 @@ class _DayCell extends StatelessWidget {
                           fontWeight:
                               isToday ? FontWeight.w700 : FontWeight.w400,
                           color: isToday
-                              ? NebulaColors.auroraCyan
+                              ? tokens.focusAccent
                               : (hasLessons
                                   ? starColor
                                   : (isPast
-                                      ? (isLight
-                                          ? const Color(0xFF9CA3AF)
-                                          : NebulaColors.ghostText)
-                                      : (isLight
-                                          ? const Color(0xFF6B7280)
-                                          : NebulaColors.dimText))),
-                          shadows: isToday || hasLessons
+                                      ? tokens.mutedText.withValues(alpha: 0.58)
+                                      : tokens.mutedText)),
+                          shadows: (isToday || hasLessons) && !isLight
                               ? [
                                   Shadow(
-                                    color: (isToday ? NebulaColors.auroraCyan : starColor)
+                                    color: (isToday
+                                            ? NebulaColors.auroraCyan
+                                            : starColor)
                                         .withValues(alpha: 0.6),
                                     blurRadius: 6,
                                   )
@@ -560,7 +550,7 @@ class _DayCell extends StatelessWidget {
                             margin: const EdgeInsets.symmetric(horizontal: 1),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: l.statusColor,
+                              color: isLight ? statusColorOf(l) : l.statusColor,
                             ),
                           ))
                       .toList(),
@@ -581,7 +571,7 @@ class _DayCell extends StatelessWidget {
                             margin: const EdgeInsets.symmetric(horizontal: 1),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: NebulaColors.warningAmber
+                              color: tokens.warning
                                   .withValues(alpha: 0.5 + 0.5 * warnOpacity),
                             ),
                           ))
@@ -604,12 +594,16 @@ class _ConstellationLinesPainter extends CustomPainter {
   final Map<int, Offset> dayCentres;
   final double glow;
   final bool isLight;
+  final Color lineA;
+  final Color lineB;
 
   _ConstellationLinesPainter({
     required this.lessonDays,
     required this.dayCentres,
     required this.glow,
     required this.isLight,
+    this.lineA = NebulaColors.stellarBlue,
+    this.lineB = NebulaColors.nebulaPurple,
   });
 
   @override
@@ -632,8 +626,8 @@ class _ConstellationLinesPainter extends CustomPainter {
 
       paint.shader = LinearGradient(
         colors: [
-          NebulaColors.stellarBlue.withValues(alpha: opacity),
-          NebulaColors.nebulaPurple.withValues(alpha: opacity * 0.6),
+          lineA.withValues(alpha: opacity),
+          lineB.withValues(alpha: opacity * 0.6),
         ],
       ).createShader(Rect.fromPoints(from, to));
 
@@ -643,5 +637,9 @@ class _ConstellationLinesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ConstellationLinesPainter old) =>
-      old.glow != glow || old.lessonDays != lessonDays || old.isLight != isLight;
+      old.glow != glow ||
+      old.lessonDays != lessonDays ||
+      old.isLight != isLight ||
+      old.lineA != lineA ||
+      old.lineB != lineB;
 }

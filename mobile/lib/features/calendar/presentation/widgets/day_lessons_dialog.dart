@@ -107,6 +107,7 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                 },
                 onDeleteConfirmed: () async {
                   final nav = Navigator.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
                   final confirmed = await NebulaDialog.confirm(
                     context,
                     title: 'Удалить урок?',
@@ -140,14 +141,18 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                       if (mounted) {
                         setState(() => _localLessons.insert(
                             _localLessons.length, removedLesson));
-                        showNebulaSnackBar(
-                          nav.context,
-                          title: 'Не удалось удалить урок',
-                          message: parseApiError(
-                            e,
-                            fallback: 'Проверь подключение и попробуй ещё раз',
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              parseApiError(
+                                e,
+                                fallback:
+                                    'Проверь подключение и попробуй ещё раз',
+                              ),
+                            ),
+                            backgroundColor: NebulaColors.errorRose,
+                            behavior: SnackBarBehavior.floating,
                           ),
-                          tone: NebulaSnackTone.error,
                         );
                       }
                     }

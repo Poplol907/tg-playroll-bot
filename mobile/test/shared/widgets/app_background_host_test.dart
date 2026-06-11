@@ -24,7 +24,8 @@ void main() {
     expect(find.text('content'), findsOneWidget);
   });
 
-  testWidgets('AppBackgroundHost uses a static path field for light lite mode',
+  testWidgets(
+      'AppBackgroundHost uses an ambient animated path field for light lite mode',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -43,7 +44,7 @@ void main() {
       find.byType(PathFieldBackground),
     );
 
-    expect(background.animated, isFalse);
+    expect(background.animated, isTrue);
     expect(find.text('content'), findsOneWidget);
   });
 

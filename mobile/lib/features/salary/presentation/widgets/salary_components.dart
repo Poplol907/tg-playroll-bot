@@ -123,8 +123,18 @@ class _StatCard extends StatelessWidget {
             icon,
             color: color,
             size: 18,
+            // Light: soft scattered glow (wide blur, low alpha) — the icon's
+            // light diffuses gently into the matte surface instead of sitting
+            // flat or casting a hard halo.
             shadows: isLight
-                ? null
+                ? [
+                    Shadow(
+                        color: color.withValues(alpha: NebulaAlpha.accent),
+                        blurRadius: 10),
+                    Shadow(
+                        color: color.withValues(alpha: NebulaAlpha.subtle),
+                        blurRadius: 24),
+                  ]
                 : [
                     Shadow(
                         color: Colors.white.withValues(alpha: NebulaAlpha.strong),
@@ -181,15 +191,17 @@ class _MakeupBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: NebulaTokens.radiusSM,
-      accent: NebulaColors.auroraCyan,
+      accent: tokens.focusAccent,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.repeat_rounded,
-            color: NebulaColors.auroraCyan,
+            color: tokens.focusAccent,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -198,7 +210,7 @@ class _MakeupBanner extends StatelessWidget {
               'Отработано $count урок${_plural(count)}: педагог закрыл долги ✓',
               style: NebulaTypography.of(context)
                   .bodyS
-                  .copyWith(color: NebulaColors.auroraCyan),
+                  .copyWith(color: tokens.focusAccent),
             ),
           ),
         ],
@@ -221,15 +233,17 @@ class _DebtBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: NebulaTokens.radiusSM,
-      accent: NebulaColors.errorRose,
+      accent: tokens.error,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
-            color: NebulaColors.errorRose,
+            color: tokens.error,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -238,7 +252,7 @@ class _DebtBanner extends StatelessWidget {
               'Долг: $count урок${_plural(count)} отменено педагогом без отработки',
               style: NebulaTypography.of(context)
                   .bodyS
-                  .copyWith(color: NebulaColors.errorRose),
+                  .copyWith(color: tokens.error),
             ),
           ),
         ],
@@ -261,15 +275,17 @@ class _PendingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: NebulaTokens.radiusSM,
-      accent: NebulaColors.warningAmber,
+      accent: tokens.warning,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.schedule_rounded,
-            color: NebulaColors.warningAmber,
+            color: tokens.warning,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -278,7 +294,7 @@ class _PendingBanner extends StatelessWidget {
               '$amount сум — пропуски ученика, будут зачислены в конце месяца',
               style: NebulaTypography.of(context)
                   .bodyS
-                  .copyWith(color: NebulaColors.warningAmber),
+                  .copyWith(color: tokens.warning),
             ),
           ),
         ],
@@ -366,16 +382,15 @@ class _RatesCard extends StatelessWidget {
           ...rates.asMap().entries.map((e) {
             final i = e.key;
             final r = e.value;
-            final Color dotColor = r.isForeign
-                ? NebulaColors.warningAmber
-                : NebulaColors.stellarBlue;
+            final Color dotColor =
+                r.isForeign ? tokens.warning : tokens.primaryAccent;
             final String label = r.isForeign
                 ? 'Иностранный тариф'
                 : (r.instrumentName ?? 'Базовая ставка');
             return Column(
               children: [
                 if (i > 0)
-                  const Divider(color: NebulaColors.surfaceBorder, height: 16),
+                  Divider(color: tokens.surfaceBorder, height: 16),
                 Row(children: [
                   Container(
                     width: 8,
@@ -494,14 +509,16 @@ class _InlineErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
       borderRadius: NebulaTokens.radiusMD,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: NebulaColors.warningAmber,
+            color: tokens.warning,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -510,7 +527,7 @@ class _InlineErrorCard extends StatelessWidget {
               message,
               style: NebulaTypography.of(context)
                   .labelM
-                  .copyWith(color: NebulaColors.mistWhite),
+                  .copyWith(color: tokens.secondaryText),
             ),
           ),
           NebulaTextButton(

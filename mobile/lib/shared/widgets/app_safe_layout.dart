@@ -62,6 +62,36 @@ abstract class AppSafeInsets {
   }
 }
 
+/// Canonical edge treatment for every scroll viewport: instead of a hard
+/// rectangular clip, content dissolves softly at the top/bottom edge — text
+/// "мылится" out of view rather than being guillotined by the window.
+/// One mechanism for the whole app (PRIME RULE); applied by AppScrollView
+/// and AppListView so every screen scrolls the same way.
+class ScrollEdgeFade extends StatelessWidget {
+  final Widget child;
+
+  const ScrollEdgeFade({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (rect) => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          Colors.white,
+          Colors.white,
+          Colors.transparent,
+        ],
+        stops: [0.0, 0.04, 0.96, 1.0],
+      ).createShader(rect),
+      blendMode: BlendMode.dstIn,
+      child: child,
+    );
+  }
+}
+
 class AppScrollView extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -80,14 +110,18 @@ class AppScrollView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: controller,
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      physics: physics ??
-          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-      padding: padding ??
-          AppSafeInsets.screen(context, includeKeyboard: includeKeyboardInset),
-      child: child,
+    return ScrollEdgeFade(
+      child: SingleChildScrollView(
+        controller: controller,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        physics: physics ??
+            const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+        padding: padding ??
+            AppSafeInsets.screen(context,
+                includeKeyboard: includeKeyboardInset),
+        child: child,
+      ),
     );
   }
 }
@@ -112,14 +146,16 @@ class AppListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      controller: controller,
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      physics: physics,
-      padding: padding ??
-          AppSafeInsets.list(context, includeKeyboard: includeKeyboardInset),
-      itemCount: itemCount,
-      itemBuilder: itemBuilder,
+    return ScrollEdgeFade(
+      child: ListView.builder(
+        controller: controller,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        physics: physics,
+        padding: padding ??
+            AppSafeInsets.list(context, includeKeyboard: includeKeyboardInset),
+        itemCount: itemCount,
+        itemBuilder: itemBuilder,
+      ),
     );
   }
 }

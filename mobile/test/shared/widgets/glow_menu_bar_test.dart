@@ -101,6 +101,48 @@ void main() {
     expect(border.top.color, CosmoThemeTokens.lightLite.surfaceBorder);
   });
 
+  testWidgets('GlowMenuBar fits four tabs on narrow phones', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: GlowMenuBar(
+            currentIndex: 0,
+            onTap: (_) {},
+            items: const [
+              GlowMenuItem(
+                icon: Icons.calendar_month_rounded,
+                label: 'Календарь',
+                glowColor: Colors.blue,
+              ),
+              GlowMenuItem(
+                icon: Icons.people_outline_rounded,
+                label: 'Ученики',
+                glowColor: Colors.purple,
+              ),
+              GlowMenuItem(
+                icon: Icons.payments_outlined,
+                label: 'Зарплата',
+                glowColor: Colors.green,
+              ),
+              GlowMenuItem(
+                icon: Icons.settings_outlined,
+                label: 'Настройки',
+                glowColor: Colors.amber,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Календарь'), findsOneWidget);
+    expect(find.text('Настройки'), findsOneWidget);
+  });
+
   testWidgets(
       'GlowMenuBar admin layout centers Studio and keeps empty bar inert',
       (tester) async {

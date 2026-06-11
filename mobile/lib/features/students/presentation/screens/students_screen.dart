@@ -53,9 +53,10 @@ class StudentsScreen extends ConsumerWidget {
                       final titleText = Text(
                         'Ученики',
                         style: NebulaTypography.of(ctx).displayL.copyWith(
-                          color:
-                              isLight ? Colors.white : NebulaColors.softWhite,
-                        ),
+                              color: isLight
+                                  ? Colors.white
+                                  : NebulaColors.softWhite,
+                            ),
                       );
                       if (!isLight) return titleText;
                       return ShaderMask(
@@ -83,10 +84,11 @@ class StudentsScreen extends ConsumerWidget {
                             ),
                             child: Text(
                               '${students.length}',
-                              style: NebulaTypography.of(context).bodyM.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: tokens.primaryAccent,
-                              ),
+                              style:
+                                  NebulaTypography.of(context).bodyM.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: tokens.primaryAccent,
+                                      ),
                             ),
                           ),
                         ) ??
@@ -206,13 +208,10 @@ class _StudentCard extends ConsumerWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final nameColor =
-        isLight ? const Color(0xFF0D1117) : NebulaColors.softWhite;
-    final subColor = isLight ? const Color(0xFF4B5563) : NebulaColors.dimText;
-    final iconColor =
-        isLight ? const Color(0xFF9CA3AF) : NebulaColors.ghostText;
-    final newBadgeBorder =
-        isLight ? const Color(0xFFFFFFFF) : NebulaColors.spaceBlack;
+    final nameColor = tokens.primaryText;
+    final subColor = tokens.mutedText;
+    final iconColor = tokens.mutedText.withValues(alpha: 0.72);
+    final newBadgeBorder = isLight ? tokens.denseSurface : tokens.backgroundMid;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -255,8 +254,8 @@ class _StudentCard extends ConsumerWidget {
                       child: Text(
                         student.initials,
                         style: NebulaTypography.of(context).titleM.copyWith(
-                          color: Colors.black,
-                        ),
+                              color: Colors.black,
+                            ),
                       ),
                     ),
                   ),
@@ -287,9 +286,9 @@ class _StudentCard extends ConsumerWidget {
                           child: Text(
                             student.fullName,
                             style: NebulaTypography.of(context).titleM.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: nameColor,
-                            ),
+                                  fontWeight: FontWeight.w600,
+                                  color: nameColor,
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),

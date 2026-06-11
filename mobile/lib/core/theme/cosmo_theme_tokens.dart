@@ -60,28 +60,26 @@ class CosmoThemeTokens extends ThemeExtension<CosmoThemeTokens> {
     glowIntensity: 1.0,
   );
 
-  // Pure-white page — the app's single light theme. No animated background.
+  // Warm sand-pearl page — light, premium, but not washed out. Accents reuse
+  // the same canonical NebulaColors as dark mode so statuses don't drift
+  // between screens or themes.
   static const lightLite = CosmoThemeTokens(
-    background: Color(0xFFFFFFFF),
-    backgroundMid: Color(0xFFF7FAFF),
-    backgroundNear: Color(0xFFEEF4FF),
-    // Restrained translucency mirrors the dark theme philosophy: the static
-    // background reads faintly through surfaces without hurting legibility,
-    // just like the nebula shows through dark surfaces. Same idea, light
-    // tokens — surface ~0.95, denseSurface ~0.98.
-    surface: Color(0xF2F7FAFF),
-    denseSurface: Color(0xFAFFFFFF),
-    surfaceBorder: Color(0x223B5B8A),
-    primaryText: Color(0xFF0D1117),
-    secondaryText: Color(0xCC0D1117),
-    mutedText: Color(0xFF5B677A),
-    primaryAccent: Color(0xFF2563EB),
-    secondaryAccent: Color(0xFF7C3AED),
-    focusAccent: Color(0xFF1D4ED8),
-    success: Color(0xFF059669),
-    warning: Color(0xFFD97706),
-    error: Color(0xFFDC2626),
-    glowIntensity: 0.0,
+    background: Color(0xFFFFF8EC),
+    backgroundMid: Color(0xFFFFF1DA),
+    backgroundNear: Color(0xFFF5DFC0),
+    surface: Color(0xF2FFFDF7),
+    denseSurface: Color(0xFAFFFCF3),
+    surfaceBorder: Color(0x55D8B98A),
+    primaryText: Color(0xFF211A12),
+    secondaryText: Color(0xCC211A12),
+    mutedText: Color(0xFF6F6254),
+    primaryAccent: NebulaColors.stellarBlue,
+    secondaryAccent: NebulaColors.nebulaPurple,
+    focusAccent: NebulaColors.auroraCyan,
+    success: NebulaColors.successMint,
+    warning: NebulaColors.warningAmber,
+    error: NebulaColors.errorRose,
+    glowIntensity: 0.18,
   );
 
   @override
