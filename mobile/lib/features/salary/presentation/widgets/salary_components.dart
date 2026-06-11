@@ -51,21 +51,31 @@ class _LegendDot extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: type.labelS.copyWith(color: tokens.mutedText),
-            ),
-            Text(
-              '$value сум',
-              style: type.labelM.copyWith(
-                fontWeight: FontWeight.w700,
-                color: color,
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: type.labelS.copyWith(color: tokens.mutedText),
               ),
-            ),
-          ],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '$value сум',
+                  maxLines: 1,
+                  style: type.labelM.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -125,20 +135,25 @@ class _StatCard extends StatelessWidget {
                   ],
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: type.displayL.copyWith(
-              color: color,
-              shadows: isLight
-                  ? null
-                  : [
-                      Shadow(
-                          color: Colors.white.withValues(alpha: NebulaAlpha.medium),
-                          blurRadius: 2),
-                      Shadow(
-                          color: color.withValues(alpha: NebulaAlpha.strong),
-                          blurRadius: 8),
-                    ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: type.displayL.copyWith(
+                color: color,
+                shadows: isLight
+                    ? null
+                    : [
+                        Shadow(
+                            color: Colors.white.withValues(alpha: NebulaAlpha.medium),
+                            blurRadius: 2),
+                        Shadow(
+                            color: color.withValues(alpha: NebulaAlpha.strong),
+                            blurRadius: 8),
+                      ],
+              ),
             ),
           ),
           const SizedBox(height: 2),
@@ -291,20 +306,31 @@ class _PayRow extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: (bold ? type.titleM : type.bodyM).copyWith(
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-            color: bold ? tokens.primaryText : tokens.mutedText,
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: (bold ? type.titleM : type.bodyM).copyWith(
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+              color: bold ? tokens.primaryText : tokens.mutedText,
+            ),
           ),
         ),
-        Text(
-          value,
-          style: (bold ? type.titleM : type.bodyM).copyWith(
-            fontWeight: FontWeight.w700,
-            color: color,
+        const SizedBox(width: 12),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: (bold ? type.titleM : type.bodyM).copyWith(
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
           ),
         ),
       ],
@@ -381,11 +407,19 @@ class _RatesCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text(
-                    '${fmt(r.ratePerLesson)} сум',
-                    style: type.bodyM.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: dotColor,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '${fmt(r.ratePerLesson)} сум',
+                        maxLines: 1,
+                        style: type.bodyM.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: dotColor,
+                        ),
+                      ),
                     ),
                   ),
                 ]),

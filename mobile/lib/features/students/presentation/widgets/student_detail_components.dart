@@ -145,6 +145,8 @@ class _ScheduleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = NebulaTypography.of(context);
     final role = NebulaSemantic.of(context).primary;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(children: [
@@ -163,10 +165,10 @@ class _ScheduleRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Text(time, style: type.titleS.copyWith(color: NebulaColors.softWhite)),
+        Text(time, style: type.titleS.copyWith(color: tokens.primaryText)),
         const Spacer(),
         Text('$count ${_word(count)}',
-            style: type.labelM.copyWith(color: NebulaColors.ghostText)),
+            style: type.labelM.copyWith(color: tokens.mutedText)),
       ]),
     );
   }
@@ -204,13 +206,15 @@ class _SubscriptionBlock extends StatelessWidget {
     final monthName = DateFormat('MMMM yyyy', 'ru').format(dt);
 
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(16),
       borderRadius: NebulaTokens.radiusMD,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Text(monthName,
-              style: type.titleS.copyWith(color: NebulaColors.softWhite)),
+              style: type.titleS.copyWith(color: tokens.primaryText)),
           const Spacer(),
           StatusBadge(
             label: status == 'active' ? 'Активен' : status,
@@ -251,10 +255,10 @@ class _SubscriptionBlock extends StatelessWidget {
         ]),
         if (ml.isNotEmpty) ...[
           const SizedBox(height: 14),
-          const Divider(color: NebulaColors.surfaceBorder, height: 1),
+          Divider(color: tokens.surfaceBorder, height: 1),
           const SizedBox(height: 12),
           Text('Купленные даты',
-              style: type.labelM.copyWith(color: NebulaColors.ghostText)),
+              style: type.labelM.copyWith(color: tokens.mutedText)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
@@ -268,7 +272,7 @@ class _SubscriptionBlock extends StatelessWidget {
         if (subscriptions.length > 1) ...[
           const SizedBox(height: 12),
           Text('Всего абонементов: ${subscriptions.length}',
-              style: type.labelM.copyWith(color: NebulaColors.stellarBlue)),
+              style: type.labelM.copyWith(color: tokens.primaryAccent)),
         ],
       ]),
     );
@@ -285,21 +289,23 @@ class _ProgressBar extends StatelessWidget {
     final total = paid == 0 ? 1 : paid;
     final dF = (done / total).clamp(0.0, 1.0);
     final mF = (missed / total).clamp(0.0, 1.0 - dF);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: Stack(children: [
-        Container(height: 6, color: NebulaColors.surfaceBorder),
+        Container(height: 6, color: tokens.surfaceBorder),
         FractionallySizedBox(
             widthFactor: dF,
-            child: Container(height: 6, color: NebulaColors.successMint)),
+            child: Container(height: 6, color: tokens.success)),
         FractionallySizedBox(
           widthFactor: dF + mF,
           child: Container(
             height: 6,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-              NebulaColors.successMint,
-              NebulaColors.errorRose
+              tokens.success,
+              tokens.error,
             ])),
           ),
         ),
@@ -316,6 +322,8 @@ class _DateChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = lesson.statusColor;
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -328,7 +336,7 @@ class _DateChip extends StatelessWidget {
             style:
                 type.bodyM.copyWith(color: color, fontWeight: FontWeight.w700)),
         Text(DateFormat('EE', 'ru').format(lesson.scheduledDate),
-            style: type.overline.copyWith(color: NebulaColors.ghostText)),
+            style: type.overline.copyWith(color: tokens.mutedText)),
       ]),
     );
   }
@@ -350,6 +358,8 @@ class _LessonRow extends StatelessWidget {
         lesson.status;
 
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: NebulaSurface(
@@ -366,11 +376,11 @@ class _LessonRow extends StatelessWidget {
           Expanded(
             child: Text(
                 DateFormat('d MMM yyyy', 'ru').format(lesson.scheduledDate),
-                style: type.bodyM.copyWith(color: NebulaColors.softWhite)),
+                style: type.bodyM.copyWith(color: tokens.primaryText)),
           ),
           if (lesson.scheduledTime != null)
             Text(lesson.scheduledTime!,
-                style: type.labelM.copyWith(color: NebulaColors.dimText)),
+                style: type.labelM.copyWith(color: tokens.mutedText)),
           const SizedBox(width: 10),
           Text(label, style: type.labelM.copyWith(color: color)),
         ]),
@@ -394,6 +404,8 @@ class _AddScheduleButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return GestureDetector(
       onTap: () async {
         HapticFeedback.lightImpact();
@@ -413,18 +425,17 @@ class _AddScheduleButton extends ConsumerWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.accent),
-              NebulaColors.nebulaPurple.withValues(alpha: NebulaAlpha.subtle),
+              tokens.primaryAccent.withValues(alpha: NebulaAlpha.accent),
+              tokens.secondaryAccent.withValues(alpha: NebulaAlpha.subtle),
             ],
           ),
           borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
           border: Border.all(
-            color:
-                NebulaColors.stellarBlue.withValues(alpha: NebulaAlpha.medium),
+            color: tokens.primaryAccent.withValues(alpha: NebulaAlpha.medium),
           ),
           boxShadow: [
             BoxShadow(
-              color: NebulaColors.stellarBlue
+              color: tokens.primaryAccent
                   .withValues(alpha: NebulaAlpha.surface),
               blurRadius: 12,
               offset: Offset.zero,
@@ -438,13 +449,13 @@ class _AddScheduleButton extends ConsumerWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: NebulaColors.stellarBlue
-                    .withValues(alpha: NebulaAlpha.subtle),
+                color:
+                    tokens.primaryAccent.withValues(alpha: NebulaAlpha.subtle),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.calendar_month_rounded,
-                color: NebulaColors.stellarBlue,
+                color: tokens.primaryAccent,
                 size: 16,
               ),
             ),
@@ -453,7 +464,7 @@ class _AddScheduleButton extends ConsumerWidget {
               'Добавить расписание',
               style: NebulaTypography.of(context)
                   .titleS
-                  .copyWith(color: NebulaColors.stellarBlue),
+                  .copyWith(color: tokens.primaryAccent),
             ),
           ],
         ),

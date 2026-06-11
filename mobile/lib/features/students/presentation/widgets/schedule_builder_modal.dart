@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
-import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/platform/app_platform.dart';
@@ -234,6 +233,8 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
     required List<DateTime> preview,
   }) {
     final height = MediaQuery.of(context).size.height * 0.82;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return SizedBox(
       height: height,
@@ -246,7 +247,7 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
               monthLabel: monthLabel,
               showHandle: false,
             ),
-            const Divider(height: 20, color: NebulaColors.surfaceBorder),
+            Divider(height: 20, color: tokens.surfaceBorder),
             const _GridLabel(),
             const SizedBox(height: 8),
             SizedBox(
@@ -285,6 +286,8 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
     required String monthLabel,
     required List<DateTime> preview,
   }) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return NebulaModalSurface(
       containerKey: const ValueKey('schedule-builder-modal-surface'),
       borderRadius: const BorderRadius.vertical(
@@ -297,7 +300,7 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
             monthLabel: monthLabel,
             showHandle: true,
           ),
-          const Divider(height: 16, color: NebulaColors.surfaceBorder),
+          Divider(height: 16, color: tokens.surfaceBorder),
           // Label — static, never scrolls
           const Padding(
             padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
@@ -407,9 +410,9 @@ class _Header extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: NebulaColors.nebulaSurface,
+                    color: tokens.surface,
                     shape: BoxShape.circle,
-                    border: Border.all(color: NebulaColors.surfaceBorder),
+                    border: Border.all(color: tokens.surfaceBorder),
                   ),
                   child: Icon(
                     Icons.close_rounded,
@@ -431,11 +434,13 @@ class _GridLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Text(
       'ВЫБЕРИТЕ ДЕНЬ И ВРЕМЯ',
       style: NebulaTypography.of(context)
           .overline
-          .copyWith(color: NebulaColors.ghostText),
+          .copyWith(color: tokens.mutedText),
     );
   }
 }
@@ -461,6 +466,8 @@ class _ActionArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -476,18 +483,16 @@ class _ActionArea extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color:
-                  NebulaColors.errorRose.withValues(alpha: NebulaAlpha.surface),
+              color: tokens.error.withValues(alpha: NebulaAlpha.surface),
               borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
               border: Border.all(
-                color: NebulaColors.errorRose
-                    .withValues(alpha: NebulaAlpha.accent),
+                color: tokens.error.withValues(alpha: NebulaAlpha.accent),
               ),
             ),
             child: Row(children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
-                color: NebulaColors.errorRose,
+                color: tokens.error,
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -496,7 +501,7 @@ class _ActionArea extends StatelessWidget {
                   errorMsg!,
                   style: NebulaTypography.of(context)
                       .bodyS
-                      .copyWith(color: NebulaColors.errorRose),
+                      .copyWith(color: tokens.error),
                 ),
               ),
             ]),
@@ -536,6 +541,8 @@ class _WeekGrid extends StatelessWidget {
     final timeColW = compact ? 42.0 : 46.0;
     final cellH = compact ? 32.0 : 38.0;
     final headerH = compact ? 30.0 : 32.0;
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return NebulaSurface(
       padding: EdgeInsets.zero,
@@ -557,8 +564,8 @@ class _WeekGrid extends StatelessWidget {
                         style: NebulaTypography.of(context).labelS.copyWith(
                               fontWeight: FontWeight.w700,
                               color: isWeekend
-                                  ? NebulaColors.nebulaPurple
-                                  : NebulaColors.dimText,
+                                  ? tokens.secondaryAccent
+                                  : tokens.mutedText,
                             ),
                       ),
                     ),
@@ -568,7 +575,7 @@ class _WeekGrid extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1, color: NebulaColors.surfaceBorder),
+          Divider(height: 1, color: tokens.surfaceBorder),
 
           // ── Time rows ─────────────────────────────────────────────────
           Expanded(
@@ -584,9 +591,9 @@ class _WeekGrid extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (ti > 0)
-                      const Divider(
+                      Divider(
                         height: 1,
-                        color: NebulaColors.surfaceBorder,
+                        color: tokens.surfaceBorder,
                       ),
                     SizedBox(
                       height: cellH,
@@ -600,7 +607,7 @@ class _WeekGrid extends StatelessWidget {
                                 timeStr,
                                 style: NebulaTypography.of(context)
                                     .overline
-                                    .copyWith(color: NebulaColors.dimText),
+                                    .copyWith(color: tokens.mutedText),
                               ),
                             ),
                           ),
@@ -619,17 +626,17 @@ class _WeekGrid extends StatelessWidget {
                                   margin: EdgeInsets.all(compact ? 1.5 : 2),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? NebulaColors.stellarBlue.withValues(
+                                        ? tokens.primaryAccent.withValues(
                                             alpha: NebulaAlpha.border)
                                         : isWeekend
-                                            ? NebulaColors.nebulaPurple
+                                            ? tokens.secondaryAccent
                                                 .withValues(
                                                     alpha: NebulaAlpha.whisper)
                                             : Colors.transparent,
                                     borderRadius: BorderRadius.circular(6),
                                     border: isSelected
                                         ? Border.all(
-                                            color: NebulaColors.stellarBlue
+                                            color: tokens.primaryAccent
                                                 .withValues(
                                                     alpha: NebulaAlpha.strong),
                                             width: 1.2,
@@ -638,7 +645,7 @@ class _WeekGrid extends StatelessWidget {
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
-                                              color: NebulaColors.stellarBlue
+                                              color: tokens.primaryAccent
                                                   .withValues(
                                                       alpha:
                                                           NebulaAlpha.border),
@@ -648,10 +655,10 @@ class _WeekGrid extends StatelessWidget {
                                         : null,
                                   ),
                                   child: isSelected
-                                      ? const Center(
+                                      ? Center(
                                           child: Icon(
                                             Icons.check_rounded,
-                                            color: NebulaColors.stellarBlue,
+                                            color: tokens.primaryAccent,
                                             size: 14,
                                           ),
                                         )
@@ -697,6 +704,8 @@ class _PreviewSection extends StatelessWidget {
       final label = DateFormat('EEEE', 'ru').format(dt);
       byDay.putIfAbsent(label, () => []).add(dt);
     }
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return NebulaSurface(
       padding: const EdgeInsets.all(16),
@@ -705,14 +714,14 @@ class _PreviewSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Icon(Icons.preview_rounded,
-                color: NebulaColors.stellarBlue, size: 16),
+            Icon(Icons.preview_rounded,
+                color: tokens.primaryAccent, size: 16),
             const SizedBox(width: 8),
             Text(
               'ПРЕДПРОСМОТР · $monthLabel',
               style: NebulaTypography.of(context)
                   .overline
-                  .copyWith(color: NebulaColors.stellarBlue),
+                  .copyWith(color: tokens.primaryAccent),
             ),
           ]),
           const SizedBox(height: 12),
@@ -728,7 +737,7 @@ class _PreviewSection extends StatelessWidget {
                   Text(
                     '${_capitalize(dayName)}  ·  ${dates.length} урок${_plural(dates.length)}',
                     style: NebulaTypography.of(context).bodyS.copyWith(
-                          color: NebulaColors.softWhite,
+                          color: tokens.primaryText,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -743,19 +752,19 @@ class _PreviewSection extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: NebulaColors.stellarBlue
+                          color: tokens.primaryAccent
                               .withValues(alpha: NebulaAlpha.surface),
                           borderRadius:
                               BorderRadius.circular(NebulaTokens.radiusSM),
                           border: Border.all(
-                              color: NebulaColors.stellarBlue
+                              color: tokens.primaryAccent
                                   .withValues(alpha: NebulaAlpha.border)),
                         ),
                         child: Text(
                           label,
                           style: NebulaTypography.of(context)
                               .labelM
-                              .copyWith(color: NebulaColors.stellarBlue),
+                              .copyWith(color: tokens.primaryAccent),
                         ),
                       );
                     }).toList(),
@@ -765,7 +774,7 @@ class _PreviewSection extends StatelessWidget {
             );
           }),
 
-          const Divider(color: NebulaColors.surfaceBorder, height: 20),
+          Divider(color: tokens.surfaceBorder, height: 20),
 
           // Totals row
           Row(children: [
@@ -773,20 +782,20 @@ class _PreviewSection extends StatelessWidget {
                 icon: Icons.calendar_today_rounded,
                 label: 'Уроков всего',
                 value: '${preview.length}',
-                color: NebulaColors.stellarBlue),
+                color: tokens.primaryAccent),
             const SizedBox(width: 12),
             if (isForeign)
-              const _Total(
+              _Total(
                   icon: Icons.language_rounded,
                   label: 'Тариф',
                   value: 'Иностранный',
-                  color: NebulaColors.warningAmber)
+                  color: tokens.warning)
             else
-              const _Total(
+              _Total(
                   icon: Icons.person_rounded,
                   label: 'Тариф',
                   value: 'Стандартный',
-                  color: NebulaColors.successMint),
+                  color: tokens.success),
           ]),
         ],
       ),
@@ -838,6 +847,8 @@ class _Total extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Expanded(
       child: Row(children: [
         Icon(icon, color: color, size: 14),
@@ -846,7 +857,7 @@ class _Total extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: type.overline.copyWith(color: NebulaColors.ghostText)),
+                style: type.overline.copyWith(color: tokens.mutedText)),
             Text(value,
                 style: type.bodyS
                     .copyWith(fontWeight: FontWeight.w700, color: color)),
@@ -903,6 +914,8 @@ class _ConfirmButtonState extends State<_ConfirmButton>
     final label = widget.count > 0
         ? 'Создать ${widget.count} урок${_pl(widget.count)}'
         : 'Выберите слоты';
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return GestureDetector(
       onTapDown: widget.enabled ? (_) => _ctrl.forward() : null,
@@ -921,21 +934,21 @@ class _ConfirmButtonState extends State<_ConfirmButton>
           height: 52,
           decoration: BoxDecoration(
             gradient: widget.enabled
-                ? const LinearGradient(
+                ? LinearGradient(
                     colors: [
-                      NebulaColors.stellarBlue,
-                      NebulaColors.nebulaPurple
+                      tokens.primaryAccent,
+                      tokens.secondaryAccent,
                     ],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   )
                 : null,
-            color: widget.enabled ? null : NebulaColors.depthNear,
+            color: widget.enabled ? null : tokens.surface,
             borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
             boxShadow: widget.enabled
                 ? [
                     BoxShadow(
-                      color: NebulaColors.stellarBlue
+                      color: tokens.primaryAccent
                           .withValues(alpha: NebulaAlpha.accent),
                       blurRadius: 16,
                       offset: Offset.zero,
@@ -952,7 +965,7 @@ class _ConfirmButtonState extends State<_ConfirmButton>
                           fontWeight: FontWeight.w700,
                           color: widget.enabled
                               ? Colors.white
-                              : NebulaColors.ghostText,
+                              : tokens.mutedText,
                         ),
                   ),
           ),

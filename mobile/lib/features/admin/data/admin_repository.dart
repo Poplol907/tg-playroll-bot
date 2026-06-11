@@ -138,6 +138,12 @@ class AdminRepository {
     await _dio.delete('/org/users/$userId');
   }
 
+  /// Soft-delete: archives the teacher (login blocked, hidden from lists)
+  /// while keeping all their lessons/rates/subscriptions for history.
+  Future<void> disableUser(int userId) async {
+    await _dio.post('/org/users/$userId/disable');
+  }
+
   Future<StudioStats> getStudioStats(String monthYear) async {
     final r = await _dio.get('/reports/studio', queryParameters: {
       'month': monthYear,

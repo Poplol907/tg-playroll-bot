@@ -93,27 +93,31 @@ class CalendarScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.displayName ?? 'Педагог',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: tokens.primaryText,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.displayName ?? 'Педагог',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: tokens.primaryText,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Расписание уроков',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: tokens.mutedText,
+                        Text(
+                          'Расписание уроков',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: tokens.mutedText,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 12),
                   // Logout button
                   GestureDetector(
                     onTap: () => _confirmLogout(context, ref),

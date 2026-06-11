@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
@@ -20,6 +21,8 @@ class ViewAsBanner extends ConsumerWidget {
     if (viewAs == null) return const SizedBox.shrink();
 
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return Material(
       color: Colors.transparent,
@@ -51,13 +54,13 @@ class ViewAsBanner extends ConsumerWidget {
                   children: [
                     TextSpan(
                       text: 'Просматриваешь как: ',
-                      style: type.labelM.copyWith(color: NebulaColors.mistWhite),
+                      style: type.labelM.copyWith(color: tokens.secondaryText),
                     ),
                     TextSpan(
                       text: viewAs.displayName,
                       style: type.labelM.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: NebulaColors.softWhite,
+                        color: tokens.primaryText,
                       ),
                     ),
                   ],

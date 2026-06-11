@@ -9,7 +9,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.lightShader,
+        theme: AppTheme.lightLite,
         home: Scaffold(
           body: StellarButton(
             label: 'Сохранить',

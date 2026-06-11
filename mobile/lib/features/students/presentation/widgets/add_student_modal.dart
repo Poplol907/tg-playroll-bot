@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
@@ -96,13 +97,15 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
     final isAdmin = user?.isAdmin ?? false;
 
     final type = NebulaTypography.of(context);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Новый ученик',
-          style: type.titleL.copyWith(color: NebulaColors.softWhite),
+          style: type.titleL.copyWith(color: tokens.primaryText),
         ),
         const SizedBox(height: 20),
 
@@ -154,13 +157,13 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
             decoration: BoxDecoration(
               color: _isForeign
                   ? NebulaColors.warningAmber.withValues(alpha: NebulaAlpha.mist)
-                  : NebulaColors.nebulaSurface,
+                  : tokens.surface,
               borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
               border: Border.all(
                 color: _isForeign
                     ? NebulaColors.warningAmber
                         .withValues(alpha: NebulaAlpha.medium)
-                    : NebulaColors.surfaceBorder,
+                    : tokens.surfaceBorder,
               ),
             ),
             child: Row(
@@ -170,7 +173,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                   size: 18,
                   color: _isForeign
                       ? NebulaColors.warningAmber
-                      : NebulaColors.ghostText,
+                      : tokens.mutedText,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -179,7 +182,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                     style: type.bodyM.copyWith(
                       color: _isForeign
                           ? NebulaColors.warningAmber
-                          : NebulaColors.dimText,
+                          : tokens.mutedText,
                     ),
                   ),
                 ),
@@ -192,7 +195,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                     color: _isForeign
                         ? NebulaColors.warningAmber
                             .withValues(alpha: NebulaAlpha.accent)
-                        : NebulaColors.surfaceBorder,
+                        : tokens.surfaceBorder,
                   ),
                   child: AnimatedAlign(
                     duration: const Duration(milliseconds: 200),
@@ -207,7 +210,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                         shape: BoxShape.circle,
                         color: _isForeign
                             ? NebulaColors.warningAmber
-                            : NebulaColors.ghostText,
+                            : tokens.mutedText,
                       ),
                     ),
                   ),
@@ -222,7 +225,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
           const SizedBox(height: 12),
           Text(
             _error!,
-            style: type.bodyS.copyWith(color: NebulaColors.errorRose),
+            style: type.bodyS.copyWith(color: tokens.error),
           ),
         ],
 
@@ -234,7 +237,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
           loading: _loading,
           onPressed: _loading ? null : _submit,
           icon: Icons.person_add_rounded,
-          color: NebulaColors.stellarBlue,
+          color: tokens.primaryAccent,
         ),
       ],
     );
@@ -254,28 +257,30 @@ class _TeacherPicker extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final teachersAsync = ref.watch(teachersPickerProvider);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return teachersAsync.when(
       loading: () => const SizedBox(
         height: 52,
         child: Center(child: OrbitLoader()),
       ),
-      error: (_, __) => const Text(
+      error: (_, __) => Text(
         'Не удалось загрузить педагогов',
-        style: TextStyle(color: NebulaColors.ghostText),
+        style: TextStyle(color: tokens.mutedText),
       ),
       data: (teachers) {
         final type = NebulaTypography.of(context);
         return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
-          color: NebulaColors.nebulaSurface,
+          color: tokens.surface,
           borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
           border: Border.all(
             color: selectedId != null
-                ? NebulaColors.stellarBlue
+                ? tokens.primaryAccent
                     .withValues(alpha: NebulaAlpha.medium)
-                : NebulaColors.surfaceBorder,
+                : tokens.surfaceBorder,
           ),
         ),
         child: DropdownButtonHideUnderline(
@@ -283,13 +288,13 @@ class _TeacherPicker extends ConsumerWidget {
             value: selectedId,
             hint: Text(
               'Выберите педагога',
-              style: type.bodyM.copyWith(color: NebulaColors.ghostText),
+              style: type.bodyM.copyWith(color: tokens.mutedText),
             ),
-            dropdownColor: NebulaColors.spaceBlack,
-            icon: const Icon(Icons.expand_more_rounded,
-                color: NebulaColors.ghostText),
+            dropdownColor: tokens.denseSurface,
+            icon: Icon(Icons.expand_more_rounded,
+                color: tokens.mutedText),
             isExpanded: true,
-            style: type.bodyM.copyWith(color: NebulaColors.softWhite),
+            style: type.bodyM.copyWith(color: tokens.primaryText),
             items: teachers
                 .map((t) => DropdownMenuItem(
                       value: t.id,

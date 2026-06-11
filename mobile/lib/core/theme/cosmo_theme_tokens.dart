@@ -60,34 +60,17 @@ class CosmoThemeTokens extends ThemeExtension<CosmoThemeTokens> {
     glowIntensity: 1.0,
   );
 
-  // Cool near-white page with subtle blue-gray depth.
-  // Slight glow allowed for accent elements, but content stays crisp.
-  static const lightShader = CosmoThemeTokens(
-    background: Color(0xFFF8FAFF),
-    backgroundMid: Color(0xFFF0F5FF),
-    backgroundNear: Color(0xFFE7EEFC),
-    surface: Color(0xFFFDFEFF),
-    denseSurface: Color(0xFFFFFFFF),
-    surfaceBorder: Color(0x263B5B8A),
-    primaryText: Color(0xFF111827),
-    secondaryText: Color(0xCC111827),
-    mutedText: Color(0xFF5B677A),
-    primaryAccent: Color(0xFF2563EB),
-    secondaryAccent: Color(0xFF5B5FEF),
-    focusAccent: Color(0xFF1D4ED8),
-    success: Color(0xFF059669),
-    warning: Color(0xFFD97706),
-    error: Color(0xFFDC2626),
-    glowIntensity: 0.18,
-  );
-
-  // Pure-white page — lightest possible load; no glow at all.
+  // Pure-white page — the app's single light theme. No animated background.
   static const lightLite = CosmoThemeTokens(
     background: Color(0xFFFFFFFF),
     backgroundMid: Color(0xFFF7FAFF),
     backgroundNear: Color(0xFFEEF4FF),
-    surface: Color(0xFFF7FAFF),
-    denseSurface: Color(0xFFFFFFFF),
+    // Restrained translucency mirrors the dark theme philosophy: the static
+    // background reads faintly through surfaces without hurting legibility,
+    // just like the nebula shows through dark surfaces. Same idea, light
+    // tokens — surface ~0.95, denseSurface ~0.98.
+    surface: Color(0xF2F7FAFF),
+    denseSurface: Color(0xFAFFFFFF),
     surfaceBorder: Color(0x223B5B8A),
     primaryText: Color(0xFF0D1117),
     secondaryText: Color(0xCC0D1117),

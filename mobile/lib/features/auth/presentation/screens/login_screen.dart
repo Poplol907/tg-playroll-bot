@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
-import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../shared/widgets/app_background_host.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
@@ -114,21 +113,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'COSMO STUDIO',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: NebulaColors.softWhite,
+                        color: tokens.primaryText,
                         letterSpacing: 4,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Управление музыкальной школой',
                       style: TextStyle(
                         fontSize: 13,
-                        color: NebulaColors.dimText,
+                        color: tokens.mutedText,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -143,12 +142,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Вход',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
-                                color: NebulaColors.softWhite,
+                                color: tokens.primaryText,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -178,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   _obscure
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: NebulaColors.dimText,
+                                  color: tokens.mutedText,
                                 ),
                                 onPressed: () =>
                                     setState(() => _obscure = !_obscure),
@@ -194,25 +193,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: NebulaColors.errorRose
+                                  color: tokens.error
                                       .withValues(alpha: 0.10),
                                   borderRadius: BorderRadius.circular(
                                       NebulaTokens.radiusSM),
                                   border: Border.all(
-                                      color: NebulaColors.errorRose
+                                      color: tokens.error
                                           .withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.error_outline,
-                                        color: NebulaColors.errorRose,
+                                    Icon(Icons.error_outline,
+                                        color: tokens.error,
                                         size: 18),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         auth.error!,
-                                        style: const TextStyle(
-                                          color: NebulaColors.errorRose,
+                                        style: TextStyle(
+                                          color: tokens.error,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -248,13 +247,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: NebulaColors.nebulaSurface,
+              color: tokens.surface,
               shape: BoxShape.circle,
-              border: Border.all(color: NebulaColors.surfaceBorder),
+              border: Border.all(color: tokens.surfaceBorder),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.settings_ethernet_rounded,
-              color: NebulaColors.ghostText,
+              color: tokens.mutedText,
               size: 18,
             ),
           ),

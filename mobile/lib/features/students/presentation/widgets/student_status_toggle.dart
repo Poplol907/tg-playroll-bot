@@ -47,6 +47,8 @@ class _StatusToggleState extends State<_StatusToggle>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return GestureDetector(
       onTap: widget.loading ? null : widget.onToggle,
       child: Column(
@@ -64,12 +66,12 @@ class _StatusToggleState extends State<_StatusToggle>
                   height: 30,
                   decoration: BoxDecoration(
                     color: Color.lerp(
-                        NebulaColors.depthNear, NebulaColors.successMint, t),
+                        tokens.surfaceBorder, tokens.success, t),
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(
                       color: Color.lerp(
-                              NebulaColors.surfaceBorder,
-                              NebulaColors.successMint.withValues(alpha: 0.6),
+                              tokens.surfaceBorder,
+                              tokens.success.withValues(alpha: 0.6),
                               t) ??
                           Colors.transparent,
                       width: 1.5,
@@ -77,7 +79,7 @@ class _StatusToggleState extends State<_StatusToggle>
                     boxShadow: t > 0.05
                         ? [
                             BoxShadow(
-                              color: NebulaColors.successMint.withValues(
+                              color: tokens.success.withValues(
                                   alpha: (t * 0.45).clamp(0.0, 0.45)),
                               blurRadius: 12,
                             )
@@ -117,8 +119,8 @@ class _StatusToggleState extends State<_StatusToggle>
               style: TextStyle(
                 fontSize: 10,
                 color: _ctrl.value > 0.5
-                    ? NebulaColors.successMint
-                    : NebulaColors.ghostText,
+                    ? tokens.success
+                    : tokens.mutedText,
               ),
             ),
           ),

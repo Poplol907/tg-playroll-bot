@@ -22,14 +22,16 @@ class _ContentLoader extends ConsumerWidget {
     final lessonsAsync = ref.watch(studentLessonsProvider(student.id));
     final subsAsync = ref.watch(studentSubscriptionsProvider(student.id));
     final activeMonth = ref.watch(globalMonthYearProvider);
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return lessonsAsync.when(
       loading: () => const Center(child: OrbitLoader()),
-      error: (_, __) => const Center(
+      error: (_, __) => Center(
         child: Text(
           'Не удалось загрузить',
           style: TextStyle(
-            color: NebulaColors.ghostText,
+            color: tokens.mutedText,
           ),
         ),
       ),
@@ -95,6 +97,8 @@ class _Body extends StatelessWidget {
     final scheduled = monthLessons.where((l) => l.status == 'scheduled').length;
     final schedule =
         _weeklySchedule(lessons); // all lessons for pattern detection
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
 
     return SingleChildScrollView(
       controller: scrollCtrl,
@@ -105,7 +109,7 @@ class _Body extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (subs.isNotEmpty) ...[
-            _label('Абонемент'),
+            _label('Абонемент', tokens),
             const SizedBox(height: 10),
             _SubscriptionBlock(
                 subscriptions: subs,
@@ -114,7 +118,7 @@ class _Body extends StatelessWidget {
             const SizedBox(height: 22),
           ],
 
-          _label('Статистика'),
+          _label('Статистика', tokens),
           const SizedBox(height: 10),
           _StatsBlock(
             attended: attended,
@@ -124,11 +128,11 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 22),
 
-          _label('Расписание'),
+          _label('Расписание', tokens),
           const SizedBox(height: 10),
           if (schedule.isEmpty)
-            const Text('Расписание не определено',
-                style: TextStyle(color: NebulaColors.ghostText, fontSize: 14))
+            Text('Расписание не определено',
+                style: TextStyle(color: tokens.mutedText, fontSize: 14))
           else
             NebulaSurface(
               padding: const EdgeInsets.all(16),
@@ -157,11 +161,11 @@ class _Body extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: NebulaColors.stellarBlue
+                color: tokens.primaryAccent
                     .withValues(alpha: NebulaAlpha.subtle),
                 borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
                 border: Border.all(
-                    color: NebulaColors.stellarBlue
+                    color: tokens.primaryAccent
                         .withValues(alpha: NebulaAlpha.medium)),
               ),
               child: Row(
@@ -171,7 +175,7 @@ class _Body extends StatelessWidget {
                     showAllLessons
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.list_alt_rounded,
-                    color: NebulaColors.stellarBlue,
+                    color: tokens.primaryAccent,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -179,10 +183,10 @@ class _Body extends StatelessWidget {
                     showAllLessons
                         ? 'Скрыть историю'
                         : 'История · ${_formatMonth(activeMonth)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: NebulaColors.stellarBlue),
+                        color: tokens.primaryAccent),
                   ),
                 ],
               ),
@@ -191,13 +195,13 @@ class _Body extends StatelessWidget {
 
           if (showAllLessons) ...[
             const SizedBox(height: 20),
-            _label('История · ${_formatMonth(activeMonth)}'),
+            _label('История · ${_formatMonth(activeMonth)}', tokens),
             const SizedBox(height: 10),
             if (monthLessons.isEmpty)
-              const Text(
+              Text(
                 'Уроков в этом месяце нет',
                 style: TextStyle(
-                  color: NebulaColors.ghostText,
+                  color: tokens.mutedText,
                 ),
               )
             else
@@ -208,12 +212,12 @@ class _Body extends StatelessWidget {
     );
   }
 
-  Widget _label(String text) => Text(
+  Widget _label(String text, CosmoThemeTokens tokens) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: NebulaColors.ghostText,
+          color: tokens.mutedText,
           letterSpacing: 0.9,
         ),
       );

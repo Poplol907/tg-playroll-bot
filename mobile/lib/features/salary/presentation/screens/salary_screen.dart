@@ -253,33 +253,39 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                 borderRadius: NebulaTokens.radiusXL,
                 child: Column(
                   children: [
-                    // Amount text — glow in dark, clean ink in light
-                    Text(
-                      '${_fmt((d.totalCurrent * ring).round())} сум',
-                      style: NebulaTypography.of(context).displayL.copyWith(
-                        fontSize: NebulaTypography.of(context).displayL.fontSize! * 1.35,
-                        color: tokens.primaryText,
-                        shadows: isLight
-                            ? null
-                            : [
-                                Shadow(
-                                  color: Colors.white.withValues(
-                                      alpha: NebulaAlpha.strong + breathe * 0.20),
-                                  blurRadius: 3,
-                                ),
-                                Shadow(
-                                  color: NebulaColors.successMint.withValues(
-                                      alpha: NebulaAlpha.strong + breathe * 0.20),
-                                  blurRadius: 14,
-                                ),
-                                Shadow(
-                                  color: NebulaColors.successMint.withValues(
-                                      alpha: NebulaAlpha.subtle + breathe * 0.10),
-                                  blurRadius: 32,
-                                ),
-                              ],
+                    // Amount text — glow in dark, clean ink in light.
+                    // Large "сум" amounts use non-breaking spaces; scaleDown
+                    // keeps the hero on one line instead of overflowing.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${_fmt((d.totalCurrent * ring).round())} сум',
+                        maxLines: 1,
+                        style: NebulaTypography.of(context).displayL.copyWith(
+                          fontSize: NebulaTypography.of(context).displayL.fontSize! * 1.35,
+                          color: tokens.primaryText,
+                          shadows: isLight
+                              ? null
+                              : [
+                                  Shadow(
+                                    color: Colors.white.withValues(
+                                        alpha: NebulaAlpha.strong + breathe * 0.20),
+                                    blurRadius: 3,
+                                  ),
+                                  Shadow(
+                                    color: NebulaColors.successMint.withValues(
+                                        alpha: NebulaAlpha.strong + breathe * 0.20),
+                                    blurRadius: 14,
+                                  ),
+                                  Shadow(
+                                    color: NebulaColors.successMint.withValues(
+                                        alpha: NebulaAlpha.subtle + breathe * 0.10),
+                                    blurRadius: 32,
+                                  ),
+                                ],
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -346,16 +352,20 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _LegendDot(
-                          color: NebulaColors.successMint,
-                          label: 'Проведено',
-                          value: _fmt(d.earnedAmount),
+                        Flexible(
+                          child: _LegendDot(
+                            color: NebulaColors.successMint,
+                            label: 'Проведено',
+                            value: _fmt(d.earnedAmount),
+                          ),
                         ),
                         const SizedBox(width: 20),
-                        _LegendDot(
-                          color: NebulaColors.warningAmber,
-                          label: 'Пропуски',
-                          value: _fmt(d.pendingAmount),
+                        Flexible(
+                          child: _LegendDot(
+                            color: NebulaColors.warningAmber,
+                            label: 'Пропуски',
+                            value: _fmt(d.pendingAmount),
+                          ),
                         ),
                       ],
                     ),

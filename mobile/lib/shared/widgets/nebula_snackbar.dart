@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_tokens.dart';
 import 'nebula_surface.dart';
@@ -31,6 +32,9 @@ void showNebulaSnackBar(
       ),
   };
 
+  final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+      CosmoThemeTokens.darkInternals;
+
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       behavior: SnackBarBehavior.floating,
@@ -57,8 +61,8 @@ void showNebulaSnackBar(
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: NebulaColors.softWhite,
+                    style: TextStyle(
+                      color: tokens.primaryText,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -67,8 +71,8 @@ void showNebulaSnackBar(
                     const SizedBox(height: NebulaTokens.sp2),
                     Text(
                       message,
-                      style: const TextStyle(
-                        color: NebulaColors.mistWhite,
+                      style: TextStyle(
+                        color: tokens.secondaryText,
                         fontSize: 12,
                       ),
                     ),

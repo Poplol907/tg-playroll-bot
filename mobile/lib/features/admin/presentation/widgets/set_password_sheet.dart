@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../shared/widgets/mist_modal.dart';
 import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
@@ -60,23 +60,25 @@ class _SetPasswordSheetState extends ConsumerState<SetPasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Пароль для ${widget.user.displayName}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: NebulaColors.softWhite,
+            color: tokens.primaryText,
           ),
         ),
         Text(
           '@${widget.user.login}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: NebulaColors.dimText,
+            color: tokens.mutedText,
           ),
         ),
         const SizedBox(height: 20),
@@ -88,7 +90,7 @@ class _SetPasswordSheetState extends ConsumerState<SetPasswordSheet> {
           suffixIcon: IconButton(
             icon: Icon(
               _show ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: NebulaColors.ghostText,
+              color: tokens.mutedText,
               size: 18,
             ),
             onPressed: () => setState(() => _show = !_show),
@@ -99,7 +101,7 @@ class _SetPasswordSheetState extends ConsumerState<SetPasswordSheet> {
           const SizedBox(height: 10),
           Text(
             _error!,
-            style: const TextStyle(fontSize: 13, color: NebulaColors.errorRose),
+            style: TextStyle(fontSize: 13, color: tokens.error),
           ),
         ],
         const SizedBox(height: 20),
@@ -108,7 +110,7 @@ class _SetPasswordSheetState extends ConsumerState<SetPasswordSheet> {
           loading: _loading,
           onPressed: _loading ? null : _submit,
           icon: Icons.lock_rounded,
-          color: NebulaColors.stellarBlue,
+          color: tokens.primaryAccent,
         ),
       ],
     );
