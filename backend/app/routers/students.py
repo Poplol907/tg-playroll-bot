@@ -149,7 +149,7 @@ async def students_by_teacher(
         raise HTTPException(status_code=403, detail="admin only")
 
     result = await session.execute(
-        select(Student)
+        select(Student, StudentTeacher.id.label("st_id"))
         .join(StudentTeacher, StudentTeacher.student_id == Student.id)
         .where(
             StudentTeacher.teacher_user_id == teacher_id,
@@ -157,8 +157,13 @@ async def students_by_teacher(
         )
         .order_by(Student.last_name, Student.first_name)
     )
-    students = result.scalars().all()
-    return [StudentOut.model_validate(s) for s in students]
+    rows = result.all()
+    out = []
+    for student, st_id in rows:
+        data = StudentOut.model_validate(student)
+        data.student_teacher_id = st_id
+        out.append(data)
+    return out
 
 
 @router.delete("/{student_id}", status_code=204)

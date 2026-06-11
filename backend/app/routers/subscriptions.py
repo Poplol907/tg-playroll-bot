@@ -10,7 +10,10 @@ from backend.app.schemas.subscriptions import (
     SubscriptionUpdateIn,
     SubscriptionOut,
 )
-from backend.app.services.permissions import require_admin_or_teacher
+from backend.app.services.permissions import (
+    require_admin_or_teacher,
+    require_teacher_self_or_admin,
+)
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -19,13 +22,19 @@ router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 async def list_subscriptions(
     student_id: int | None = None,
     month: str | None = None,
+    teacher_id: int | None = None,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     q = select(Subscription).where(Subscription.org_id == current_user.org_id)
 
     if current_user.role == "TEACHER":
+        if teacher_id is not None:
+            require_teacher_self_or_admin(current_user, teacher_id)
         q = q.where(Subscription.teacher_user_id == current_user.id)
+    elif teacher_id is not None:
+        require_teacher_self_or_admin(current_user, teacher_id)
+        q = q.where(Subscription.teacher_user_id == teacher_id)
 
     if student_id is not None:
         q = q.where(Subscription.student_id == student_id)
