@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/app_background_host.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -100,12 +102,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   gradient: RadialGradient(
                                     colors: isLight
                                         ? [
-                                            tokens.surface
-                                                .withValues(alpha: 0.92),
-                                            tokens.focusAccent
-                                                .withValues(alpha: 0.16),
-                                            tokens.primaryAccent
-                                                .withValues(alpha: 0.07),
+                                            tokens.surface.withValues(
+                                                alpha: NebulaAlpha.occludingSurface),
+                                            tokens.focusAccent.withValues(
+                                                alpha: NebulaAlpha.subtle),
+                                            tokens.primaryAccent.withValues(
+                                                alpha: NebulaAlpha.mist),
                                             Colors.transparent,
                                           ]
                                         : const [
@@ -141,11 +143,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 6),
                     Text(
                       'Управление музыкальной школой',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: tokens.mutedText,
-                        letterSpacing: 0.3,
-                      ),
+                      style: NebulaTypography.of(context).bodyS.copyWith(
+                            color: tokens.mutedText,
+                            letterSpacing: 0.3,
+                          ),
                     ),
                     const SizedBox(height: 52),
                     // ── Login Form ──
@@ -209,12 +210,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: tokens.error.withValues(alpha: 0.10),
+                                  color: tokens.error
+                                      .withValues(alpha: NebulaAlpha.surface),
                                   borderRadius: BorderRadius.circular(
                                       NebulaTokens.radiusSM),
                                   border: Border.all(
-                                      color:
-                                          tokens.error.withValues(alpha: 0.3)),
+                                      color: tokens.error
+                                          .withValues(alpha: NebulaAlpha.accent)),
                                 ),
                                 child: Row(
                                   children: [
@@ -224,10 +226,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     Expanded(
                                       child: Text(
                                         auth.error!,
-                                        style: TextStyle(
-                                          color: tokens.error,
-                                          fontSize: 13,
-                                        ),
+                                        style: NebulaTypography.of(context)
+                                            .bodyS
+                                            .copyWith(color: tokens.error),
                                       ),
                                     ),
                                   ],

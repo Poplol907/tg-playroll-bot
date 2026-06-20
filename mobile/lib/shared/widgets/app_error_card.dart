@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_typography.dart';
 import 'nebula_surface.dart';
 import 'nebula_text_button.dart';
 
@@ -22,6 +23,7 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -33,21 +35,14 @@ class AppEmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: tokens.mutedText,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: type.titleS.copyWith(color: tokens.mutedText),
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: tokens.mutedText,
-                  fontSize: 13,
-                ),
+                style: type.bodyS.copyWith(color: tokens.mutedText),
               ),
             ],
           ],
@@ -76,6 +71,7 @@ class AppErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(24),
       borderRadius: NebulaTokens.radiusLG,
@@ -92,20 +88,13 @@ class AppErrorCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             isConnectionError ? 'Нет соединения' : 'Ошибка загрузки',
-            style: TextStyle(
-              color: tokens.error,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
+            style: type.titleS.copyWith(color: tokens.error),
           ),
           const SizedBox(height: 6),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: tokens.secondaryText,
-              fontSize: 13,
-            ),
+            style: type.bodyS.copyWith(color: tokens.secondaryText),
           ),
           const SizedBox(height: 12),
           NebulaTextButton(
@@ -134,6 +123,7 @@ class AppInlineErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
       borderRadius: NebulaTokens.radiusMD,
@@ -148,10 +138,7 @@ class AppInlineErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                color: tokens.secondaryText,
-                fontSize: 12,
-              ),
+              style: type.labelM.copyWith(color: tokens.secondaryText),
             ),
           ),
           NebulaTextButton(

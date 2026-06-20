@@ -80,9 +80,9 @@ class _StatChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
+          color: color.withValues(alpha: NebulaAlpha.surface),
           borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-          border: Border.all(color: color.withValues(alpha: 0.22)),
+          border: Border.all(color: color.withValues(alpha: NebulaAlpha.border)),
         ),
         child: Column(
           children: [

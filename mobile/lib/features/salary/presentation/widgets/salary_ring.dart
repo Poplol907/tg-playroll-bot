@@ -33,9 +33,19 @@ class _RingPainter extends CustomPainter {
   static const Color warning = NebulaColors.warningAmber;
   static const Color ink = Colors.white;
 
-  static final _pLg = ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 14.0);
-  static final _pMd = ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 11.0);
-  static final _pSm = ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 9.0);
+  // ASCII glyph sizes for the concentric rings (canvas ParagraphStyle, not
+  // widget text — NebulaTypography doesn't apply here). Named so the values
+  // aren't magic literals.
+  static const double _glyphLg = 14.0;
+  static const double _glyphMd = 11.0;
+  static const double _glyphSm = 9.0;
+
+  static final _pLg =
+      ui.ParagraphStyle(fontFamily: 'Courier', fontSize: _glyphLg);
+  static final _pMd =
+      ui.ParagraphStyle(fontFamily: 'Courier', fontSize: _glyphMd);
+  static final _pSm =
+      ui.ParagraphStyle(fontFamily: 'Courier', fontSize: _glyphSm);
   static const _pcLg = ui.ParagraphConstraints(width: 17);
   static const _pcMd = ui.ParagraphConstraints(width: 14);
   static const _pcSm = ui.ParagraphConstraints(width: 11);

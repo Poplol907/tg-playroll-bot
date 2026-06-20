@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.symmetric(
                     horizontal: BorderSide(
-                      color: widget.glowColor.withValues(alpha: 0.30),
+                      color: widget.glowColor.withValues(alpha: NebulaAlpha.accent),
                       width: 0.6,
                     ),
                   ),
@@ -94,8 +95,8 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
                     end: Alignment.centerRight,
                     colors: [
                       Colors.transparent,
-                      widget.glowColor.withValues(alpha: 0.08),
-                      widget.glowColor.withValues(alpha: 0.05),
+                      widget.glowColor.withValues(alpha: NebulaAlpha.mist),
+                      widget.glowColor.withValues(alpha: NebulaAlpha.whisper),
                       Colors.transparent,
                     ],
                   ),
@@ -158,12 +159,12 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
                               ? [
                                   Shadow(
                                     color: widget.glowColor
-                                        .withValues(alpha: 0.85),
+                                        .withValues(alpha: NebulaAlpha.high),
                                     blurRadius: 16,
                                   ),
                                   Shadow(
                                     color: widget.glowColor
-                                        .withValues(alpha: 0.45),
+                                        .withValues(alpha: NebulaAlpha.medium),
                                     blurRadius: 32,
                                   ),
                                 ]

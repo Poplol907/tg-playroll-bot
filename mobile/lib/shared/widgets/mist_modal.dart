@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_tokens.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
@@ -46,7 +47,7 @@ class MistModal extends StatelessWidget {
       isDismissible: isDismissible,
       enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
+      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
       useSafeArea: true,
       constraints: maxHeightFraction != null
           ? BoxConstraints(
@@ -72,7 +73,7 @@ class MistModal extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: tokens.mutedText.withValues(alpha: 0.42),
+                color: tokens.mutedText.withValues(alpha: NebulaAlpha.medium),
                 borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
               ),
             ),

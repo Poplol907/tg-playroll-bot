@@ -166,7 +166,10 @@ void main() {
     //              88 →  42 (salary_components, server_settings_modal,
     //                        nebula_dialog, students_screen, view_as_banner,
     //                        admin+settings residuals)
-    const baseline = 42;
+    //              42 →  22 (nebula_surface specular, login planet/error,
+    //                        drum_picker glow, adaptive/mist barriers,
+    //                        calendar_month_stats, mist handle)
+    const baseline = 22;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -212,7 +215,9 @@ void main() {
     //              94 →  46 (salary_components, server_settings_modal,
     //                        nebula_dialog, students_screen, view_as_banner,
     //                        admin+settings residuals)
-    const baseline = 46;
+    //              46 →  30 (ASCII painter glyph consts; app_error_card,
+    //                        nebula_snackbar, login → NebulaTypography tokens)
+    const baseline = 30;
     expect(
       count,
       lessThanOrEqualTo(baseline),
