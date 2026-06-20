@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
@@ -30,11 +31,18 @@ class GlowMenuBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
+  /// Live fractional position of the section swipe (e.g. 1.3 = between tab 1
+  /// and 2, leaning toward 1). Drives the macOS-dock proximity magnification:
+  /// the tab the finger is sliding toward grows and brightens by distance.
+  /// Null = no dock effect (desktop / no PageView).
+  final ValueListenable<double>? magnify;
+
   const GlowMenuBar({
     super.key,
     required this.items,
     required this.currentIndex,
     required this.onTap,
+    this.magnify,
   });
 
   @override
@@ -44,6 +52,7 @@ class GlowMenuBar extends StatelessWidget {
         items: items,
         currentIndex: currentIndex,
         onTap: onTap,
+        magnify: magnify,
       ),
     );
   }
@@ -57,11 +66,13 @@ class _GlowBarBody extends StatelessWidget {
   final List<GlowMenuItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final ValueListenable<double>? magnify;
 
   const _GlowBarBody({
     required this.items,
     required this.currentIndex,
     required this.onTap,
+    this.magnify,
   });
 
   @override
@@ -168,6 +179,8 @@ class _GlowBarBody extends StatelessWidget {
                                   bottom: 0,
                                   child: _GlowNavTab(
                                     item: items[0],
+                                    index: 0,
+                                    magnify: magnify,
                                     selected: currentIndex == 0,
                                     isDark: isDark,
                                     onTap: () {
@@ -183,6 +196,8 @@ class _GlowBarBody extends StatelessWidget {
                                   bottom: 0,
                                   child: _GlowNavTab(
                                     item: items[1],
+                                    index: 1,
+                                    magnify: magnify,
                                     selected: currentIndex == 1,
                                     isDark: isDark,
                                     onTap: () {
@@ -203,6 +218,8 @@ class _GlowBarBody extends StatelessWidget {
                                 (e) => Expanded(
                                   child: _GlowNavTab(
                                     item: e.value,
+                                    index: e.key,
+                                    magnify: magnify,
                                     selected: e.key == currentIndex,
                                     isDark: isDark,
                                     onTap: () {
@@ -229,12 +246,16 @@ class _GlowBarBody extends StatelessWidget {
 
 class _GlowNavTab extends StatelessWidget {
   final GlowMenuItem item;
+  final int index;
+  final ValueListenable<double>? magnify;
   final bool selected;
   final bool isDark;
   final VoidCallback onTap;
 
   const _GlowNavTab({
     required this.item,
+    required this.index,
+    required this.magnify,
     required this.selected,
     required this.isDark,
     required this.onTap,
@@ -242,13 +263,33 @@ class _GlowNavTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    final tab = RepaintBoundary(
       child: _GlowTab(
         item: item,
         selected: selected,
         isDark: isDark,
         onTap: onTap,
       ),
+    );
+    if (magnify == null) return tab;
+    // Dock proximity: scale this tab by how close the swipe position is to it.
+    // t = max(0, 1 - dist/range); scale = 1 + t*peak. Same shape as the macOS
+    // dock magnification, driven by the live PageView offset instead of a cursor.
+    return ValueListenableBuilder<double>(
+      valueListenable: magnify!,
+      builder: (_, pos, child) {
+        const range = 1.35; // how many tabs away still react
+        const peak = 0.26; // extra scale at the focal tab
+        final dist = (index - pos).abs();
+        final t = (1.0 - dist / range).clamp(0.0, 1.0);
+        final scale = 1.0 + t * peak;
+        return Transform.scale(
+          scale: scale,
+          filterQuality: FilterQuality.low,
+          child: child,
+        );
+      },
+      child: tab,
     );
   }
 }

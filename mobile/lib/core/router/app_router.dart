@@ -44,6 +44,57 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
+  // ── Swipe navigation (mobile) ───────────────────────────────────────────
+  // The mobile shell renders the role's section screens in a PageView so the
+  // user can swipe between sections. The PageView and the router are kept in
+  // sync: swipe → context.go(route); tab tap → animate the PageView.
+  PageController? _pageController;
+  int _pageCount = 0;
+  // Live fractional page position — feeds the nav bar's dock magnification.
+  // ValueNotifier (not setState) so only the nav bar repaints per scroll frame.
+  final ValueNotifier<double> _navPos = ValueNotifier<double>(0);
+
+  void _ensureController(int index, int count) {
+    if (_pageController == null || _pageCount != count) {
+      _pageController?.removeListener(_onPageScroll);
+      _pageController?.dispose();
+      _pageController = PageController(initialPage: index);
+      _pageController!.addListener(_onPageScroll);
+      _pageCount = count;
+      _navPos.value = index.toDouble();
+    }
+  }
+
+  void _onPageScroll() {
+    final p = _pageController?.page;
+    if (p != null) _navPos.value = p;
+  }
+
+  @override
+  void dispose() {
+    _pageController?.removeListener(_onPageScroll);
+    _pageController?.dispose();
+    _navPos.dispose();
+    super.dispose();
+  }
+
+  Widget _screenForRoute(String route) {
+    switch (route) {
+      case '/admin':
+        return const AdminScreen();
+      case '/calendar':
+        return const CalendarScreen();
+      case '/students':
+        return const StudentsScreen();
+      case '/salary':
+        return const SalaryScreen();
+      case '/settings':
+        return const SettingsScreen();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   // Маршруты в порядке вкладок:
   // - Педагог: Календарь + Ученики + Зарплата + Настройки.
   // - Админ в обычном режиме: Студия + Настройки.
@@ -190,13 +241,31 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ── Мобайл: нижний таббар ───────────────────────────────────────────────────
+  // ── Мобайл: нижний таббар + свайп между разделами ────────────────────────────
   Widget _buildMobileLayout(
     Widget monthBar,
     List<GlowMenuItem> items,
     bool isAdmin,
     bool viewingAs,
   ) {
+    final routes = _routesForRole(isAdmin: isAdmin, viewingAs: viewingAs);
+    _ensureController(widget.currentIndex, routes.length);
+
+    // Sync the PageView to the router when the active index changed elsewhere
+    // (tab tap, deep link). Animate to it after this frame.
+    final controller = _pageController!;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !controller.hasClients) return;
+      final page = controller.page?.round() ?? widget.currentIndex;
+      if (page != widget.currentIndex) {
+        controller.animateToPage(
+          widget.currentIndex,
+          duration: const Duration(milliseconds: 360),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       // SafeArea here is the SINGLE source of the top inset (status bar /
@@ -211,7 +280,25 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: Column(
               children: [
                 monthBar,
-                Expanded(child: widget.child),
+                Expanded(
+                  child: PageView.builder(
+                    controller: controller,
+                    physics: const _SwipeNavPhysics(),
+                    itemCount: routes.length,
+                    onPageChanged: (i) {
+                      if (i != widget.currentIndex) {
+                        HapticFeedback.selectionClick();
+                        _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs);
+                      }
+                    },
+                    // Active page = the screen GoRouter already built
+                    // (widget.child) so routing/state stay authoritative.
+                    // Off-screen pages build lazily during a swipe.
+                    itemBuilder: (_, i) => i == widget.currentIndex
+                        ? widget.child
+                        : _screenForRoute(routes[i]),
+                  ),
+                ),
               ],
             ),
           ),
@@ -222,12 +309,30 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
+        magnify: _navPos,
         onTap: (i) =>
             _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
         items: items,
       ),
     );
   }
+}
+
+/// Slightly snappier than the default page physics — sections feel light to
+/// flick between without overshooting.
+class _SwipeNavPhysics extends PageScrollPhysics {
+  const _SwipeNavPhysics({super.parent});
+
+  @override
+  _SwipeNavPhysics applyTo(ScrollPhysics? ancestor) =>
+      _SwipeNavPhysics(parent: buildParent(ancestor));
+
+  @override
+  SpringDescription get spring => const SpringDescription(
+        mass: 0.55,
+        stiffness: 120,
+        damping: 18,
+      );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
