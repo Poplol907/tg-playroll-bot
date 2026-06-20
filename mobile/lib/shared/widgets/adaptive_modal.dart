@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
+import '../../core/theme/nebula_alpha.dart';
 import 'nebula_modal_surface.dart';
 
 /// Показывает bottom sheet на мобайле и Dialog на десктопе.
@@ -26,7 +27,7 @@ abstract class AdaptiveModal {
       backgroundColor: Colors.transparent,
       useSafeArea: true,
       isDismissible: isDismissible,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
+      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
       builder: (ctx) {
         final media = MediaQuery.of(ctx);
         return Padding(
@@ -51,7 +52,7 @@ abstract class AdaptiveModal {
     return showDialog<T>(
       context: context,
       barrierDismissible: isDismissible,
-      barrierColor: Colors.black.withValues(alpha: 0.60),
+      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
       builder: (ctx) => _DesktopDialogWrapper(
         width: width,
         child: builder(ctx),

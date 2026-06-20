@@ -418,9 +418,11 @@ class _WaterPainter extends CustomPainter {
       : super(repaint: repaint);
 
   // Shared immutable objects — created once
+  // ASCII glyph size (canvas ParagraphStyle, not widget text).
+  static const double _glyphSize = 10.0;
   static final _pStyle = ui.ParagraphStyle(
     fontFamily: 'Courier',
-    fontSize: 10.0,
+    fontSize: _glyphSize,
   );
   static const _pConstraints = ui.ParagraphConstraints(width: 12);
 
@@ -500,7 +502,7 @@ class _WaterPainter extends CustomPainter {
           return (ui.ParagraphBuilder(_pStyle)
                 ..pushStyle(ui.TextStyle(
                   color: Color.fromRGBO(r, g, b, alpha),
-                  fontSize: 10.0,
+                  fontSize: _glyphSize,
                 ))
                 ..addText(char))
               .build()

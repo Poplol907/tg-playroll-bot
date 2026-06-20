@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
+import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -163,8 +164,8 @@ class _SpecularBorderPainter extends CustomPainter {
       drawEdge(
         Rect.fromLTWH(0, 0, size.width, size.height * 0.55),
         [
-          Colors.black.withValues(alpha: 0.12),
-          Colors.black.withValues(alpha: 0.06),
+          Colors.black.withValues(alpha: NebulaAlpha.surface),
+          Colors.black.withValues(alpha: NebulaAlpha.mist),
           Colors.transparent,
         ],
       );
@@ -172,7 +173,7 @@ class _SpecularBorderPainter extends CustomPainter {
         Rect.fromLTWH(0, size.height * 0.45, size.width, size.height * 0.55),
         [
           Colors.transparent,
-          Colors.black.withValues(alpha: 0.04),
+          Colors.black.withValues(alpha: NebulaAlpha.whisper),
         ],
       );
     } else {
@@ -180,16 +181,16 @@ class _SpecularBorderPainter extends CustomPainter {
       drawEdge(
         Rect.fromLTWH(0, 0, size.width, size.height * 0.55),
         [
-          Colors.white.withValues(alpha: 0.22),
-          Colors.white.withValues(alpha: 0.12),
-          Colors.white.withValues(alpha: 0.04),
+          Colors.white.withValues(alpha: NebulaAlpha.border),
+          Colors.white.withValues(alpha: NebulaAlpha.surface),
+          Colors.white.withValues(alpha: NebulaAlpha.whisper),
         ],
       );
       drawEdge(
         Rect.fromLTWH(0, size.height * 0.45, size.width, size.height * 0.55),
         [
           Colors.transparent,
-          Colors.white.withValues(alpha: 0.05),
+          Colors.white.withValues(alpha: NebulaAlpha.whisper),
         ],
       );
     }

@@ -129,8 +129,10 @@ class _CosmoLoginSpherePainter extends CustomPainter {
   });
 
   static const _chars = '░▒▓█▀▄▌▐│─┤├┴┬╭╮╰╯';
+  // ASCII glyph size (canvas ParagraphStyle, not widget text).
+  static const double _glyphSize = 8.5;
   static final _paragraphStyle =
-      ui.ParagraphStyle(fontFamily: 'Courier', fontSize: 8.5);
+      ui.ParagraphStyle(fontFamily: 'Courier', fontSize: _glyphSize);
   static const _paragraphConstraints = ui.ParagraphConstraints(width: 12);
 
   bool get _isLight => tokens.background.computeLuminance() > 0.5;
@@ -148,7 +150,7 @@ class _CosmoLoginSpherePainter extends CustomPainter {
           ..pushStyle(
             ui.TextStyle(
               color: color.withValues(alpha: alpha.clamp(0.0, 1.0)),
-              fontSize: 8.5,
+              fontSize: _glyphSize,
             ),
           )
           ..addText(char))
