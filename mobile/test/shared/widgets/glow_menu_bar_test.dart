@@ -143,6 +143,46 @@ void main() {
     expect(find.text('Настройки'), findsOneWidget);
   });
 
+  testWidgets('GlowMenuBar dock magnification scales the focal tab',
+      (tester) async {
+    final magnify = ValueNotifier<double>(0);
+    addTearDown(magnify.dispose);
+
+    Widget bar() => MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: GlowMenuBar(
+              currentIndex: 0,
+              onTap: (_) {},
+              magnify: magnify,
+              items: const [
+                GlowMenuItem(
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Календарь',
+                  glowColor: Colors.blue,
+                ),
+                GlowMenuItem(
+                  icon: Icons.people_outline_rounded,
+                  label: 'Ученики',
+                  glowColor: Colors.purple,
+                ),
+              ],
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(bar());
+    // getRect accounts for ancestor Transform.scale (paint-time), so the
+    // on-screen icon rect reflects the dock magnification.
+    final tab1Rest = tester.getRect(find.byIcon(Icons.people_outline_rounded));
+
+    // Slide the focal position fully onto tab 1 — it should grow.
+    magnify.value = 1.0;
+    await tester.pump();
+    final tab1Focused = tester.getRect(find.byIcon(Icons.people_outline_rounded));
+
+    expect(tab1Focused.width, greaterThan(tab1Rest.width));
+  });
+
   testWidgets(
       'GlowMenuBar admin layout centers Studio and keeps empty bar inert',
       (tester) async {
