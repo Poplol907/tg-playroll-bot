@@ -16,6 +16,11 @@ void main() async {
   // Платформо-адаптивное хранилище (macOS = NSUserDefaults, iOS/Android = Keychain)
   await AppStorage.init();
 
+  // Восстанавливаем выбранную пользователем тему (иначе при перезапуске
+  // всегда вставала бы тёмная).
+  final savedMode =
+      visualModeFromStored(await AppStorage.instance.read(kVisualModeStorageKey));
+
   // Русская локаль для дат
   await initializeDateFormatting('ru', null);
 
@@ -36,7 +41,14 @@ void main() async {
     ]);
   }
 
-  runApp(const ProviderScope(child: CosmoApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        appVisualModeProvider.overrideWith((ref) => savedMode),
+      ],
+      child: const CosmoApp(),
+    ),
+  );
 }
 
 class CosmoApp extends ConsumerWidget {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/server_config.dart';
+import '../../../../core/storage/app_storage.dart';
 import '../../../../core/theme/app_visual_mode.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
@@ -64,10 +65,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _cycleTheme() {
     HapticFeedback.selectionClick();
     final mode = ref.read(appVisualModeProvider);
-    ref.read(appVisualModeProvider.notifier).state = switch (mode) {
+    final next = switch (mode) {
       AppVisualMode.darkInternals => AppVisualMode.lightLite,
       AppVisualMode.lightLite => AppVisualMode.darkInternals,
     };
+    ref.read(appVisualModeProvider.notifier).state = next;
+    // Persist so the choice survives an app restart.
+    AppStorage.instance.write(kVisualModeStorageKey, next.name);
   }
 
   Future<void> _logout() async {
