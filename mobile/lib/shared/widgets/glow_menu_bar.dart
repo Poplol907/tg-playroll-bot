@@ -674,55 +674,68 @@ class _LiquidPill extends StatelessWidget {
           builder: (_, constraints) {
             final n = items.length;
             if (n == 0) return const SizedBox.shrink();
-            final tabWidth = constraints.maxWidth / n;
-            // Pill is slightly narrower than a tab so the capsule reads as
-            // a focus highlight, not a full-tab fill.
-            const insetH = NebulaTokens.sp8;
-            const insetV = 6.0;
-            final pillWidth = tabWidth - insetH * 2;
-            // Interpolate colour between the two neighbouring tabs so the
-            // hue smoothly transitions during a swipe.
+
+            // Match the tab row geometry exactly so the pill hugs the icon:
+            // tab row uses `Padding(horizontal: sp8, vertical: sp8)` then a
+            // Row of `Expanded` tabs. So the tab area starts at sp8 from the
+            // bar edge and each tab is (innerWidth / n) wide.
+            const outerPadH = NebulaTokens.sp8;
+            const outerPadV = NebulaTokens.sp8;
+            const pillSlackH = 4.0; // pill is 4px narrower than the tab on each side
+            final innerWidth = constraints.maxWidth - outerPadH * 2;
+            final tabWidth = innerWidth / n;
+            final pillWidth = (tabWidth - pillSlackH * 2).clamp(0.0, double.infinity);
+
+            // Drift fraction: 0 when pos is on a tab centre, peaks at 1 when
+            // pos is exactly between two tabs. Used to lift the pill while
+            // it's actively moving — feels like a draggable handle, not an
+            // afterthought indicator.
             final lower = pos.floor().clamp(0, n - 1);
             final upper = pos.ceil().clamp(0, n - 1);
             final frac = (pos - lower).clamp(0.0, 1.0);
+            final drift = (frac < 0.5 ? frac : 1.0 - frac) * 2.0; // 0..1
+
+            // Interpolate hue between neighbouring tabs so the capsule takes
+            // the new section's colour as it arrives.
             final color = Color.lerp(
               items[lower].glowColor,
               items[upper].glowColor,
               frac,
             )!;
-            final left = pos * tabWidth + insetH;
+
+            final left = outerPadH + pos * tabWidth + pillSlackH;
             return Stack(
               children: [
                 Positioned(
                   left: left,
-                  top: insetV,
-                  bottom: insetV,
+                  top: outerPadV,
+                  bottom: outerPadV,
                   width: pillWidth,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
                       color: color.withValues(
                         alpha: isDark
-                            ? NebulaAlpha.subtle
-                            : NebulaAlpha.surface,
+                            ? NebulaAlpha.subtle + drift * 0.06
+                            : NebulaAlpha.surface + drift * 0.06,
                       ),
                       border: Border.all(
                         color: color.withValues(
                           alpha: isDark
-                              ? NebulaAlpha.border
-                              : NebulaAlpha.accent,
+                              ? NebulaAlpha.border + drift * 0.10
+                              : NebulaAlpha.accent + drift * 0.10,
                         ),
-                        width: 0.8,
+                        width: 0.9,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: color.withValues(
                             alpha: isDark
-                                ? NebulaAlpha.surface
-                                : NebulaAlpha.mist,
+                                ? NebulaAlpha.surface + drift * 0.06
+                                : NebulaAlpha.mist + drift * 0.04,
                           ),
-                          blurRadius: 12,
-                          spreadRadius: -1,
+                          blurRadius: 12 + drift * 8,
+                          spreadRadius: -1 + drift * 1.5,
                         ),
                       ],
                     ),

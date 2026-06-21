@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
@@ -142,8 +143,26 @@ class StudentsScreen extends ConsumerWidget {
                           bottom: 24,
                         ),
                         itemCount: students.length,
-                        itemBuilder: (context, i) =>
-                            _StudentCard(student: students[i], index: i),
+                        itemBuilder: (context, i) {
+                          // Stagger: each card fades + slides in with a small
+                          // per-index delay. Capped at 480ms so a long roster
+                          // doesn't take forever to settle.
+                          final delay = (i * 45).clamp(0, 480);
+                          return _StudentCard(student: students[i], index: i)
+                              .animate()
+                              .fadeIn(
+                                delay: delay.ms,
+                                duration: 260.ms,
+                                curve: Curves.easeOut,
+                              )
+                              .slideY(
+                                begin: 0.10,
+                                end: 0,
+                                delay: delay.ms,
+                                duration: 280.ms,
+                                curve: Curves.easeOutCubic,
+                              );
+                        },
                       ),
               ),
             ),
@@ -294,11 +313,22 @@ class _StudentCard extends ConsumerWidget {
                         ),
                         if (_isNew) ...[
                           const SizedBox(width: 8),
+                          // Ambient shimmer draws the eye to recently-added
+                          // students. Three-second loop so it never feels busy.
                           const StatusBadge(
                             label: 'НОВЫЙ',
                             intent: SemanticIntent.success,
                             styleOverride: BadgeStyle.compact,
-                          ),
+                          )
+                              .animate(
+                                onPlay: (c) => c.repeat(),
+                              )
+                              .shimmer(
+                                duration: 1600.ms,
+                                delay: 1400.ms,
+                                color: Colors.white
+                                    .withValues(alpha: NebulaAlpha.accent),
+                              ),
                         ],
                         if (student.isForeign) ...[
                           const SizedBox(width: 6),
