@@ -178,9 +178,51 @@ void main() {
     // Slide the focal position fully onto tab 1 — it should grow.
     magnify.value = 1.0;
     await tester.pump();
-    final tab1Focused = tester.getRect(find.byIcon(Icons.people_outline_rounded));
+    final tab1Focused =
+        tester.getRect(find.byIcon(Icons.people_outline_rounded));
 
     expect(tab1Focused.width, greaterThan(tab1Rest.width));
+  });
+
+  testWidgets('GlowMenuBar owns horizontal section swipe gestures',
+      (tester) async {
+    var dragStarted = false;
+    var dragDelta = 0.0;
+    var dragEnded = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: GlowMenuBar(
+            currentIndex: 0,
+            onTap: (_) {},
+            onHorizontalDragStart: (_) => dragStarted = true,
+            onHorizontalDragUpdate: (details) => dragDelta += details.delta.dx,
+            onHorizontalDragEnd: (_) => dragEnded = true,
+            items: const [
+              GlowMenuItem(
+                icon: Icons.calendar_month_rounded,
+                label: 'Календарь',
+                glowColor: Colors.blue,
+              ),
+              GlowMenuItem(
+                icon: Icons.people_outline_rounded,
+                label: 'Ученики',
+                glowColor: Colors.purple,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final surface = find.byKey(const ValueKey('glow-menu-bar-surface'));
+    await tester.drag(surface, const Offset(-120, 0));
+    await tester.pump();
+
+    expect(dragStarted, isTrue);
+    expect(dragDelta, lessThan(0));
+    expect(dragEnded, isTrue);
   });
 
   testWidgets(
