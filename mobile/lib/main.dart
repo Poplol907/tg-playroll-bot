@@ -9,6 +9,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/app_visual_mode.dart';
 import 'core/router/app_router.dart';
 import 'shared/widgets/global_touch_overlay.dart';
+import 'shared/widgets/theme_reveal_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +19,8 @@ void main() async {
 
   // Восстанавливаем выбранную пользователем тему (иначе при перезапуске
   // всегда вставала бы тёмная).
-  final savedMode =
-      visualModeFromStored(await AppStorage.instance.read(kVisualModeStorageKey));
+  final savedMode = visualModeFromStored(
+      await AppStorage.instance.read(kVisualModeStorageKey));
 
   // Русская локаль для дат
   await initializeDateFormatting('ru', null);
@@ -68,7 +69,9 @@ class CosmoApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
-        return GlobalTouchOverlay(child: child);
+        return ThemeRevealOverlay(
+          child: GlobalTouchOverlay(child: child),
+        );
       },
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
