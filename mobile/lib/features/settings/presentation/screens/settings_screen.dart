@@ -17,6 +17,7 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
+import '../../../../shared/widgets/theme_reveal_overlay.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -29,6 +30,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _ctrl;
   bool _saving = false;
   bool _saved = false;
+  bool _themeChanging = false;
 
   @override
   void initState() {
@@ -62,16 +64,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _cycleTheme() {
+  Future<void> _cycleTheme() async {
+    if (_themeChanging) return;
     HapticFeedback.selectionClick();
     final mode = ref.read(appVisualModeProvider);
     final next = switch (mode) {
       AppVisualMode.darkInternals => AppVisualMode.lightLite,
       AppVisualMode.lightLite => AppVisualMode.darkInternals,
     };
-    ref.read(appVisualModeProvider.notifier).state = next;
-    // Persist so the choice survives an app restart.
-    AppStorage.instance.write(kVisualModeStorageKey, next.name);
+    _themeChanging = true;
+    try {
+      final handled = await ThemeRevealOverlay.switchMode(context, next);
+      if (!handled && mounted) {
+        ref.read(appVisualModeProvider.notifier).state = next;
+      }
+      await AppStorage.instance.write(kVisualModeStorageKey, next.name);
+    } finally {
+      _themeChanging = false;
+    }
   }
 
   Future<void> _logout() async {
@@ -132,8 +142,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Адрес сервера',
-                          style: type.titleS
-                              .copyWith(color: tokens.primaryText),
+                          style:
+                              type.titleS.copyWith(color: tokens.primaryText),
                         ),
                       ],
                     ),
