@@ -70,19 +70,23 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
   double _px = -1, _py = -1, _prevPx = -1, _prevPy = -1;
   bool _down = false;
 
-  // ── Wave parameters (tuned for a viscous "syrup" feel under the finger) ──
-  // Lower wave speed + higher damping + softer tension means the surface
-  // remembers the gesture: the trail lingers, the spread is slow, the return
-  // to flat is gentle. Bigger hover radius + stronger hover strength make the
-  // brush feel substantial — like dragging through honey, not flicking water.
-  static const _waveSpeed = 0.18; // slower propagation → след тянется
-  static const _damping = 0.985; // wave energy bleeds off very slowly
-  static const _hoverStr = 0.42; // stronger imprint where the finger glides
-  static const _clickStr = 38.0;
+  // ── Wave parameters (tuned for a "folding cloth" feel) ──────────────────
+  // The earlier preset (waveSpeed 0.18 + tension 0.55) behaved like a struck
+  // string: the spring-back was too strong, ripples bounced off neighbours,
+  // and the surface chattered everywhere the finger went. To make the
+  // surface fold like fabric instead, the spring-back is almost gone
+  // (tension near 1 = amplitude is preserved between frames), propagation is
+  // crawl-slow (energy stays under the finger), and the hover impulse is
+  // gentle + wide (a smooth dimple, not a splash). Velocity damping does the
+  // actual fade-out — slowly, without ringing.
+  static const _waveSpeed = 0.06; // almost no lateral spread → no ripples flying off
+  static const _damping = 0.93; // velocity bleeds quickly → no oscillation
+  static const _hoverStr = 0.18; // soft press, not a splash
+  static const _clickStr = 14.0; // tap = gentle fold, not a shock
 
-  static const _tension = 0.55; // soft spring → no springy "bounce" back
-  static const _hoverRad = 5; // wider brush — finger paints a generous trail
-  static const _clickRad = 8;
+  static const _tension = 0.94; // near-1 → trail is held, no springy return
+  static const _hoverRad = 7; // wide brush → a smooth, broad dimple
+  static const _clickRad = 10;
   static const _eps = 0.001;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
