@@ -12,6 +12,7 @@ import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/students/presentation/screens/students_screen.dart';
 import '../../features/salary/presentation/screens/salary_screen.dart';
+import '../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../shared/providers/month_provider.dart';
 import '../../shared/widgets/app_background_host.dart';
 import '../../shared/widgets/space_page_transition.dart';
@@ -314,12 +315,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
     });
 
+    // Detail/push screens flip bottomBarVisibleProvider to false in initState,
+    // back to true in dispose. The bar slides off the bottom in those cases
+    // and the content reclaims the full screen.
+    final barVisible = ref.watch(bottomBarVisibleProvider);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      // SafeArea here is the SINGLE source of the top inset (status bar /
-      // Dynamic Island). Everything below — banner, month bar, screens —
-      // starts beneath the island. Individual widgets must NOT re-apply
-      // MediaQuery.padding.top, or insets double up.
+      // The bar floats over the content (Apple TabView / Instagram pattern),
+      // so it must NOT live in `bottomNavigationBar` (which would steal space
+      // from the body). It's the last child of the overlay Stack instead.
       body: Stack(
         children: [
           SafeArea(
@@ -359,17 +364,38 @@ class _AppShellState extends ConsumerState<AppShell> {
           // Поверх всего: оранжевая окантовка экрана + овальная кнопка
           // выхода из режима «смотрю как педагог».
           const ViewAsOverlay(),
+
+          // Floating nav island — slides off the bottom when a detail screen
+          // requests the bar hidden via bottomBarVisibleProvider.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              ignoring: !barVisible,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                offset: barVisible ? Offset.zero : const Offset(0, 1.4),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 220),
+                  opacity: barVisible ? 1.0 : 0.0,
+                  child: GlowMenuBar(
+                    currentIndex: widget.currentIndex,
+                    magnify: _navPos,
+                    onTap: (i) =>
+                        _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
+                    onHorizontalDragStart: _onNavDragStart,
+                    onHorizontalDragUpdate: _onNavDragUpdate,
+                    onHorizontalDragEnd: _onNavDragEnd,
+                    onHorizontalDragCancel: _onNavDragCancel,
+                    items: items,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
-      ),
-      bottomNavigationBar: GlowMenuBar(
-        currentIndex: widget.currentIndex,
-        magnify: _navPos,
-        onTap: (i) => _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
-        onHorizontalDragStart: _onNavDragStart,
-        onHorizontalDragUpdate: _onNavDragUpdate,
-        onHorizontalDragEnd: _onNavDragEnd,
-        onHorizontalDragCancel: _onNavDragCancel,
-        items: items,
       ),
     );
   }
