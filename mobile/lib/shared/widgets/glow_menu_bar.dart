@@ -30,8 +30,12 @@ class GlowMenuBar extends StatelessWidget {
   final List<GlowMenuItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final GestureDragStartCallback? onHorizontalDragStart;
+  final GestureDragUpdateCallback? onHorizontalDragUpdate;
+  final GestureDragEndCallback? onHorizontalDragEnd;
+  final GestureDragCancelCallback? onHorizontalDragCancel;
 
-  /// Live fractional position of the section swipe (e.g. 1.3 = between tab 1
+  /// Live fractional position of the nav-bar swipe (e.g. 1.3 = between tab 1
   /// and 2, leaning toward 1). Drives the macOS-dock proximity magnification:
   /// the tab the finger is sliding toward grows and brightens by distance.
   /// Null = no dock effect (desktop / no PageView).
@@ -43,6 +47,10 @@ class GlowMenuBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     this.magnify,
+    this.onHorizontalDragStart,
+    this.onHorizontalDragUpdate,
+    this.onHorizontalDragEnd,
+    this.onHorizontalDragCancel,
   });
 
   @override
@@ -53,6 +61,10 @@ class GlowMenuBar extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onTap,
         magnify: magnify,
+        onHorizontalDragStart: onHorizontalDragStart,
+        onHorizontalDragUpdate: onHorizontalDragUpdate,
+        onHorizontalDragEnd: onHorizontalDragEnd,
+        onHorizontalDragCancel: onHorizontalDragCancel,
       ),
     );
   }
@@ -67,12 +79,20 @@ class _GlowBarBody extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final ValueListenable<double>? magnify;
+  final GestureDragStartCallback? onHorizontalDragStart;
+  final GestureDragUpdateCallback? onHorizontalDragUpdate;
+  final GestureDragEndCallback? onHorizontalDragEnd;
+  final GestureDragCancelCallback? onHorizontalDragCancel;
 
   const _GlowBarBody({
     required this.items,
     required this.currentIndex,
     required this.onTap,
     this.magnify,
+    this.onHorizontalDragStart,
+    this.onHorizontalDragUpdate,
+    this.onHorizontalDragEnd,
+    this.onHorizontalDragCancel,
   });
 
   @override
@@ -101,138 +121,145 @@ class _GlowBarBody extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 6, 16, bottomInset + 10),
-      child: Container(
-        key: const ValueKey('glow-menu-bar-surface'),
-        decoration: BoxDecoration(
-          color: surface.fill,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: surface.border,
-            width: surface.borderWidth,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: onHorizontalDragStart,
+        onHorizontalDragUpdate: onHorizontalDragUpdate,
+        onHorizontalDragEnd: onHorizontalDragEnd,
+        onHorizontalDragCancel: onHorizontalDragCancel,
+        child: Container(
+          key: const ValueKey('glow-menu-bar-surface'),
+          decoration: BoxDecoration(
+            color: surface.fill,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: surface.border,
+              width: surface.borderWidth,
+            ),
+            boxShadow: isDark
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: NebulaAlpha.border),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : [
+                    // Soft diffused lift on white — wide blur, low alpha.
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: NebulaAlpha.mist),
+                      blurRadius: 24,
+                      spreadRadius: -4,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
           ),
-          boxShadow: isDark
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: NebulaAlpha.border),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : [
-                  // Soft diffused lift on white — wide blur, low alpha.
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: NebulaAlpha.mist),
-                    blurRadius: 24,
-                    spreadRadius: -4,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: Stack(
-            children: [
-              // ── Matte sheen over the fill ───────────────────────────
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(gradient: surface.sheen),
-                  ),
-                ),
-              ),
-
-              // ── Nav-wide ambient bloom ──────────────────────────────
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    painter: _NavAmbientPainter(
-                      color: activeColor,
-                      xFraction: activeFrac,
-                      isDark: isDark,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Stack(
+              children: [
+                // ── Matte sheen over the fill ───────────────────────────
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(gradient: surface.sheen),
                     ),
                   ),
                 ),
-              ),
 
-              // ── Tab row ─────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: NebulaTokens.sp8,
-                  vertical: NebulaTokens.sp8,
-                ),
-                child: isAdminPair
-                    ? LayoutBuilder(
-                        builder: (context, constraints) {
-                          final tabWidth = math.min(76.0,
-                              math.max(58.0, constraints.maxWidth * 0.34));
-                          final centerLeft =
-                              constraints.maxWidth / 2 - tabWidth / 2;
-                          return SizedBox(
-                            height: 58,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Positioned(
-                                  left: centerLeft,
-                                  width: tabWidth,
-                                  top: 0,
-                                  bottom: 0,
-                                  child: _GlowNavTab(
-                                    item: items[0],
-                                    index: 0,
-                                    magnify: magnify,
-                                    selected: currentIndex == 0,
-                                    isDark: isDark,
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      onTap(0);
-                                    },
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  width: tabWidth,
-                                  top: 0,
-                                  bottom: 0,
-                                  child: _GlowNavTab(
-                                    item: items[1],
-                                    index: 1,
-                                    magnify: magnify,
-                                    selected: currentIndex == 1,
-                                    isDark: isDark,
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      onTap(1);
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ...items.asMap().entries.map(
-                                (e) => Expanded(
-                                  child: _GlowNavTab(
-                                    item: e.value,
-                                    index: e.key,
-                                    magnify: magnify,
-                                    selected: e.key == currentIndex,
-                                    isDark: isDark,
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      onTap(e.key);
-                                    },
-                                  ),
-                                ),
-                              ),
-                        ],
+                // ── Nav-wide ambient bloom ──────────────────────────────
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _NavAmbientPainter(
+                        color: activeColor,
+                        xFraction: activeFrac,
+                        isDark: isDark,
                       ),
-              ),
-            ],
+                    ),
+                  ),
+                ),
+
+                // ── Tab row ─────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: NebulaTokens.sp8,
+                    vertical: NebulaTokens.sp8,
+                  ),
+                  child: isAdminPair
+                      ? LayoutBuilder(
+                          builder: (context, constraints) {
+                            final tabWidth = math.min(76.0,
+                                math.max(58.0, constraints.maxWidth * 0.34));
+                            final centerLeft =
+                                constraints.maxWidth / 2 - tabWidth / 2;
+                            return SizedBox(
+                              height: 58,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Positioned(
+                                    left: centerLeft,
+                                    width: tabWidth,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: _GlowNavTab(
+                                      item: items[0],
+                                      index: 0,
+                                      magnify: magnify,
+                                      selected: currentIndex == 0,
+                                      isDark: isDark,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        onTap(0);
+                                      },
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    width: tabWidth,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: _GlowNavTab(
+                                      item: items[1],
+                                      index: 1,
+                                      magnify: magnify,
+                                      selected: currentIndex == 1,
+                                      isDark: isDark,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        onTap(1);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ...items.asMap().entries.map(
+                                  (e) => Expanded(
+                                    child: _GlowNavTab(
+                                      item: e.value,
+                                      index: e.key,
+                                      magnify: magnify,
+                                      selected: e.key == currentIndex,
+                                      isDark: isDark,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        onTap(e.key);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

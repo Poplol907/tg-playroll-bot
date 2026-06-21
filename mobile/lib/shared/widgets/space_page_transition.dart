@@ -326,77 +326,16 @@ CustomTransitionPage<T> spaceTransitionPage<T>({
   );
 }
 
-/// Lightweight crossfade for bottom-tab navigation.
-/// No nebula overlay and no route-owned background. AppBackgroundHost remains
-/// the single background; this transition only manages transparent foregrounds.
-CustomTransitionPage<T> nebulaFadePage<T>({
+/// Shell navigation is already animated by PageView on mobile. A route-level
+/// transition would replay the entrance after the swipe has settled, so shell
+/// pages intentionally have no second animation. Feature-owned motion (for
+/// example salary widget entrances) remains independent.
+NoTransitionPage<T> shellPage<T>({
   required LocalKey key,
   required Widget child,
 }) {
-  return CustomTransitionPage<T>(
+  return NoTransitionPage<T>(
     key: key,
     child: child,
-    transitionDuration: const Duration(milliseconds: 280),
-    reverseTransitionDuration: const Duration(milliseconds: 240),
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return _ShellForegroundTransition(
-        animation: animation,
-        secondaryAnimation: secondaryAnimation,
-        child: child,
-      );
-    },
   );
-}
-
-class _ShellForegroundTransition extends StatelessWidget {
-  final Animation<double> animation;
-  final Animation<double> secondaryAnimation;
-  final Widget child;
-
-  const _ShellForegroundTransition({
-    required this.animation,
-    required this.secondaryAnimation,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final enter = CurvedAnimation(
-      parent: animation,
-      curve: const Interval(0.55, 1.0, curve: Curves.easeOutCubic),
-      reverseCurve: const Interval(0.0, 0.45, curve: Curves.easeInCubic),
-    );
-    final exit = CurvedAnimation(
-      parent: secondaryAnimation,
-      curve: const Interval(0.0, 0.38, curve: Curves.easeInCubic),
-      reverseCurve: const Interval(0.62, 1.0, curve: Curves.easeOutCubic),
-    );
-    final enterSlide = Tween<Offset>(
-      begin: const Offset(0.0, 0.025),
-      end: Offset.zero,
-    ).animate(enter);
-    final exitSlide = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0.0, -0.018),
-    ).animate(exit);
-
-    return AnimatedBuilder(
-      animation: Listenable.merge([animation, secondaryAnimation]),
-      child: child,
-      builder: (context, child) {
-        final opacity = (enter.value * (1.0 - exit.value)).clamp(0.0, 1.0);
-        final offset = enterSlide.value + exitSlide.value;
-        return IgnorePointer(
-          ignoring: opacity < 0.99,
-          child: FractionalTranslation(
-            translation: offset,
-            child: Opacity(
-              opacity: opacity,
-              child: child,
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
