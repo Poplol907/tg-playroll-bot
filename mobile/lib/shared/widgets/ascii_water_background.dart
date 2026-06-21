@@ -70,15 +70,19 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
   double _px = -1, _py = -1, _prevPx = -1, _prevPy = -1;
   bool _down = false;
 
-  // ── Wave parameters (tuned for viscous ASCII feel) ───────────────────────
-  static const _waveSpeed = 0.28; // Slower wave propagation but still propagates
-  static const _damping = 0.95; // High retention to let it spread
-  static const _hoverStr = 0.18;
-  static const _clickStr = 32.0;
+  // ── Wave parameters (tuned for a viscous "syrup" feel under the finger) ──
+  // Lower wave speed + higher damping + softer tension means the surface
+  // remembers the gesture: the trail lingers, the spread is slow, the return
+  // to flat is gentle. Bigger hover radius + stronger hover strength make the
+  // brush feel substantial — like dragging through honey, not flicking water.
+  static const _waveSpeed = 0.18; // slower propagation → след тянется
+  static const _damping = 0.985; // wave energy bleeds off very slowly
+  static const _hoverStr = 0.42; // stronger imprint where the finger glides
+  static const _clickStr = 38.0;
 
-  static const _tension = 0.90; // Slightly lower spring back
-  static const _hoverRad = 3;
-  static const _clickRad = 6;
+  static const _tension = 0.55; // soft spring → no springy "bounce" back
+  static const _hoverRad = 5; // wider brush — finger paints a generous trail
+  static const _clickRad = 8;
   static const _eps = 0.001;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -92,11 +96,12 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
     RepaintPulse.notifier.addListener(_onRepaintPulse);
 
     // Fade in fast (80 ms) — first ripple appears without stutter.
-    // Fade out slowly (900 ms) for a water-evaporation feel.
+    // Fade out slowly (1400 ms) — pairs with the viscous wave so the trail
+    // doesn't snap to invisibility before the user can enjoy it.
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 80),
-      reverseDuration: const Duration(milliseconds: 900),
+      reverseDuration: const Duration(milliseconds: 1400),
       value: 0.0, // starts hidden
     );
   }
@@ -145,7 +150,10 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
 
   void _scheduleHide() {
     _fadeOutTimer?.cancel();
-    _fadeOutTimer = Timer(const Duration(milliseconds: 1500), () {
+    // Hold the ASCII visible a bit longer (2200 ms) — the viscous trail keeps
+    // moving after the finger leaves, and snapping it away mid-motion looks
+    // worse than letting it settle on its own.
+    _fadeOutTimer = Timer(const Duration(milliseconds: 2200), () {
       if (mounted) _fadeCtrl.reverse();
     });
   }
