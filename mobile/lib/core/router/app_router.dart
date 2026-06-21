@@ -21,6 +21,7 @@ import '../../shared/widgets/desktop_content_frame.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../../core/theme/nebula_tokens.dart';
 import '../../shared/widgets/nebula_surface.dart';
 import '../../core/services/update_service.dart';
 import '../../core/services/repaint_pulse.dart';
@@ -45,9 +46,10 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   // ── Swipe navigation (mobile) ───────────────────────────────────────────
-  // The mobile shell renders the role's section screens in a PageView so the
-  // user can swipe between sections. The PageView and the router are kept in
-  // sync: swipe → context.go(route); tab tap → animate the PageView.
+  // The mobile shell renders the role's section screens in a PageView. Direct
+  // content swipes are disabled; only a horizontal drag on GlowMenuBar drives
+  // the pager. The PageView and router remain synchronized for deep links and
+  // direct tab taps.
   PageController? _pageController;
   int _pageCount = 0;
   // Live fractional page position — feeds the nav bar's dock magnification.
@@ -68,6 +70,54 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _onPageScroll() {
     final p = _pageController?.page;
     if (p != null) _navPos.value = p;
+  }
+
+  void _onNavDragStart(DragStartDetails details) {
+    final controller = _pageController;
+    if (controller == null || !controller.hasClients) return;
+    controller.jumpTo(controller.offset);
+  }
+
+  void _onNavDragUpdate(DragUpdateDetails details) {
+    final controller = _pageController;
+    if (controller == null || !controller.hasClients) return;
+
+    final position = controller.position;
+    final nextOffset = (controller.offset - details.delta.dx).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    controller.jumpTo(nextOffset);
+  }
+
+  void _onNavDragEnd(DragEndDetails details) {
+    _settleNavDrag(-details.velocity.pixelsPerSecond.dx);
+  }
+
+  void _onNavDragCancel() {
+    _settleNavDrag(0);
+  }
+
+  void _settleNavDrag(double pageVelocity) {
+    final controller = _pageController;
+    if (controller == null || !controller.hasClients || _pageCount == 0) return;
+
+    final page = controller.page ?? widget.currentIndex.toDouble();
+    const flingThreshold = 420.0;
+    final int target;
+    if (pageVelocity > flingThreshold) {
+      target = page.floor() + 1;
+    } else if (pageVelocity < -flingThreshold) {
+      target = page.ceil() - 1;
+    } else {
+      target = page.round();
+    }
+
+    controller.animateToPage(
+      target.clamp(0, _pageCount - 1),
+      duration: NebulaTokens.feedback,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -99,13 +149,13 @@ class _AppShellState extends ConsumerState<AppShell> {
   // - Педагог: Календарь + Ученики + Зарплата + Настройки.
   // - Админ в обычном режиме: Студия + Настройки.
   // - Админ в view-as: те же вкладки что у педагога (он смотрит данные педагога).
-  List<String> _routesForRole({required bool isAdmin, required bool viewingAs}) {
+  List<String> _routesForRole(
+      {required bool isAdmin, required bool viewingAs}) {
     if (isAdmin && !viewingAs) return ['/admin', '/settings'];
     return ['/calendar', '/students', '/salary', '/settings'];
   }
 
-  void _onTabTap(int index,
-      {required bool isAdmin, required bool viewingAs}) {
+  void _onTabTap(int index, {required bool isAdmin, required bool viewingAs}) {
     final routes = _routesForRole(isAdmin: isAdmin, viewingAs: viewingAs);
     if (index < routes.length) context.go(routes[index]);
   }
@@ -221,8 +271,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: [
           DesktopSidebar(
             currentIndex: widget.currentIndex,
-            onTap: (i) =>
-                _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
+            onTap: (i) => _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
             items: items,
           ),
           Expanded(
@@ -252,17 +301,16 @@ class _AppShellState extends ConsumerState<AppShell> {
     _ensureController(widget.currentIndex, routes.length);
 
     // Sync the PageView to the router when the active index changed elsewhere
-    // (tab tap, deep link). Animate to it after this frame.
+    // (tab tap, deep link). Do not animate here: animateToPage physically
+    // scrolls through every intermediate tab (for example Settings ->
+    // Calendar), building those screens and fighting the route crossfade.
+    // Horizontal section drags are owned exclusively by GlowMenuBar.
     final controller = _pageController!;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !controller.hasClients) return;
       final page = controller.page?.round() ?? widget.currentIndex;
       if (page != widget.currentIndex) {
-        controller.animateToPage(
-          widget.currentIndex,
-          duration: const Duration(milliseconds: 360),
-          curve: Curves.easeOutCubic,
-        );
+        controller.jumpToPage(widget.currentIndex);
       }
     });
 
@@ -283,7 +331,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 Expanded(
                   child: PageView.builder(
                     controller: controller,
-                    physics: const _SwipeNavPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: routes.length,
                     onPageChanged: (i) {
                       if (i != widget.currentIndex) {
@@ -294,9 +342,15 @@ class _AppShellState extends ConsumerState<AppShell> {
                     // Active page = the screen GoRouter already built
                     // (widget.child) so routing/state stay authoritative.
                     // Off-screen pages build lazily during a swipe.
-                    itemBuilder: (_, i) => i == widget.currentIndex
-                        ? widget.child
-                        : _screenForRoute(routes[i]),
+                    // Stable per-route keys prevent PageView from treating
+                    // an unrelated rebuild (e.g. theme toggle) as a page
+                    // swap and scrolling through every intermediate tab.
+                    itemBuilder: (_, i) => KeyedSubtree(
+                      key: ValueKey('shell-page-${routes[i]}'),
+                      child: i == widget.currentIndex
+                          ? widget.child
+                          : _screenForRoute(routes[i]),
+                    ),
                   ),
                 ),
               ],
@@ -310,29 +364,15 @@ class _AppShellState extends ConsumerState<AppShell> {
       bottomNavigationBar: GlowMenuBar(
         currentIndex: widget.currentIndex,
         magnify: _navPos,
-        onTap: (i) =>
-            _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
+        onTap: (i) => _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
+        onHorizontalDragStart: _onNavDragStart,
+        onHorizontalDragUpdate: _onNavDragUpdate,
+        onHorizontalDragEnd: _onNavDragEnd,
+        onHorizontalDragCancel: _onNavDragCancel,
         items: items,
       ),
     );
   }
-}
-
-/// Slightly snappier than the default page physics — sections feel light to
-/// flick between without overshooting.
-class _SwipeNavPhysics extends PageScrollPhysics {
-  const _SwipeNavPhysics({super.parent});
-
-  @override
-  _SwipeNavPhysics applyTo(ScrollPhysics? ancestor) =>
-      _SwipeNavPhysics(parent: buildParent(ancestor));
-
-  @override
-  SpringDescription get spring => const SpringDescription(
-        mass: 0.55,
-        stiffness: 120,
-        damping: 18,
-      );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -457,8 +497,8 @@ class _MonthArrowState extends State<_MonthArrow> {
         glow: _hovered
             ? [
                 BoxShadow(
-                  color: tokens.focusAccent
-                      .withValues(alpha: NebulaAlpha.subtle),
+                  color:
+                      tokens.focusAccent.withValues(alpha: NebulaAlpha.subtle),
                   blurRadius: 18,
                   spreadRadius: -2,
                 ),
@@ -549,35 +589,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/admin',
-            pageBuilder: (context, state) => nebulaFadePage(
+            pageBuilder: (context, state) => shellPage(
               key: state.pageKey,
               child: const AdminScreen(),
             ),
           ),
           GoRoute(
             path: '/calendar',
-            pageBuilder: (context, state) => nebulaFadePage(
+            pageBuilder: (context, state) => shellPage(
               key: state.pageKey,
               child: const CalendarScreen(),
             ),
           ),
           GoRoute(
             path: '/students',
-            pageBuilder: (context, state) => nebulaFadePage(
+            pageBuilder: (context, state) => shellPage(
               key: state.pageKey,
               child: const StudentsScreen(),
             ),
           ),
           GoRoute(
             path: '/salary',
-            pageBuilder: (context, state) => nebulaFadePage(
+            pageBuilder: (context, state) => shellPage(
               key: state.pageKey,
               child: const SalaryScreen(),
             ),
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => nebulaFadePage(
+            pageBuilder: (context, state) => shellPage(
               key: state.pageKey,
               child: const SettingsScreen(),
             ),
