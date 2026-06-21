@@ -57,6 +57,15 @@ class _AppShellState extends ConsumerState<AppShell> {
   // ValueNotifier (not setState) so only the nav bar repaints per scroll frame.
   final ValueNotifier<double> _navPos = ValueNotifier<double>(0);
 
+  // True while the user is actively dragging the pill. Drives the "loupe"
+  // grow on the capsule and disables the inert follower visuals.
+  final ValueNotifier<bool> _pillDragActive = ValueNotifier<bool>(false);
+
+  // Cached at drag start so the speed conversion stays consistent even if
+  // the viewport reports zero mid-gesture.
+  double _dragPagePx = 0;
+  double _dragTabPx = 0;
+
   void _ensureController(int index, int count) {
     if (_pageController == null || _pageCount != count) {
       _pageController?.removeListener(_onPageScroll);
@@ -77,14 +86,32 @@ class _AppShellState extends ConsumerState<AppShell> {
     final controller = _pageController;
     if (controller == null || !controller.hasClients) return;
     controller.jumpTo(controller.offset);
+    _pillDragActive.value = true;
+
+    // Snapshot the page→tab speed conversion. The pill travels across the
+    // bar at tab-width per tab; PageView travels at viewportSize per page.
+    // So one pixel of finger motion on the bar = (viewport / tabWidth) px
+    // on the pager. Tab width = (bar width - 2·sp8) / N, but bar width is
+    // close enough to viewport width on mobile, so we approximate using N.
+    final media = MediaQuery.of(context);
+    _dragPagePx = controller.position.viewportDimension > 0
+        ? controller.position.viewportDimension
+        : media.size.width;
+    final n = _pageCount > 0 ? _pageCount : 1;
+    _dragTabPx = (media.size.width - 16) / n; // 16 = sp8 * 2 outer padding
   }
 
   void _onNavDragUpdate(DragUpdateDetails details) {
     final controller = _pageController;
     if (controller == null || !controller.hasClients) return;
 
+    // Direct mapping: finger moves the pill RIGHT → pager goes to NEXT page
+    // (offset grows). Scale by viewport/tabWidth so dragging one tab worth
+    // of distance lands the user exactly on the next page — same feel as
+    // grabbing the iOS / Telegram tab bar handle.
+    final scale = _dragTabPx > 0 ? (_dragPagePx / _dragTabPx) : 1.0;
     final position = controller.position;
-    final nextOffset = (controller.offset - details.delta.dx).clamp(
+    final nextOffset = (controller.offset + details.delta.dx * scale).clamp(
       position.minScrollExtent,
       position.maxScrollExtent,
     );
@@ -92,10 +119,15 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _onNavDragEnd(DragEndDetails details) {
-    _settleNavDrag(-details.velocity.pixelsPerSecond.dx);
+    _pillDragActive.value = false;
+    // Direct mapping: pixels/sec of finger → pages/sec on the pager,
+    // converted via the same scale as during the drag.
+    final scale = _dragTabPx > 0 ? (_dragPagePx / _dragTabPx) : 1.0;
+    _settleNavDrag(details.velocity.pixelsPerSecond.dx * scale);
   }
 
   void _onNavDragCancel() {
+    _pillDragActive.value = false;
     _settleNavDrag(0);
   }
 
@@ -126,6 +158,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     _pageController?.removeListener(_onPageScroll);
     _pageController?.dispose();
     _navPos.dispose();
+    _pillDragActive.dispose();
     super.dispose();
   }
 
@@ -383,6 +416,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                   child: GlowMenuBar(
                     currentIndex: widget.currentIndex,
                     magnify: _navPos,
+                    dragActive: _pillDragActive,
                     onTap: (i) =>
                         _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs),
                     onHorizontalDragStart: _onNavDragStart,

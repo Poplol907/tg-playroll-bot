@@ -41,12 +41,17 @@ class GlowMenuBar extends StatelessWidget {
   /// Null = no dock effect (desktop / no PageView).
   final ValueListenable<double>? magnify;
 
+  /// True while the user is dragging the pill. The capsule scales up like a
+  /// magnifier ("loupe") so it reads as a grabbable handle.
+  final ValueListenable<bool>? dragActive;
+
   const GlowMenuBar({
     super.key,
     required this.items,
     required this.currentIndex,
     required this.onTap,
     this.magnify,
+    this.dragActive,
     this.onHorizontalDragStart,
     this.onHorizontalDragUpdate,
     this.onHorizontalDragEnd,
@@ -61,6 +66,7 @@ class GlowMenuBar extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onTap,
         magnify: magnify,
+        dragActive: dragActive,
         onHorizontalDragStart: onHorizontalDragStart,
         onHorizontalDragUpdate: onHorizontalDragUpdate,
         onHorizontalDragEnd: onHorizontalDragEnd,
@@ -79,6 +85,7 @@ class _GlowBarBody extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final ValueListenable<double>? magnify;
+  final ValueListenable<bool>? dragActive;
   final GestureDragStartCallback? onHorizontalDragStart;
   final GestureDragUpdateCallback? onHorizontalDragUpdate;
   final GestureDragEndCallback? onHorizontalDragEnd;
@@ -89,6 +96,7 @@ class _GlowBarBody extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     this.magnify,
+    this.dragActive,
     this.onHorizontalDragStart,
     this.onHorizontalDragUpdate,
     this.onHorizontalDragEnd,
@@ -188,6 +196,7 @@ class _GlowBarBody extends StatelessWidget {
                     child: IgnorePointer(
                       child: _LiquidPill(
                         magnify: magnify!,
+                        dragActive: dragActive,
                         items: items,
                         isDark: isDark,
                       ),
@@ -656,11 +665,13 @@ class _NavAmbientPainter extends CustomPainter {
 
 class _LiquidPill extends StatelessWidget {
   final ValueListenable<double> magnify;
+  final ValueListenable<bool>? dragActive;
   final List<GlowMenuItem> items;
   final bool isDark;
 
   const _LiquidPill({
     required this.magnify,
+    required this.dragActive,
     required this.items,
     required this.isDark,
   });
@@ -704,6 +715,58 @@ class _LiquidPill extends StatelessWidget {
             )!;
 
             final left = outerPadH + pos * tabWidth + pillSlackH;
+
+            final capsule = DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                color: color.withValues(
+                  alpha: isDark
+                      ? NebulaAlpha.subtle + drift * 0.06
+                      : NebulaAlpha.surface + drift * 0.06,
+                ),
+                border: Border.all(
+                  color: color.withValues(
+                    alpha: isDark
+                        ? NebulaAlpha.border + drift * 0.10
+                        : NebulaAlpha.accent + drift * 0.10,
+                  ),
+                  width: 0.9,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(
+                      alpha: isDark
+                          ? NebulaAlpha.surface + drift * 0.06
+                          : NebulaAlpha.mist + drift * 0.04,
+                    ),
+                    blurRadius: 12 + drift * 8,
+                    spreadRadius: -1 + drift * 1.5,
+                  ),
+                ],
+              ),
+            );
+
+            // Loupe effect: when the user grabs the pill it grows ~18% so
+            // the capsule reads as a tactile handle, like the magnified tab
+            // in iOS / Telegram / Instagram bars. Native AnimatedScale here
+            // (not flutter_animate's `target`) — its controller is owned by
+            // the framework and disposes cleanly when the bar rebuilds.
+            final dragNotifier = dragActive;
+            final pill = dragNotifier == null
+                ? capsule
+                : ValueListenableBuilder<bool>(
+                    valueListenable: dragNotifier,
+                    child: capsule,
+                    builder: (_, active, child) {
+                      return AnimatedScale(
+                        scale: active ? 1.18 : 1.0,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        child: child,
+                      );
+                    },
+                  );
+
             return Stack(
               children: [
                 Positioned(
@@ -711,35 +774,7 @@ class _LiquidPill extends StatelessWidget {
                   top: outerPadV,
                   bottom: outerPadV,
                   width: pillWidth,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: color.withValues(
-                        alpha: isDark
-                            ? NebulaAlpha.subtle + drift * 0.06
-                            : NebulaAlpha.surface + drift * 0.06,
-                      ),
-                      border: Border.all(
-                        color: color.withValues(
-                          alpha: isDark
-                              ? NebulaAlpha.border + drift * 0.10
-                              : NebulaAlpha.accent + drift * 0.10,
-                        ),
-                        width: 0.9,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(
-                            alpha: isDark
-                                ? NebulaAlpha.surface + drift * 0.06
-                                : NebulaAlpha.mist + drift * 0.04,
-                          ),
-                          blurRadius: 12 + drift * 8,
-                          spreadRadius: -1 + drift * 1.5,
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: pill,
                 ),
               ],
             );
