@@ -144,22 +144,28 @@ class StudentsScreen extends ConsumerWidget {
                         ),
                         itemCount: students.length,
                         itemBuilder: (context, i) {
-                          // Stagger: each card fades + slides in with a small
-                          // per-index delay. Capped at 480ms so a long roster
-                          // doesn't take forever to settle.
-                          final delay = (i * 45).clamp(0, 480);
-                          return _StudentCard(student: students[i], index: i)
+                          // Stagger ONLY the first viewport (cards 0..7) so a
+                          // fresh open feels like a cascade. Anything beyond
+                          // that — including cards revealed by fast scroll —
+                          // appears instantly: no per-row delay can keep up
+                          // with a flick, and any delay shows as a blank gap.
+                          const stagger = 7;
+                          final card =
+                              _StudentCard(student: students[i], index: i);
+                          if (i >= stagger) return card;
+                          final delay = (i * 55).ms;
+                          return card
                               .animate()
                               .fadeIn(
-                                delay: delay.ms,
-                                duration: 260.ms,
+                                delay: delay,
+                                duration: 240.ms,
                                 curve: Curves.easeOut,
                               )
                               .slideY(
-                                begin: 0.10,
+                                begin: 0.08,
                                 end: 0,
-                                delay: delay.ms,
-                                duration: 280.ms,
+                                delay: delay,
+                                duration: 260.ms,
                                 curve: Curves.easeOutCubic,
                               );
                         },
@@ -314,21 +320,30 @@ class _StudentCard extends ConsumerWidget {
                         if (_isNew) ...[
                           const SizedBox(width: 8),
                           // Ambient shimmer draws the eye to recently-added
-                          // students. Three-second loop so it never feels busy.
-                          const StatusBadge(
-                            label: 'НОВЫЙ',
-                            intent: SemanticIntent.success,
-                            styleOverride: BadgeStyle.compact,
-                          )
-                              .animate(
-                                onPlay: (c) => c.repeat(),
-                              )
-                              .shimmer(
-                                duration: 1600.ms,
-                                delay: 1400.ms,
-                                color: Colors.white
-                                    .withValues(alpha: NebulaAlpha.accent),
-                              ),
+                          // students. Suppressed under reduce-motion / in
+                          // test bindings so it doesn't leave dangling
+                          // periodic timers when the tree unmounts.
+                          if (MediaQuery.of(context).disableAnimations)
+                            const StatusBadge(
+                              label: 'НОВЫЙ',
+                              intent: SemanticIntent.success,
+                              styleOverride: BadgeStyle.compact,
+                            )
+                          else
+                            const StatusBadge(
+                              label: 'НОВЫЙ',
+                              intent: SemanticIntent.success,
+                              styleOverride: BadgeStyle.compact,
+                            )
+                                .animate(
+                                  onPlay: (c) => c.repeat(),
+                                )
+                                .shimmer(
+                                  duration: 1600.ms,
+                                  delay: 1400.ms,
+                                  color: Colors.white
+                                      .withValues(alpha: NebulaAlpha.accent),
+                                ),
                         ],
                         if (student.isForeign) ...[
                           const SizedBox(width: 6),

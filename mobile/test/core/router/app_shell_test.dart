@@ -120,9 +120,12 @@ void main() {
 
     final navSurface = find.byKey(const ValueKey('glow-menu-bar-surface'));
     final navGesture = await tester.startGesture(tester.getCenter(navSurface));
-    await navGesture.moveBy(const Offset(-24, 0));
+    // Dragging the nav-pill RIGHT now moves the pager to the NEXT page
+    // (direct mapping: finger right → page index up). The previous inverted
+    // behaviour was a bug — pill should follow the finger, not chase it.
+    await navGesture.moveBy(const Offset(24, 0));
     await tester.pump();
-    await navGesture.moveBy(const Offset(-96, 0));
+    await navGesture.moveBy(const Offset(96, 0));
     await tester.pump();
     expect(controller.page, greaterThan(0));
     await navGesture.up();

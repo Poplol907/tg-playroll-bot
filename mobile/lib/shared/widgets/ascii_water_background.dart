@@ -70,23 +70,22 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
   double _px = -1, _py = -1, _prevPx = -1, _prevPy = -1;
   bool _down = false;
 
-  // ── Wave parameters (tuned for a "folding cloth" feel) ──────────────────
-  // The earlier preset (waveSpeed 0.18 + tension 0.55) behaved like a struck
-  // string: the spring-back was too strong, ripples bounced off neighbours,
-  // and the surface chattered everywhere the finger went. To make the
-  // surface fold like fabric instead, the spring-back is almost gone
-  // (tension near 1 = amplitude is preserved between frames), propagation is
-  // crawl-slow (energy stays under the finger), and the hover impulse is
-  // gentle + wide (a smooth dimple, not a splash). Velocity damping does the
-  // actual fade-out — slowly, without ringing.
-  static const _waveSpeed = 0.06; // almost no lateral spread → no ripples flying off
-  static const _damping = 0.93; // velocity bleeds quickly → no oscillation
-  static const _hoverStr = 0.18; // soft press, not a splash
-  static const _clickStr = 14.0; // tap = gentle fold, not a shock
+  // ── Wave parameters (tuned for "droplet bubbling on water") ─────────────
+  // The previous "cloth" preset (tension 0.94) preserved amplitude so well
+  // that the dimple lingered as a permanent dark patch. Inverted now:
+  // tension is mid-low so the surface RETURNS to flat reliably; damping is
+  // mid so a couple of soft echoes get to fan out before they fade; the
+  // impulse is small + narrow so each touch reads as a tiny "blip" instead
+  // of a smear. Result: light little ripples that bubble, spread, and
+  // vanish in under a second.
+  static const _waveSpeed = 0.16; // brisk propagation → ripples actually radiate
+  static const _damping = 0.88; // velocity fades fast — no chatter, no ringing
+  static const _hoverStr = 0.06; // tiny pinch, not a smear
+  static const _clickStr = 10.0; // single light "blip" on tap
 
-  static const _tension = 0.94; // near-1 → trail is held, no springy return
-  static const _hoverRad = 7; // wide brush → a smooth, broad dimple
-  static const _clickRad = 10;
+  static const _tension = 0.78; // surface springs back → no lingering dark patch
+  static const _hoverRad = 3; // small, focused dimple (real droplet size)
+  static const _clickRad = 5;
   static const _eps = 0.001;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -100,12 +99,11 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
     RepaintPulse.notifier.addListener(_onRepaintPulse);
 
     // Fade in fast (80 ms) — first ripple appears without stutter.
-    // Fade out slowly (1400 ms) — pairs with the viscous wave so the trail
-    // doesn't snap to invisibility before the user can enjoy it.
+    // Fade out matches the new "light ripple" feel — short and clean (700 ms).
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 80),
-      reverseDuration: const Duration(milliseconds: 1400),
+      reverseDuration: const Duration(milliseconds: 700),
       value: 0.0, // starts hidden
     );
   }
@@ -154,10 +152,9 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
 
   void _scheduleHide() {
     _fadeOutTimer?.cancel();
-    // Hold the ASCII visible a bit longer (2200 ms) — the viscous trail keeps
-    // moving after the finger leaves, and snapping it away mid-motion looks
-    // worse than letting it settle on its own.
-    _fadeOutTimer = Timer(const Duration(milliseconds: 2200), () {
+    // Short hold (1200 ms) — light ripples should be GONE by the time the
+    // user looks away, not loiter as a dark patch.
+    _fadeOutTimer = Timer(const Duration(milliseconds: 1200), () {
       if (mounted) _fadeCtrl.reverse();
     });
   }
