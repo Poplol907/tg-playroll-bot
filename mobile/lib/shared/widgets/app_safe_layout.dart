@@ -8,6 +8,11 @@ import '../../core/theme/nebula_tokens.dart';
 /// breathing room plus keyboard inset so focused controls are never pinned under
 /// the keyboard.
 abstract class AppSafeInsets {
+  /// Approximate height of the floating GlowMenuBar capsule + its bottom
+  /// inset. Used to push scroll content above the floating bar so the last
+  /// items aren't hidden behind the pill.
+  static const double floatingNavBarHeight = 84.0;
+
   static EdgeInsets screen(
     BuildContext context, {
     double left = NebulaTokens.sp20,
@@ -15,6 +20,7 @@ abstract class AppSafeInsets {
     double right = NebulaTokens.sp20,
     double bottom = NebulaTokens.sp24,
     bool includeKeyboard = false,
+    bool includeFloatingNavBar = true,
   }) {
     final media = MediaQuery.of(context);
     return EdgeInsets.fromLTRB(
@@ -23,6 +29,7 @@ abstract class AppSafeInsets {
       right,
       bottom +
           media.viewPadding.bottom +
+          (includeFloatingNavBar ? floatingNavBarHeight : 0) +
           (includeKeyboard ? media.viewInsets.bottom : 0),
     );
   }
@@ -34,6 +41,7 @@ abstract class AppSafeInsets {
     double right = NebulaTokens.sp16,
     double bottom = NebulaTokens.sp24,
     bool includeKeyboard = false,
+    bool includeFloatingNavBar = true,
   }) {
     return screen(
       context,
@@ -42,6 +50,7 @@ abstract class AppSafeInsets {
       right: right,
       bottom: bottom,
       includeKeyboard: includeKeyboard,
+      includeFloatingNavBar: includeFloatingNavBar,
     );
   }
 

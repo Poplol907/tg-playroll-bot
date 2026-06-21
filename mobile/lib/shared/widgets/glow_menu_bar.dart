@@ -180,6 +180,20 @@ class _GlowBarBody extends StatelessWidget {
                   ),
                 ),
 
+                // ── Liquid pill — glides under the active tab, tracking the
+                //    live PageView offset. Disabled for the admin pair (it
+                //    uses a different Stack-positioned layout).
+                if (!isAdminPair && magnify != null && items.length > 1)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: _LiquidPill(
+                        magnify: magnify!,
+                        items: items,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+
                 // ── Tab row ─────────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -626,6 +640,101 @@ class _NavAmbientPainter extends CustomPainter {
   @override
   bool shouldRepaint(_NavAmbientPainter old) =>
       old.color != color || old.xFraction != xFraction || old.isDark != isDark;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Liquid pill — stadium-shaped capsule that glides under the active tab
+//
+//  Reads the live fractional swipe position (`magnify`) and renders a single
+//  rounded-rect "pill" centred on that fractional tab. As the user drags
+//  between sections, the pill slides smoothly — just like the floating
+//  capsule under iOS 26 / Instagram tab bars.
+//
+//  Colours interpolate between the surrounding tabs' glow colours so the
+//  pill takes on the new section's hue as it arrives.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LiquidPill extends StatelessWidget {
+  final ValueListenable<double> magnify;
+  final List<GlowMenuItem> items;
+  final bool isDark;
+
+  const _LiquidPill({
+    required this.magnify,
+    required this.items,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: magnify,
+      builder: (_, pos, __) {
+        return LayoutBuilder(
+          builder: (_, constraints) {
+            final n = items.length;
+            if (n == 0) return const SizedBox.shrink();
+            final tabWidth = constraints.maxWidth / n;
+            // Pill is slightly narrower than a tab so the capsule reads as
+            // a focus highlight, not a full-tab fill.
+            const insetH = NebulaTokens.sp8;
+            const insetV = 6.0;
+            final pillWidth = tabWidth - insetH * 2;
+            // Interpolate colour between the two neighbouring tabs so the
+            // hue smoothly transitions during a swipe.
+            final lower = pos.floor().clamp(0, n - 1);
+            final upper = pos.ceil().clamp(0, n - 1);
+            final frac = (pos - lower).clamp(0.0, 1.0);
+            final color = Color.lerp(
+              items[lower].glowColor,
+              items[upper].glowColor,
+              frac,
+            )!;
+            final left = pos * tabWidth + insetH;
+            return Stack(
+              children: [
+                Positioned(
+                  left: left,
+                  top: insetV,
+                  bottom: insetV,
+                  width: pillWidth,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: color.withValues(
+                        alpha: isDark
+                            ? NebulaAlpha.subtle
+                            : NebulaAlpha.surface,
+                      ),
+                      border: Border.all(
+                        color: color.withValues(
+                          alpha: isDark
+                              ? NebulaAlpha.border
+                              : NebulaAlpha.accent,
+                        ),
+                        width: 0.8,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(
+                            alpha: isDark
+                                ? NebulaAlpha.surface
+                                : NebulaAlpha.mist,
+                          ),
+                          blurRadius: 12,
+                          spreadRadius: -1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
