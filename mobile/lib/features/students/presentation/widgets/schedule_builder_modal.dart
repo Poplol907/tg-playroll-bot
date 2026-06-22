@@ -8,6 +8,7 @@ import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../shared/models/student.dart';
+import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
@@ -92,13 +93,15 @@ class ScheduleBuilderModal extends ConsumerStatefulWidget {
             desktopWidth: 760,
             builder: (_) => modal,
           )
-        : showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            useSafeArea: true,
-            builder: (_) => modal,
-          );
+        : runWithBottomBarHidden<bool>(context, () {
+            return showModalBottomSheet<bool>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              useSafeArea: true,
+              builder: (_) => modal,
+            );
+          });
     return resultFuture.then((result) => result ?? false);
   }
 

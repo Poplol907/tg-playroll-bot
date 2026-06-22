@@ -19,6 +19,7 @@ import '../../../../shared/widgets/pulse_indicator.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../../data/calendar_repository.dart';
@@ -252,13 +253,15 @@ class CalendarScreen extends ConsumerWidget {
       );
       return;
     }
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: false,
-      builder: (_) => _DayLessonsSheet(date: date, lessons: lessons),
-    );
+    runWithBottomBarHidden<void>(context, () {
+      return showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        useSafeArea: true,
+        enableDrag: false,
+        builder: (_) => _DayLessonsSheet(date: date, lessons: lessons),
+      );
+    });
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../providers/bottom_bar_visibility_provider.dart';
 import 'nebula_modal_surface.dart';
 
 /// Показывает bottom sheet на мобайле и Dialog на десктопе.
@@ -13,34 +14,36 @@ abstract class AdaptiveModal {
     double mobileInitialSize = 0.65,
     double desktopWidth = 480,
   }) {
-    if (AppPlatform.isDesktop) {
-      return _showDesktopDialog<T>(
-        context,
-        builder: builder,
-        isDismissible: isDismissible,
-        width: desktopWidth,
-      );
-    }
-    return showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      isDismissible: isDismissible,
-      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
-      builder: (ctx) {
-        final media = MediaQuery.of(ctx);
-        return Padding(
-          padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: media.size.height * 0.9,
-            ),
-            child: builder(ctx),
-          ),
+    return runWithBottomBarHidden<T>(context, () {
+      if (AppPlatform.isDesktop) {
+        return _showDesktopDialog<T>(
+          context,
+          builder: builder,
+          isDismissible: isDismissible,
+          width: desktopWidth,
         );
-      },
-    );
+      }
+      return showModalBottomSheet<T>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        useSafeArea: true,
+        isDismissible: isDismissible,
+        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
+        builder: (ctx) {
+          final media = MediaQuery.of(ctx);
+          return Padding(
+            padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: media.size.height * 0.9,
+              ),
+              child: builder(ctx),
+            ),
+          );
+        },
+      );
+    });
   }
 
   static Future<T?> _showDesktopDialog<T>(

@@ -425,12 +425,14 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
       AdaptiveModal.show(ctx, builder: (_) => sheet);
       return;
     }
-    showModalBottomSheet(
-      context: ctx,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => sheet,
-    );
+    runWithBottomBarHidden<void>(ctx, () {
+      return showModalBottomSheet<void>(
+        context: ctx,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => sheet,
+      );
+    });
   }
 
   String _lessonWord(int n) {

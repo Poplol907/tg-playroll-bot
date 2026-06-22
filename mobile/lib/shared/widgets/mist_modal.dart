@@ -3,6 +3,7 @@ import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_tokens.dart';
+import '../providers/bottom_bar_visibility_provider.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
 import 'nebula_modal_surface.dart';
@@ -41,21 +42,24 @@ class MistModal extends StatelessWidget {
         desktopWidth: desktopWidth,
       );
     }
-    return showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: isScrollControlled,
-      isDismissible: isDismissible,
-      enableDrag: enableDrag,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
-      useSafeArea: true,
-      constraints: maxHeightFraction != null
-          ? BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * maxHeightFraction,
-            )
-          : null,
-      builder: (ctx) => MistModal(child: builder(ctx)),
-    );
+    return runWithBottomBarHidden<T>(context, () {
+      return showModalBottomSheet<T>(
+        context: context,
+        isScrollControlled: isScrollControlled,
+        isDismissible: isDismissible,
+        enableDrag: enableDrag,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
+        useSafeArea: true,
+        constraints: maxHeightFraction != null
+            ? BoxConstraints(
+                maxHeight:
+                    MediaQuery.of(context).size.height * maxHeightFraction,
+              )
+            : null,
+        builder: (ctx) => MistModal(child: builder(ctx)),
+      );
+    });
   }
 
   @override

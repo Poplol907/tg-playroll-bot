@@ -10,6 +10,7 @@ import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/theme/nebula_typography.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../providers/bottom_bar_visibility_provider.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
 import 'nebula_modal_surface.dart';
@@ -28,14 +29,16 @@ class ServerSettingsModal extends ConsumerStatefulWidget {
         desktopWidth: 440,
       );
     }
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
-      useSafeArea: true,
-      builder: (_) => const ServerSettingsModal(),
-    );
+    return runWithBottomBarHidden(context, () {
+      return showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
+        useSafeArea: true,
+        builder: (_) => const ServerSettingsModal(),
+      );
+    });
   }
 
   @override
