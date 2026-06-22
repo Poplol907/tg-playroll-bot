@@ -17,6 +17,7 @@ import '../../../../shared/providers/month_provider.dart';
 import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
+import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../data/students_repository.dart';
@@ -33,18 +34,20 @@ class StudentDetailSheet extends ConsumerStatefulWidget {
   const StudentDetailSheet({super.key, required this.student});
 
   static Future<void> show(BuildContext context, StudentModel student) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
-      useSafeArea: true,
-      // enableDrag:false — Flutter's built-in drag conflicts with our custom
-      // spring dismiss and leaves the barrier stuck mid-fade ("dark overlay
-      // until tap"). We drive the drag ourselves and pop in _onDragEnd.
-      enableDrag: false,
-      builder: (_) => StudentDetailSheet(student: student),
-    );
+    return runWithBottomBarHidden(context, () {
+      return showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
+        useSafeArea: true,
+        // enableDrag:false — Flutter's built-in drag conflicts with our custom
+        // spring dismiss and leaves the barrier stuck mid-fade ("dark overlay
+        // until tap"). We drive the drag ourselves and pop in _onDragEnd.
+        enableDrag: false,
+        builder: (_) => StudentDetailSheet(student: student),
+      );
+    });
   }
 
   @override

@@ -11,6 +11,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///      slides back once the last one is dismissed.
 final bottomBarVisibleProvider = StateProvider<bool>((ref) => true);
 
+/// Hide the floating nav bar while [show] is in flight, restore on completion.
+///
+/// Used by MistModal.show / AdaptiveModal.show / direct showModalBottomSheet
+/// call sites so the bar always retracts when a sheet/dialog opens, even if
+/// the observer-based path misses (e.g. modal pushed on a different
+/// Navigator, theme-rebuild eats the depth counter, etc.).
+///
+/// Nests safely via a counter — opening a modal from inside another modal
+/// keeps the bar hidden until BOTH have closed.
+Future<T?> runWithBottomBarHidden<T>(
+  BuildContext context,
+  Future<T?> Function() show,
+) async {
+  ProviderContainer? container;
+  try {
+    container = ProviderScope.containerOf(context, listen: false);
+  } catch (_) {
+    // No scope (test mode, isolated viewer) — just run the show fn.
+    return show();
+  }
+  final notifier = container.read(bottomBarVisibleProvider.notifier);
+  final wasVisible = notifier.state;
+  if (wasVisible) notifier.state = false;
+  try {
+    return await show();
+  } finally {
+    if (wasVisible) notifier.state = true;
+  }
+}
+
 /// Navigator observer that auto-hides the floating bar whenever a modal-style
 /// route is on top of the stack. Counts pushes/pops so nested modals work.
 ///

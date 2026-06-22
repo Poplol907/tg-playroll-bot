@@ -22,6 +22,7 @@ import '../../shared/widgets/desktop_content_frame.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../shared/widgets/nebula_surface.dart';
 import '../../core/services/update_service.dart';
@@ -489,6 +490,9 @@ class _GlobalMonthBar extends StatelessWidget {
                     ? SystemMouseCursors.basic
                     : SystemMouseCursors.click,
                 child: NebulaSurface(
+                  // Same nav-profile glass recipe as the floating bottom bar
+                  // so all three islands read as the same material.
+                  profile: NebulaSurfaceProfile.nav,
                   borderRadius: 999,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
@@ -561,6 +565,9 @@ class _MonthArrowState extends State<_MonthArrow> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: NebulaSurface(
+        // Same nav-profile glass recipe → arrow pucks match the month pill
+        // and the floating bottom bar.
+        profile: NebulaSurfaceProfile.nav,
         borderRadius: 999,
         width: 38,
         height: 38,

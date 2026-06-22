@@ -12,6 +12,7 @@ import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/models/lesson.dart';
+import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
 import '../../../../shared/widgets/nebula_modal_surface.dart';
@@ -34,15 +35,17 @@ class LessonModal extends ConsumerStatefulWidget {
         builder: (_) => _LessonModalDesktop(lesson: lesson),
       );
     }
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      enableDrag: false,
-      barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
-      builder: (_) => LessonModal(lesson: lesson),
-    );
+    return runWithBottomBarHidden(context, () {
+      return showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        useSafeArea: true,
+        enableDrag: false,
+        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
+        builder: (_) => LessonModal(lesson: lesson),
+      );
+    });
   }
 
   @override

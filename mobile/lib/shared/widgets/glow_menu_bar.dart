@@ -127,14 +127,19 @@ class _GlowBarBody extends StatelessWidget {
     // transparent so the app background flows beneath it.
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 6, 16, bottomInset + 10),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onHorizontalDragStart: onHorizontalDragStart,
-        onHorizontalDragUpdate: onHorizontalDragUpdate,
-        onHorizontalDragEnd: onHorizontalDragEnd,
-        onHorizontalDragCancel: onHorizontalDragCancel,
+    // The island contracts (and its sheen/glow fade) while the pill is
+    // grabbed, so the loupe-grown capsule looks like it has *consumed* the
+    // bar — same illusion as iOS / Telegram where the active handle
+    // dominates the bar during a drag.
+    final dragNotifier = dragActive;
+    final island = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragStart: onHorizontalDragStart,
+      onHorizontalDragUpdate: onHorizontalDragUpdate,
+      onHorizontalDragEnd: onHorizontalDragEnd,
+      onHorizontalDragCancel: onHorizontalDragCancel,
+      child: _BarIsland(
+        dragActive: dragNotifier,
         child: Container(
           key: const ValueKey('glow-menu-bar-surface'),
           decoration: BoxDecoration(
@@ -286,6 +291,46 @@ class _GlowBarBody extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 6, 16, bottomInset + 10),
+      child: island,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  _BarIsland — wraps the floating bar and contracts it while the user grabs
+//  the pill. Combined with the pill's loupe-scale, the capsule looks like it
+//  has "consumed" the bar surface during a drag (Apple / Telegram feel).
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BarIsland extends StatelessWidget {
+  final ValueListenable<bool>? dragActive;
+  final Widget child;
+
+  const _BarIsland({required this.dragActive, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = dragActive;
+    if (notifier == null) return child;
+    return ValueListenableBuilder<bool>(
+      valueListenable: notifier,
+      child: child,
+      builder: (_, active, c) {
+        return AnimatedScale(
+          scale: active ? 0.94 : 1.0,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: active ? 0.86 : 1.0,
+            duration: const Duration(milliseconds: 220),
+            child: c,
+          ),
+        );
+      },
     );
   }
 }
@@ -508,8 +553,8 @@ class _TabContent extends StatelessWidget {
     // and adds glow, never geometry. This keeps every tab on the same icon
     // baseline and text baseline — no jiggle when the pill arrives, all
     // labels aligned, all icons the same size across the bar.
-    const double iconSize = 22.0;
-    const double labelSize = 9.0;
+    const double iconSize = 20.0;
+    const double labelSize = 8.0;
     const FontWeight labelWeight = FontWeight.w600;
 
     return Column(
@@ -545,15 +590,24 @@ class _TabContent extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 4),
-        Text(
-          item.label,
-          style: TextStyle(
-            fontFamily: 'SpaceMono',
-            fontSize: labelSize,
-            fontWeight: labelWeight,
-            color: color,
-            letterSpacing: 0.6,
-            height: 1.0,
+        // FittedBox scales the label DOWN if it would otherwise overflow the
+        // tab cell — so "Календарь" (longest label) shrinks to fit instead of
+        // hard-clipping. Centred horizontally so shorter labels stay centred
+        // and longer ones simply read a hair smaller.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Text(
+            item.label,
+            maxLines: 1,
+            style: TextStyle(
+              fontFamily: 'SpaceMono',
+              fontSize: labelSize,
+              fontWeight: labelWeight,
+              color: color,
+              letterSpacing: 0.3,
+              height: 1.0,
+            ),
           ),
         ),
       ],
