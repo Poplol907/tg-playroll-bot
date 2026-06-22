@@ -29,12 +29,12 @@ abstract class AppSafeInsets {
     bool includeFloatingTopBar = true,
   }) {
     final media = MediaQuery.of(context);
+    // The shell's SafeArea(top:true) already consumes the Dynamic Island
+    // inset before the screen builds, so we only add the floating top bar
+    // here — never the status-bar viewPadding again, or it stacks twice.
     return EdgeInsets.fromLTRB(
       left,
-      top +
-          (includeFloatingTopBar
-              ? media.viewPadding.top + floatingTopBarHeight
-              : 0),
+      top + (includeFloatingTopBar ? floatingTopBarHeight : 0),
       right,
       bottom +
           media.viewPadding.bottom +
