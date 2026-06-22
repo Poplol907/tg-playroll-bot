@@ -67,17 +67,80 @@ class _PathFieldBackgroundState extends State<PathFieldBackground>
           end: Alignment.bottomRight,
         ),
       ),
-      child: RepaintBoundary(
-        child: CustomPaint(
-          painter: _PathFieldPainter(
-            progress: _controller,
-            tokens: widget.tokens,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Soft corner glows — three large blurred blobs in the corners
+          // give the white canvas "breathing" depth without competing with
+          // the path lines. Static (paint-once, no controller) so they cost
+          // nothing per frame.
+          RepaintBoundary(
+            child: CustomPaint(
+              painter: _CornerGlowsPainter(tokens: widget.tokens),
+            ),
           ),
-          child: widget.child,
-        ),
+          // Animated parametric path lines + traveling glints — the
+          // signature Cosmo light texture.
+          RepaintBoundary(
+            child: CustomPaint(
+              painter: _PathFieldPainter(
+                progress: _controller,
+                tokens: widget.tokens,
+              ),
+            ),
+          ),
+          // Child sits above both background layers but receives no painter
+          // background of its own — the depth comes from the layers below.
+          widget.child,
+        ],
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Corner glows — three soft accent blobs in the corners. Pure decoration,
+//  no animation. The blobs are drawn via large-radius MaskFilter.blur and
+//  very low alpha so they read as "the room has a faint warm/cool light in
+//  the corners" rather than "circles on a wall".
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CornerGlowsPainter extends CustomPainter {
+  final CosmoThemeTokens tokens;
+
+  const _CornerGlowsPainter({required this.tokens});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+
+    // Each blob: { dx, dy, radius, color, alpha }. dx/dy fractional of size,
+    // and they can sit slightly off-canvas so only the soft edge bleeds in.
+    final blobs = <(double, double, double, Color, double)>[
+      // Top-right: warm orange "evening light"
+      (1.05, -0.05, size.shortestSide * 0.55, tokens.warning, 0.10),
+      // Top-right inner: focus accent — small, slightly to the left
+      (0.78, -0.08, size.shortestSide * 0.35, tokens.primaryAccent, 0.08),
+      // Bottom-left: cool blue "morning light"
+      (-0.10, 1.05, size.shortestSide * 0.55, tokens.focusAccent, 0.10),
+    ];
+
+    for (final (fx, fy, radius, color, alpha) in blobs) {
+      final paint = Paint()
+        ..color = color.withValues(alpha: alpha)
+        // The blur sigma is what makes the edges scatter — radius/2 gives
+        // a smooth falloff that bleeds well past the disc.
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.5);
+      canvas.drawCircle(
+        Offset(size.width * fx, size.height * fy),
+        radius,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CornerGlowsPainter old) => old.tokens != tokens;
 }
 
 class _PathFieldPainter extends CustomPainter {
