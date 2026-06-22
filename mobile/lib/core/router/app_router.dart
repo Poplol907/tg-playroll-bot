@@ -587,7 +587,16 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/calendar',
     // Wakes idle animated backgrounds after any modal/dialog/sheet closes,
     // so the screen doesn't linger dimmed until the user taps.
-    observers: [RepaintPulseObserver()],
+    // BottomBarHideObserver auto-hides the floating nav bar while any
+    // modal/sheet/dialog is on the route stack — covers every show*()
+    // call site without per-modal plumbing.
+    observers: [
+      RepaintPulseObserver(),
+      BottomBarHideObserver((visible) {
+        final notifier = ref.read(bottomBarVisibleProvider.notifier);
+        if (notifier.state != visible) notifier.state = visible;
+      }),
+    ],
     redirect: (context, state) {
       final isAuth = authState.isAuthenticated;
       final isInit = authState.status == AuthStatus.initial;
