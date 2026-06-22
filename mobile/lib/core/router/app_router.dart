@@ -344,7 +344,19 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (!mounted || !controller.hasClients) return;
       final page = controller.page?.round() ?? widget.currentIndex;
       if (page != widget.currentIndex) {
-        controller.jumpToPage(widget.currentIndex);
+        final delta = (widget.currentIndex - page).abs();
+        // Tap on a neighbouring tab → animate so the pill glides into place.
+        // Tap on a far-away tab → jump, so we don't physically scroll through
+        // every intermediate page (and the pill still appears to "land").
+        if (delta == 1) {
+          controller.animateToPage(
+            widget.currentIndex,
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic,
+          );
+        } else {
+          controller.jumpToPage(widget.currentIndex);
+        }
       }
     });
 

@@ -504,6 +504,14 @@ class _TabContent extends StatelessWidget {
     final inactiveColor = isDark ? NebulaColors.ghostText : tokens.mutedText;
     final color = active ? item.glowColor : inactiveColor;
 
+    // Constant icon size + constant label weight: active state changes COLOR
+    // and adds glow, never geometry. This keeps every tab on the same icon
+    // baseline and text baseline — no jiggle when the pill arrives, all
+    // labels aligned, all icons the same size across the bar.
+    const double iconSize = 22.0;
+    const double labelSize = 9.0;
+    const FontWeight labelWeight = FontWeight.w600;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -511,7 +519,7 @@ class _TabContent extends StatelessWidget {
         Icon(
           item.icon,
           color: color,
-          size: active ? 23.0 : 22.0,
+          size: iconSize,
           shadows: active
               ? (isDark
                   ? [
@@ -536,15 +544,16 @@ class _TabContent extends StatelessWidget {
                     ])
               : null,
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         Text(
           item.label,
           style: TextStyle(
             fontFamily: 'SpaceMono',
-            fontSize: 9,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+            fontSize: labelSize,
+            fontWeight: labelWeight,
             color: color,
             letterSpacing: 0.6,
+            height: 1.0,
           ),
         ),
       ],
@@ -686,13 +695,14 @@ class _LiquidPill extends StatelessWidget {
             final n = items.length;
             if (n == 0) return const SizedBox.shrink();
 
-            // Match the tab row geometry exactly so the pill hugs the icon:
-            // tab row uses `Padding(horizontal: sp8, vertical: sp8)` then a
-            // Row of `Expanded` tabs. So the tab area starts at sp8 from the
-            // bar edge and each tab is (innerWidth / n) wide.
+            // The pill covers the full tab cell (icon + label) — same width
+            // as one Row.Expanded slot — with only a tiny 2px gap so adjacent
+            // pills don't visually touch. Tab row sits inside
+            // Padding(sp8 horizontal, sp8 vertical), then Row of N Expanded
+            // tabs, so the cell starts at sp8 from the bar edge.
             const outerPadH = NebulaTokens.sp8;
-            const outerPadV = NebulaTokens.sp8;
-            const pillSlackH = 4.0; // pill is 4px narrower than the tab on each side
+            const outerPadV = NebulaTokens.sp4;
+            const pillSlackH = 2.0; // tiny gap between neighbouring pills
             final innerWidth = constraints.maxWidth - outerPadH * 2;
             final tabWidth = innerWidth / n;
             final pillWidth = (tabWidth - pillSlackH * 2).clamp(0.0, double.infinity);
