@@ -373,40 +373,48 @@ class _AppShellState extends ConsumerState<AppShell> {
       // from the body). It's the last child of the overlay Stack instead.
       body: Stack(
         children: [
-          SafeArea(
-            top: true,
-            bottom: false,
-            child: Column(
-              children: [
-                monthBar,
-                Expanded(
-                  child: PageView.builder(
-                    controller: controller,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: routes.length,
-                    onPageChanged: (i) {
-                      if (i != widget.currentIndex) {
-                        HapticFeedback.selectionClick();
-                        _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs);
-                      }
-                    },
-                    // Active page = the screen GoRouter already built
-                    // (widget.child) so routing/state stay authoritative.
-                    // Off-screen pages build lazily during a swipe.
-                    // Stable per-route keys prevent PageView from treating
-                    // an unrelated rebuild (e.g. theme toggle) as a page
-                    // swap and scrolling through every intermediate tab.
-                    itemBuilder: (_, i) => KeyedSubtree(
-                      key: ValueKey('shell-page-${routes[i]}'),
-                      child: i == widget.currentIndex
-                          ? widget.child
-                          : _screenForRoute(routes[i]),
-                    ),
-                  ),
-                ),
-              ],
+          // Content layer — PageView fills the entire screen. The month bar
+          // and the floating nav bar are siblings ABOVE this layer (not in a
+          // Column), so the content scrolls UNDER both bars and is visible
+          // through the matte glass — same effect the bottom bar already
+          // had, now applied to the top one too.
+          PageView.builder(
+            controller: controller,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: routes.length,
+            onPageChanged: (i) {
+              if (i != widget.currentIndex) {
+                HapticFeedback.selectionClick();
+                _onTabTap(i, isAdmin: isAdmin, viewingAs: viewingAs);
+              }
+            },
+            // Active page = the screen GoRouter already built (widget.child)
+            // so routing/state stay authoritative. Off-screen pages build
+            // lazily during a swipe. Stable per-route keys prevent PageView
+            // from treating an unrelated rebuild (e.g. theme toggle) as a
+            // page swap and scrolling through every intermediate tab.
+            itemBuilder: (_, i) => KeyedSubtree(
+              key: ValueKey('shell-page-${routes[i]}'),
+              child: i == widget.currentIndex
+                  ? widget.child
+                  : _screenForRoute(routes[i]),
             ),
           ),
+
+          // Floating top island — month pill + arrow pucks, glass overlay.
+          // The status-bar inset lives here (top SafeArea around just the
+          // bar) so the content below isn't squeezed out of those pixels.
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: SafeArea(
+              top: true,
+              bottom: false,
+              child: monthBar,
+            ),
+          ),
+
           // Поверх всего: оранжевая окантовка экрана + овальная кнопка
           // выхода из режима «смотрю как педагог».
           const ViewAsOverlay(),

@@ -167,127 +167,139 @@ class _GlowBarBody extends StatelessWidget {
                     ),
                   ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: Stack(
-              children: [
-                // ── Matte sheen over the fill ───────────────────────────
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(gradient: surface.sheen),
-                    ),
-                  ),
-                ),
-
-                // ── Nav-wide ambient bloom ──────────────────────────────
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      painter: _NavAmbientPainter(
-                        color: activeColor,
-                        xFraction: activeFrac,
-                        isDark: isDark,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ── Liquid pill — glides under the active tab, tracking the
-                //    live PageView offset. Disabled for the admin pair (it
-                //    uses a different Stack-positioned layout).
-                if (!isAdminPair && magnify != null && items.length > 1)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: _LiquidPill(
-                        magnify: magnify!,
-                        dragActive: dragActive,
-                        items: items,
-                        isDark: isDark,
-                      ),
-                    ),
-                  ),
-
-                // ── Tab row ─────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: NebulaTokens.sp8,
-                    vertical: NebulaTokens.sp8,
-                  ),
-                  child: isAdminPair
-                      ? LayoutBuilder(
-                          builder: (context, constraints) {
-                            final tabWidth = math.min(76.0,
-                                math.max(58.0, constraints.maxWidth * 0.34));
-                            final centerLeft =
-                                constraints.maxWidth / 2 - tabWidth / 2;
-                            return SizedBox(
-                              height: 58,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Positioned(
-                                    left: centerLeft,
-                                    width: tabWidth,
-                                    top: 0,
-                                    bottom: 0,
-                                    child: _GlowNavTab(
-                                      item: items[0],
-                                      index: 0,
-                                      magnify: magnify,
-                                      selected: currentIndex == 0,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        HapticFeedback.selectionClick();
-                                        onTap(0);
-                                      },
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 0,
-                                    width: tabWidth,
-                                    top: 0,
-                                    bottom: 0,
-                                    child: _GlowNavTab(
-                                      item: items[1],
-                                      index: 1,
-                                      magnify: magnify,
-                                      selected: currentIndex == 1,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        HapticFeedback.selectionClick();
-                                        onTap(1);
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ...items.asMap().entries.map(
-                                  (e) => Expanded(
-                                    child: _GlowNavTab(
-                                      item: e.value,
-                                      index: e.key,
-                                      magnify: magnify,
-                                      selected: e.key == currentIndex,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        HapticFeedback.selectionClick();
-                                        onTap(e.key);
-                                      },
-                                    ),
-                                  ),
-                                ),
-                          ],
+          // Outer Stack lets the pill draw OVER the ClipRRect — when the
+          // loupe scales the capsule to 1.18×, it can bulge past the bar's
+          // stadium edge instead of being clipped to a pill-shaped tube.
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Stack(
+                  children: [
+                    // ── Matte sheen over the fill ─────────────────────────
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(gradient: surface.sheen),
                         ),
+                      ),
+                    ),
+
+                    // ── Nav-wide ambient bloom ────────────────────────────
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _NavAmbientPainter(
+                            color: activeColor,
+                            xFraction: activeFrac,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ── Tab row ───────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: NebulaTokens.sp8,
+                        vertical: NebulaTokens.sp8,
+                      ),
+                      child: isAdminPair
+                          ? LayoutBuilder(
+                              builder: (context, constraints) {
+                                final tabWidth = math.min(
+                                    76.0,
+                                    math.max(
+                                        58.0, constraints.maxWidth * 0.34));
+                                final centerLeft =
+                                    constraints.maxWidth / 2 - tabWidth / 2;
+                                return SizedBox(
+                                  height: 58,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Positioned(
+                                        left: centerLeft,
+                                        width: tabWidth,
+                                        top: 0,
+                                        bottom: 0,
+                                        child: _GlowNavTab(
+                                          item: items[0],
+                                          index: 0,
+                                          magnify: magnify,
+                                          selected: currentIndex == 0,
+                                          isDark: isDark,
+                                          onTap: () {
+                                            HapticFeedback.selectionClick();
+                                            onTap(0);
+                                          },
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        width: tabWidth,
+                                        top: 0,
+                                        bottom: 0,
+                                        child: _GlowNavTab(
+                                          item: items[1],
+                                          index: 1,
+                                          magnify: magnify,
+                                          selected: currentIndex == 1,
+                                          isDark: isDark,
+                                          onTap: () {
+                                            HapticFeedback.selectionClick();
+                                            onTap(1);
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ...items.asMap().entries.map(
+                                      (e) => Expanded(
+                                        child: _GlowNavTab(
+                                          item: e.value,
+                                          index: e.key,
+                                          magnify: magnify,
+                                          selected: e.key == currentIndex,
+                                          isDark: isDark,
+                                          onTap: () {
+                                            HapticFeedback.selectionClick();
+                                            onTap(e.key);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                              ],
+                            ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // ── Liquid pill — OUTSIDE the ClipRRect so the loupe-scale
+              //    (1.18×) bulges past the bar's stadium edge instead of
+              //    being clipped to a pill-shaped tube. Sits as a top
+              //    overlay in the outer Stack, still IgnorePointer so it
+              //    doesn't intercept tab taps.
+              if (!isAdminPair && magnify != null && items.length > 1)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: _LiquidPill(
+                      magnify: magnify!,
+                      dragActive: dragActive,
+                      items: items,
+                      isDark: isDark,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
