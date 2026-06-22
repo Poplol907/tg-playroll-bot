@@ -313,9 +313,11 @@ class _GlowBarBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  _BarIsland — wraps the floating bar and contracts it while the user grabs
-//  the pill. Combined with the pill's loupe-scale, the capsule looks like it
-//  has "consumed" the bar surface during a drag (Apple / Telegram feel).
+//  _BarIsland — wraps the floating bar and grows it when the user grabs the
+//  pill. Idle the bar sits at 92% of its full size — quiet, compact, low
+//  visual weight. Touch the pill: the bar inflates to 100% and the capsule
+//  expands to cover the whole bar (see _LiquidPill). It reads as the bar
+//  "waking up under your finger" — opposite of shrinking, much more inviting.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BarIsland extends StatelessWidget {
@@ -333,14 +335,10 @@ class _BarIsland extends StatelessWidget {
       child: child,
       builder: (_, active, c) {
         return AnimatedScale(
-          scale: active ? 0.94 : 1.0,
-          duration: const Duration(milliseconds: 220),
+          scale: active ? 1.0 : 0.92,
+          duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
-          child: AnimatedOpacity(
-            opacity: active ? 0.86 : 1.0,
-            duration: const Duration(milliseconds: 220),
-            child: c,
-          ),
+          child: c,
         );
       },
     );
@@ -761,102 +759,160 @@ class _LiquidPill extends StatelessWidget {
             final n = items.length;
             if (n == 0) return const SizedBox.shrink();
 
-            // The pill covers the full tab cell (icon + label) — same width
-            // as one Row.Expanded slot — with only a tiny 2px gap so adjacent
-            // pills don't visually touch. Tab row sits inside
-            // Padding(sp8 horizontal, sp8 vertical), then Row of N Expanded
-            // tabs, so the cell starts at sp8 from the bar edge.
+            // Bar geometry — must match the tab row inside ClipRRect:
+            //   Padding(sp8 horizontal, sp8 vertical) → Row of N Expanded tabs.
+            // The pill matches the tab cell when idle and morphs into a
+            // bar-wide magnifier when the user grabs it.
             const outerPadH = NebulaTokens.sp8;
-            const outerPadV = NebulaTokens.sp4;
-            const pillSlackH = 2.0; // tiny gap between neighbouring pills
+            const pillSlackH = 2.0;
             final innerWidth = constraints.maxWidth - outerPadH * 2;
             final tabWidth = innerWidth / n;
-            final pillWidth = (tabWidth - pillSlackH * 2).clamp(0.0, double.infinity);
+            final idleWidth =
+                (tabWidth - pillSlackH * 2).clamp(0.0, double.infinity);
+            // When active, the pill expands to cover the whole bar — the
+            // capsule literally becomes the bar's surface for that moment.
+            final expandedWidth =
+                (constraints.maxWidth - 4).clamp(0.0, double.infinity);
+            // Pill matches the bar's full height so its rounded edges trace
+            // the bar's edges exactly — no mismatched radii showing.
+            final pillHeight = constraints.maxHeight;
 
-            // Drift fraction: 0 when pos is on a tab centre, peaks at 1 when
-            // pos is exactly between two tabs. Used to lift the pill while
-            // it's actively moving — feels like a draggable handle, not an
-            // afterthought indicator.
+            // Drift fraction for the colour interpolation only (the lift /
+            // shadow used to come from this too, but the loupe state now
+            // owns those — drift is just the hue blend).
             final lower = pos.floor().clamp(0, n - 1);
             final upper = pos.ceil().clamp(0, n - 1);
             final frac = (pos - lower).clamp(0.0, 1.0);
-            final drift = (frac < 0.5 ? frac : 1.0 - frac) * 2.0; // 0..1
-
-            // Interpolate hue between neighbouring tabs so the capsule takes
-            // the new section's colour as it arrives.
             final color = Color.lerp(
               items[lower].glowColor,
               items[upper].glowColor,
               frac,
             )!;
 
-            final left = outerPadH + pos * tabWidth + pillSlackH;
+            final idleLeft = outerPadH + pos * tabWidth + pillSlackH;
 
-            final capsule = DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                color: color.withValues(
-                  alpha: isDark
-                      ? NebulaAlpha.subtle + drift * 0.06
-                      : NebulaAlpha.surface + drift * 0.06,
-                ),
-                border: Border.all(
-                  color: color.withValues(
-                    alpha: isDark
-                        ? NebulaAlpha.border + drift * 0.10
-                        : NebulaAlpha.accent + drift * 0.10,
-                  ),
-                  width: 0.9,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(
-                      alpha: isDark
-                          ? NebulaAlpha.surface + drift * 0.06
-                          : NebulaAlpha.mist + drift * 0.04,
-                    ),
-                    blurRadius: 12 + drift * 8,
-                    spreadRadius: -1 + drift * 1.5,
-                  ),
-                ],
-              ),
+            return _LoupeMorphPill(
+              dragActive: dragActive,
+              idleLeft: idleLeft,
+              idleWidth: idleWidth,
+              expandedLeft: 2.0, // 4px slack centred = 2 on each side
+              expandedWidth: expandedWidth,
+              height: pillHeight,
+              color: color,
+              isDark: isDark,
             );
+          },
+        );
+      },
+    );
+  }
+}
 
-            // Loupe effect: when the user grabs the pill it grows ~18% so
-            // the capsule reads as a tactile handle, like the magnified tab
-            // in iOS / Telegram / Instagram bars. Native AnimatedScale here
-            // (not flutter_animate's `target`) — its controller is owned by
-            // the framework and disposes cleanly when the bar rebuilds.
-            final dragNotifier = dragActive;
-            final pill = dragNotifier == null
-                ? capsule
-                : ValueListenableBuilder<bool>(
-                    valueListenable: dragNotifier,
-                    child: capsule,
-                    builder: (_, active, child) {
-                      return AnimatedScale(
-                        scale: active ? 1.18 : 1.0,
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        child: child,
-                      );
-                    },
-                  );
+// ─────────────────────────────────────────────────────────────────────────────
+//  _LoupeMorphPill — animates between the idle pill (covers the active tab)
+//  and the expanded loupe (covers the entire bar) with a single tween. left
+//  and width morph together along an ease-out spring curve, so the capsule
+//  feels like water spreading to fill its container instead of two
+//  independent properties snapping.
+// ─────────────────────────────────────────────────────────────────────────────
 
+class _LoupeMorphPill extends StatelessWidget {
+  final ValueListenable<bool>? dragActive;
+  final double idleLeft;
+  final double idleWidth;
+  final double expandedLeft;
+  final double expandedWidth;
+  final double height;
+  final Color color;
+  final bool isDark;
+
+  const _LoupeMorphPill({
+    required this.dragActive,
+    required this.idleLeft,
+    required this.idleWidth,
+    required this.expandedLeft,
+    required this.expandedWidth,
+    required this.height,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = dragActive;
+    if (notifier == null) {
+      return Stack(
+        children: [
+          Positioned(
+            left: idleLeft,
+            top: 0,
+            width: idleWidth,
+            height: height,
+            child: _capsule(active: false),
+          ),
+        ],
+      );
+    }
+    return ValueListenableBuilder<bool>(
+      valueListenable: notifier,
+      builder: (_, active, __) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween(end: active ? 1.0 : 0.0),
+          // Slow enough to read as a liquid morph, fast enough that the
+          // capsule responds the moment the user grabs.
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          builder: (_, t, ___) {
+            final left = idleLeft + (expandedLeft - idleLeft) * t;
+            final width = idleWidth + (expandedWidth - idleWidth) * t;
             return Stack(
               children: [
                 Positioned(
                   left: left,
-                  top: outerPadV,
-                  bottom: outerPadV,
-                  width: pillWidth,
-                  child: pill,
+                  top: 0,
+                  width: width,
+                  height: height,
+                  child: _capsule(active: t > 0.05),
                 ),
               ],
             );
           },
         );
       },
+    );
+  }
+
+  Widget _capsule({required bool active}) {
+    // Bar-height pill → its rounded corners trace the host bar's rounded
+    // corners exactly, so the radii read as matched not mismatched.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: color.withValues(
+          alpha: isDark
+              ? (active ? NebulaAlpha.border : NebulaAlpha.subtle)
+              : (active ? NebulaAlpha.subtle : NebulaAlpha.surface),
+        ),
+        border: Border.all(
+          color: color.withValues(
+            alpha: isDark
+                ? (active ? NebulaAlpha.medium : NebulaAlpha.border)
+                : (active ? NebulaAlpha.strong : NebulaAlpha.accent),
+          ),
+          width: active ? 1.2 : 0.9,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(
+              alpha: isDark
+                  ? (active ? NebulaAlpha.border : NebulaAlpha.surface)
+                  : (active ? NebulaAlpha.accent : NebulaAlpha.mist),
+            ),
+            blurRadius: active ? 24 : 12,
+            spreadRadius: active ? 1.5 : -1,
+          ),
+        ],
+      ),
     );
   }
 }
