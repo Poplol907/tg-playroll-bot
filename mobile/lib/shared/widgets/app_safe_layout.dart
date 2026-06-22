@@ -13,6 +13,11 @@ abstract class AppSafeInsets {
   /// items aren't hidden behind the pill.
   static const double floatingNavBarHeight = 84.0;
 
+  /// Approximate height of the floating top island (month pill + arrows).
+  /// Doesn't include the status-bar / Dynamic Island inset — that's added
+  /// dynamically from MediaQuery so it adapts to the device.
+  static const double floatingTopBarHeight = 58.0;
+
   static EdgeInsets screen(
     BuildContext context, {
     double left = NebulaTokens.sp20,
@@ -21,11 +26,15 @@ abstract class AppSafeInsets {
     double bottom = NebulaTokens.sp24,
     bool includeKeyboard = false,
     bool includeFloatingNavBar = true,
+    bool includeFloatingTopBar = true,
   }) {
     final media = MediaQuery.of(context);
     return EdgeInsets.fromLTRB(
       left,
-      top,
+      top +
+          (includeFloatingTopBar
+              ? media.viewPadding.top + floatingTopBarHeight
+              : 0),
       right,
       bottom +
           media.viewPadding.bottom +
@@ -42,6 +51,7 @@ abstract class AppSafeInsets {
     double bottom = NebulaTokens.sp24,
     bool includeKeyboard = false,
     bool includeFloatingNavBar = true,
+    bool includeFloatingTopBar = true,
   }) {
     return screen(
       context,
@@ -51,6 +61,7 @@ abstract class AppSafeInsets {
       bottom: bottom,
       includeKeyboard: includeKeyboard,
       includeFloatingNavBar: includeFloatingNavBar,
+      includeFloatingTopBar: includeFloatingTopBar,
     );
   }
 
