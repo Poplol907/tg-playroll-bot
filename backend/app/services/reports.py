@@ -21,7 +21,6 @@ from datetime import date
 
 from sqlalchemy import (
     delete as sa_delete,
-    distinct,
     func,
     select,
     update as sa_update,
@@ -354,13 +353,16 @@ async def studio_stats(
     total_cancelled = sum(1 for l in all_lessons if l.status == "cancelled")
     total_scheduled = sum(1 for l in all_lessons if l.status == "scheduled")
 
+    # Active students = the studio's whole active roster (one row per student,
+    # so no duplicates), independent of whether they had a lesson in the
+    # selected month — mirrors active_teachers, which is the full teacher
+    # roster. The previous query joined to lessons in the month, which both
+    # missed enrolled students without a lesson that month and double-counted
+    # via makeup lessons.
     active_students_result = await session.execute(
-        select(func.count(distinct(StudentTeacher.student_id)))
-        .join(Lesson, Lesson.student_teacher_id == StudentTeacher.id)
-        .where(
-            StudentTeacher.org_id == user.org_id,
-            Lesson.scheduled_date >= date_from,
-            Lesson.scheduled_date <= date_to,
+        select(func.count(Student.id)).where(
+            Student.org_id == user.org_id,
+            Student.status == "ACTIVE",
         )
     )
     active_students = active_students_result.scalar() or 0
