@@ -51,7 +51,10 @@ class ViewAsOverlay extends ConsumerWidget {
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: _ViewAsFramePainter(color: tokens.warning),
+                painter: _ViewAsFramePainter(
+                  color: tokens.warning,
+                  safeInsets: MediaQuery.of(context).viewPadding,
+                ),
               ),
             ),
           ),
@@ -109,20 +112,41 @@ class ViewAsOverlay extends ConsumerWidget {
   }
 }
 
+/// Rect the view-as frame traces: the full surface inset by the device safe
+/// area plus a small margin, so the outline hugs the visible screen on any
+/// phone (notch, Dynamic Island, home indicator) instead of a fixed offset.
+@visibleForTesting
+Rect viewAsFrameRect(
+  Size size,
+  EdgeInsets safeInsets, {
+  double margin = 6.0,
+}) {
+  return Rect.fromLTRB(
+    safeInsets.left + margin,
+    safeInsets.top + margin,
+    size.width - safeInsets.right - margin,
+    size.height - safeInsets.bottom - margin,
+  );
+}
+
 /// Рамка-индикатор: скруглённый контур с мягким внутренним свечением.
 /// Свет рассеивается внутрь, основная линия тонкая — режим считывается
-/// мгновенно, но контент остаётся нетронутым.
+/// мгновенно, но контент остаётся нетронутым. Контур повторяет видимый
+/// экран устройства (safe area), а не фиксированный отступ.
 class _ViewAsFramePainter extends CustomPainter {
   final Color color;
+  final EdgeInsets safeInsets;
 
-  const _ViewAsFramePainter({required this.color});
+  const _ViewAsFramePainter({required this.color, required this.safeInsets});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
 
+    final rect = viewAsFrameRect(size, safeInsets);
+    if (rect.width <= 0 || rect.height <= 0) return;
     final rrect = RRect.fromRectAndRadius(
-      (Offset.zero & size).deflate(5),
+      rect,
       const Radius.circular(NebulaRadii.hero),
     );
 
@@ -147,5 +171,6 @@ class _ViewAsFramePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ViewAsFramePainter old) => old.color != color;
+  bool shouldRepaint(_ViewAsFramePainter old) =>
+      old.color != color || old.safeInsets != safeInsets;
 }
