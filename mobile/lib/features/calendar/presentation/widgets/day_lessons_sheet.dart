@@ -107,30 +107,32 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
     // gap causes the black-screen crash when deleting lessons in sequence.
     final stateCtx = context;
 
-    return DraggableScrollableSheet(
-      controller: _sheetCtrl,
-      initialChildSize: 0.65,
-      minChildSize: 0.0,
-      maxChildSize: 1.0,
-      snap: true,
-      snapSizes: const [1.0],
-      expand: false,
-      builder: (_, scrollCtrl) {
-        return LayoutBuilder(
-          builder: (layoutCtx, constraints) {
-            // During the close animation the sheet can be compressed to a
-            // very small height. Rendering the full Column at < 120px causes
-            // a RenderFlex overflow because the handle (28px) + header row
-            // (~50px) + divider (1px) + padding already exceeds 90px.
-            // Return an invisible box for that transient phase — the spring
-            // closes the sheet in < 150ms so the user never notices.
-            if (constraints.maxHeight < 120) {
-              return const SizedBox.expand();
-            }
-            return _buildSheetContent(stateCtx, scrollCtrl);
-          },
-        );
-      },
+    return HideTopIslandOnFullSheetExpand(
+      child: DraggableScrollableSheet(
+        controller: _sheetCtrl,
+        initialChildSize: 0.65,
+        minChildSize: 0.0,
+        maxChildSize: 1.0,
+        snap: true,
+        snapSizes: const [1.0],
+        expand: false,
+        builder: (_, scrollCtrl) {
+          return LayoutBuilder(
+            builder: (layoutCtx, constraints) {
+              // During the close animation the sheet can be compressed to a
+              // very small height. Rendering the full Column at < 120px causes
+              // a RenderFlex overflow because the handle (28px) + header row
+              // (~50px) + divider (1px) + padding already exceeds 90px.
+              // Return an invisible box for that transient phase — the spring
+              // closes the sheet in < 150ms so the user never notices.
+              if (constraints.maxHeight < 120) {
+                return const SizedBox.expand();
+              }
+              return _buildSheetContent(stateCtx, scrollCtrl);
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -163,8 +165,7 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
                         decoration: BoxDecoration(
                           color: tokens.mutedText
                               .withValues(alpha: NebulaAlpha.medium),
-                          borderRadius:
-                              BorderRadius.circular(NebulaTokens.radiusXS),
+                          borderRadius: NebulaRadii.compactControlBorder,
                         ),
                       ),
                     ),
@@ -221,8 +222,7 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
                       decoration: BoxDecoration(
                         color: NebulaColors.stellarBlue
                             .withValues(alpha: NebulaAlpha.subtle),
-                        borderRadius:
-                            BorderRadius.circular(NebulaTokens.radiusMD),
+                        borderRadius: NebulaRadii.cardBorder,
                         border: Border.all(
                           color: NebulaColors.stellarBlue
                               .withValues(alpha: NebulaAlpha.medium),
@@ -252,7 +252,7 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
                 final l = _localLessons[i];
                 return JiggleDeleteWrapper(
                   jiggleIndex: i,
-                  borderRadius: NebulaTokens.radiusSM,
+                  borderRadius: NebulaRadii.control,
                   onTap: () {
                     Navigator.pop(stateCtx);
                     LessonModal.show(stateCtx, l);
@@ -333,8 +333,7 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: l.statusColor.withValues(alpha: NebulaAlpha.mist),
-                      borderRadius:
-                          BorderRadius.circular(NebulaTokens.radiusSM),
+                      borderRadius: NebulaRadii.controlBorder,
                       border: Border.all(
                           color: l.statusColor
                               .withValues(alpha: NebulaAlpha.border)),

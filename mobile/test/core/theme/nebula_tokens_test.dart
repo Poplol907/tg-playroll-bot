@@ -1,8 +1,29 @@
 import 'package:cosmo_studio/core/theme/nebula_colors.dart';
+import 'package:cosmo_studio/core/theme/nebula_radii.dart';
 import 'package:cosmo_studio/core/theme/nebula_tokens.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('semantic radii expose the canonical application geometry', () {
+    expect(NebulaRadii.micro, 4);
+    expect(NebulaRadii.control, 12);
+    expect(NebulaRadii.card, 18);
+    expect(NebulaRadii.panel, 24);
+    expect(NebulaRadii.modal, 24);
+    expect(NebulaRadii.sheet, 24);
+    expect(NebulaRadii.hero, 32);
+    expect(NebulaRadii.pill, 999);
+    expect(
+      NebulaRadii.cardBorder,
+      const BorderRadius.all(Radius.circular(18)),
+    );
+    expect(
+      NebulaRadii.pillBorder,
+      const BorderRadius.all(Radius.circular(999)),
+    );
+  });
+
   test('dark glow presets stay expressive but bounded', () {
     final presets = [
       NebulaTokens.glowSoft(NebulaColors.stellarBlue),

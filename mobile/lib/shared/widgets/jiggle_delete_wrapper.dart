@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/nebula_colors.dart';
-import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_radii.dart';
 
 /// Long-press-to-delete wrapper with iOS-style jiggle animation.
 ///
@@ -37,7 +37,7 @@ class JiggleDeleteWrapper extends StatefulWidget {
     required this.onDeleteConfirmed,
     this.onTap,
     this.deleteLabel = 'Удалить',
-    this.borderRadius = NebulaTokens.radiusMD,
+    this.borderRadius = NebulaRadii.card,
     this.jiggleIndex = 0,
   });
 
@@ -113,8 +113,8 @@ class _JiggleDeleteWrapperState extends State<JiggleDeleteWrapper>
         weight: 28,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.5, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween:
+            Tween(begin: 0.5, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
         weight: 14,
       ),
     ]).animate(_shakeCtrl);
@@ -258,8 +258,7 @@ class _JiggleDeleteWrapperState extends State<JiggleDeleteWrapper>
                             onTap: _onDeleteTap,
                             child: Container(
                               width: double.infinity,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 11),
+                              padding: const EdgeInsets.symmetric(vertical: 11),
                               decoration: BoxDecoration(
                                 color: NebulaColors.errorRose
                                     .withValues(alpha: 0.13),

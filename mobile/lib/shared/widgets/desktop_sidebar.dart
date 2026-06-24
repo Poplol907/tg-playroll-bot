@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_layout.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -136,7 +137,7 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+            borderRadius: NebulaRadii.cardBorder,
             color:
                 active ? activeBg : (_hovered ? hoverBg : Colors.transparent),
             boxShadow: active

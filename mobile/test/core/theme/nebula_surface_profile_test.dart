@@ -1,6 +1,8 @@
 import 'package:cosmo_studio/core/theme/app_theme.dart';
 import 'package:cosmo_studio/core/theme/cosmo_theme_tokens.dart';
+import 'package:cosmo_studio/core/theme/nebula_radii.dart';
 import 'package:cosmo_studio/core/theme/nebula_surface_profile.dart';
+import 'package:cosmo_studio/shared/widgets/nebula_modal_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -74,6 +76,30 @@ void main() {
     }
   });
 
+  for (final theme in [AppTheme.lightLite, AppTheme.darkInternals]) {
+    testWidgets(
+      'surface profiles resolve semantic radii in ${theme.brightness.name}',
+      (tester) async {
+        final radii = await resolveWith(
+          tester,
+          theme,
+          (context) => {
+            for (final profile in NebulaSurfaceProfile.values)
+              profile: profile.resolve(context).radius,
+          },
+        );
+
+        expect(radii[NebulaSurfaceProfile.input], NebulaRadii.control);
+        expect(radii[NebulaSurfaceProfile.status], NebulaRadii.control);
+        expect(radii[NebulaSurfaceProfile.card], NebulaRadii.card);
+        expect(radii[NebulaSurfaceProfile.frostedSmall], NebulaRadii.card);
+        expect(radii[NebulaSurfaceProfile.panel], NebulaRadii.panel);
+        expect(radii[NebulaSurfaceProfile.modal], NebulaRadii.modal);
+        expect(radii[NebulaSurfaceProfile.nav], NebulaRadii.nav);
+      },
+    );
+  }
+
   testWidgets('frostedSmall is the explicit blur profile', (tester) async {
     final style = await resolveWith(
       tester,
@@ -83,6 +109,33 @@ void main() {
 
     expect(style.blurPolicy, NebulaBlurPolicy.explicit);
     expect(style.blurSigma, greaterThan(0));
+  });
+
+  testWidgets('modal outer decoration, clip, and sheen share one radius',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: NebulaModalSurface(
+            chrome: NebulaModalChrome.dialog,
+            child: SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+
+    final decorations = tester
+        .widgetList<Container>(find.byType(Container))
+        .map((container) => container.decoration)
+        .whereType<BoxDecoration>()
+        .where((decoration) => decoration.borderRadius != null)
+        .toList();
+    final clip = tester.widget<ClipRRect>(find.byType(ClipRRect));
+
+    expect(decorations, hasLength(2));
+    expect(decorations.first.borderRadius, NebulaRadii.modalBorder);
+    expect(decorations.last.borderRadius, decorations.first.borderRadius);
+    expect(clip.borderRadius, decorations.first.borderRadius);
   });
 
   testWidgets('light surface profiles use clean warm sand material',

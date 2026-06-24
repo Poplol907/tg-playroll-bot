@@ -59,10 +59,9 @@ void main() {
 
     expect(
       modalProfileFiles,
-      isEmpty,
+      ['lib/shared/widgets/nebula_modal_surface.dart'],
       reason: 'Feature sheets must not build their own modal transparency. '
-          'Use NebulaModalSurface, which intentionally shares the same card '
-          'material as salary/calendar surfaces.',
+          'Only NebulaModalSurface may resolve the canonical modal profile.',
     );
   });
 

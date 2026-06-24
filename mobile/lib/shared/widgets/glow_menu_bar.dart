@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -107,9 +108,6 @@ class _GlowBarBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = NebulaSurfaceProfile.nav.resolve(context);
-    final isAdminPair = items.length == 2 &&
-        items.first.icon == Icons.shield_outlined &&
-        items.last.icon == Icons.settings_outlined;
 
     // Active colour drives the nav-wide ambient bloom.
     final activeColor = currentIndex < items.length
@@ -118,9 +116,7 @@ class _GlowBarBody extends StatelessWidget {
 
     // Count fixed-width tabs so the fraction stays accurate.
     final tabCount = items.length;
-    final activeFrac = isAdminPair
-        ? (currentIndex == 0 ? 0.5 : 0.9)
-        : (tabCount > 0 ? (currentIndex + 0.5) / tabCount : 0.5);
+    final activeFrac = tabCount > 0 ? (currentIndex + 0.5) / tabCount : 0.5;
 
     // Floating oval island: one stadium-shaped glass capsule holding every
     // tab, lifted off the screen edge. The area around the pill stays
@@ -144,7 +140,7 @@ class _GlowBarBody extends StatelessWidget {
           key: const ValueKey('glow-menu-bar-surface'),
           decoration: BoxDecoration(
             color: surface.fill,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: NebulaRadii.pillBorder,
             border: Border.all(
               color: surface.border,
               width: surface.borderWidth,
@@ -174,7 +170,7 @@ class _GlowBarBody extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: NebulaRadii.pillBorder,
                 child: Stack(
                   children: [
                     // ── Matte sheen over the fill ─────────────────────────
@@ -200,84 +196,37 @@ class _GlowBarBody extends StatelessWidget {
                     ),
 
                     // ── Tab row ───────────────────────────────────────────
+                    // Horizontal padding = 0: the edge tabs (and their
+                    // pills) flush against the bar's stadium edge, so the
+                    // capsule reads as a real segment of the bar. Vertical
+                    // padding stays to keep the icons from hitting the
+                    // top/bottom kant — pill is the background, icons get
+                    // breathing room inside it.
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: NebulaTokens.sp8,
+                        horizontal: 0,
                         vertical: NebulaTokens.sp8,
                       ),
-                      child: isAdminPair
-                          ? LayoutBuilder(
-                              builder: (context, constraints) {
-                                final tabWidth = math.min(
-                                    76.0,
-                                    math.max(
-                                        58.0, constraints.maxWidth * 0.34));
-                                final centerLeft =
-                                    constraints.maxWidth / 2 - tabWidth / 2;
-                                return SizedBox(
-                                  height: 58,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Positioned(
-                                        left: centerLeft,
-                                        width: tabWidth,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: _GlowNavTab(
-                                          item: items[0],
-                                          index: 0,
-                                          magnify: magnify,
-                                          selected: currentIndex == 0,
-                                          isDark: isDark,
-                                          onTap: () {
-                                            HapticFeedback.selectionClick();
-                                            onTap(0);
-                                          },
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 0,
-                                        width: tabWidth,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: _GlowNavTab(
-                                          item: items[1],
-                                          index: 1,
-                                          magnify: magnify,
-                                          selected: currentIndex == 1,
-                                          isDark: isDark,
-                                          onTap: () {
-                                            HapticFeedback.selectionClick();
-                                            onTap(1);
-                                          },
-                                        ),
-                                      ),
-                                    ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ...items.asMap().entries.map(
+                                (e) => Expanded(
+                                  child: _GlowNavTab(
+                                    item: e.value,
+                                    index: e.key,
+                                    magnify: magnify,
+                                    selected: e.key == currentIndex,
+                                    isDark: isDark,
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      onTap(e.key);
+                                    },
                                   ),
-                                );
-                              },
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ...items.asMap().entries.map(
-                                      (e) => Expanded(
-                                        child: _GlowNavTab(
-                                          item: e.value,
-                                          index: e.key,
-                                          magnify: magnify,
-                                          selected: e.key == currentIndex,
-                                          isDark: isDark,
-                                          onTap: () {
-                                            HapticFeedback.selectionClick();
-                                            onTap(e.key);
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                              ],
-                            ),
+                                ),
+                              ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -288,7 +237,7 @@ class _GlowBarBody extends StatelessWidget {
               //    being clipped to a pill-shaped tube. Sits as a top
               //    overlay in the outer Stack, still IgnorePointer so it
               //    doesn't intercept tab taps.
-              if (!isAdminPair && magnify != null && items.length > 1)
+              if (magnify != null && items.length > 1)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: _LiquidPill(
@@ -313,11 +262,10 @@ class _GlowBarBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  _BarIsland — wraps the floating bar and grows it when the user grabs the
-//  pill. Idle the bar sits at 92% of its full size — quiet, compact, low
-//  visual weight. Touch the pill: the bar inflates to 100% and the capsule
-//  expands to cover the whole bar (see _LiquidPill). It reads as the bar
-//  "waking up under your finger" — opposite of shrinking, much more inviting.
+//  _BarIsland — passthrough wrapper. The bar stays geometrically stable
+//  whether the user is idle or dragging; only the pill inside reacts to the
+//  drag (loupe scale). Bar + pill are concentric parts of one mechanism, so
+//  resizing the bar would break the visual coupling.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BarIsland extends StatelessWidget {
@@ -327,22 +275,7 @@ class _BarIsland extends StatelessWidget {
   const _BarIsland({required this.dragActive, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    final notifier = dragActive;
-    if (notifier == null) return child;
-    return ValueListenableBuilder<bool>(
-      valueListenable: notifier,
-      child: child,
-      builder: (_, active, c) {
-        return AnimatedScale(
-          scale: active ? 1.0 : 0.92,
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
-          child: c,
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => child;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -759,27 +692,20 @@ class _LiquidPill extends StatelessWidget {
             final n = items.length;
             if (n == 0) return const SizedBox.shrink();
 
-            // Bar geometry — must match the tab row inside ClipRRect:
-            //   Padding(sp8 horizontal, sp8 vertical) → Row of N Expanded tabs.
-            // The pill matches the tab cell when idle and morphs into a
-            // bar-wide magnifier when the user grabs it.
-            const outerPadH = NebulaTokens.sp8;
-            const pillSlackH = 2.0;
-            final innerWidth = constraints.maxWidth - outerPadH * 2;
+            // Pill lies ON the bar — a separate object resting on the
+            // surface, not a carved-out segment of it. Equal `pillInset`
+            // gap on all four sides makes the bar's stadium outline
+            // visible around every pill position, so the eye reads pill
+            // and bar as two layers (loupe over glass), not one shape.
+            const pillInset = 4.0;
+            final innerWidth = constraints.maxWidth;
             final tabWidth = innerWidth / n;
-            final idleWidth =
-                (tabWidth - pillSlackH * 2).clamp(0.0, double.infinity);
-            // When active, the pill expands to cover the whole bar — the
-            // capsule literally becomes the bar's surface for that moment.
-            final expandedWidth =
-                (constraints.maxWidth - 4).clamp(0.0, double.infinity);
-            // Pill matches the bar's full height so its rounded edges trace
-            // the bar's edges exactly — no mismatched radii showing.
-            final pillHeight = constraints.maxHeight;
+            final pillWidth = tabWidth - pillInset * 2;
+            const pillTop = pillInset;
+            const pillBottom = pillInset;
 
-            // Drift fraction for the colour interpolation only (the lift /
-            // shadow used to come from this too, but the loupe state now
-            // owns those — drift is just the hue blend).
+            // Hue interpolates between the two neighbouring tabs so the
+            // capsule takes on the new section's colour as the swipe lands.
             final lower = pos.floor().clamp(0, n - 1);
             final upper = pos.ceil().clamp(0, n - 1);
             final frac = (pos - lower).clamp(0.0, 1.0);
@@ -789,15 +715,14 @@ class _LiquidPill extends StatelessWidget {
               frac,
             )!;
 
-            final idleLeft = outerPadH + pos * tabWidth + pillSlackH;
+            final left = pos * tabWidth + pillInset;
 
-            return _LoupeMorphPill(
+            return _LoupePill(
               dragActive: dragActive,
-              idleLeft: idleLeft,
-              idleWidth: idleWidth,
-              expandedLeft: 2.0, // 4px slack centred = 2 on each side
-              expandedWidth: expandedWidth,
-              height: pillHeight,
+              left: left,
+              top: pillTop,
+              bottom: pillBottom,
+              width: pillWidth,
               color: color,
               isDark: isDark,
             );
@@ -809,30 +734,29 @@ class _LiquidPill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  _LoupeMorphPill — animates between the idle pill (covers the active tab)
-//  and the expanded loupe (covers the entire bar) with a single tween. left
-//  and width morph together along an ease-out spring curve, so the capsule
-//  feels like water spreading to fill its container instead of two
-//  independent properties snapping.
+//  _LoupePill — the concentric capsule. Idle: sits inside the bar with an
+//  equal `pillInset` gap on every side, so its stadium outline runs parallel
+//  to the bar's outline (kant ∥ kant). When the user grabs it, only the pill
+//  scales up (×1.18, easeOutCubic) — it bulges past the bar's edge like a
+//  glass loupe held over the surface. The bar itself is geometrically still:
+//  pill is the part that "magnifies", bar is the stable host.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _LoupeMorphPill extends StatelessWidget {
+class _LoupePill extends StatelessWidget {
   final ValueListenable<bool>? dragActive;
-  final double idleLeft;
-  final double idleWidth;
-  final double expandedLeft;
-  final double expandedWidth;
-  final double height;
+  final double left;
+  final double top;
+  final double bottom;
+  final double width;
   final Color color;
   final bool isDark;
 
-  const _LoupeMorphPill({
+  const _LoupePill({
     required this.dragActive,
-    required this.idleLeft,
-    required this.idleWidth,
-    required this.expandedLeft,
-    required this.expandedWidth,
-    required this.height,
+    required this.left,
+    required this.top,
+    required this.bottom,
+    required this.width,
     required this.color,
     required this.isDark,
   });
@@ -840,54 +764,50 @@ class _LoupeMorphPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notifier = dragActive;
-    if (notifier == null) {
-      return Stack(
-        children: [
-          Positioned(
-            left: idleLeft,
-            top: 0,
-            width: idleWidth,
-            height: height,
-            child: _capsule(active: false),
-          ),
-        ],
-      );
-    }
+    final placed = Stack(
+      children: [
+        Positioned(
+          left: left,
+          top: top,
+          bottom: bottom,
+          width: width,
+          child: _capsule(active: notifier?.value ?? false),
+        ),
+      ],
+    );
+    if (notifier == null) return placed;
     return ValueListenableBuilder<bool>(
       valueListenable: notifier,
       builder: (_, active, __) {
-        return TweenAnimationBuilder<double>(
-          tween: Tween(end: active ? 1.0 : 0.0),
-          // Slow enough to read as a liquid morph, fast enough that the
-          // capsule responds the moment the user grabs.
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-          builder: (_, t, ___) {
-            final left = idleLeft + (expandedLeft - idleLeft) * t;
-            final width = idleWidth + (expandedWidth - idleWidth) * t;
-            return Stack(
-              children: [
-                Positioned(
-                  left: left,
-                  top: 0,
-                  width: width,
-                  height: height,
-                  child: _capsule(active: t > 0.05),
-                ),
-              ],
-            );
-          },
+        return Stack(
+          children: [
+            Positioned(
+              left: left,
+              top: top,
+              bottom: bottom,
+              width: width,
+              child: AnimatedScale(
+                // Loupe: only the capsule grows. The outer Stack in
+                // _GlowBarBody has clipBehavior:none, so this scale-up
+                // bulges PAST the bar's stadium edge instead of being
+                // clipped to it — reads as a magnifier hovering over
+                // the surface, not a fill that takes over the bar.
+                scale: active ? 1.18 : 1.0,
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                child: _capsule(active: active),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
   Widget _capsule({required bool active}) {
-    // Bar-height pill → its rounded corners trace the host bar's rounded
-    // corners exactly, so the radii read as matched not mismatched.
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: NebulaRadii.pillBorder,
         color: color.withValues(
           alpha: isDark
               ? (active ? NebulaAlpha.border : NebulaAlpha.subtle)

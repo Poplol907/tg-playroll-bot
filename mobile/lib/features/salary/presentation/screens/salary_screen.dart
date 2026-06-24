@@ -9,7 +9,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
-import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
@@ -23,6 +23,7 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/widgets/app_screen_header.dart';
 
 part '../widgets/salary_components.dart';
 part '../widgets/salary_ring.dart';
@@ -42,9 +43,6 @@ class SalaryScreen extends ConsumerWidget {
     final viewAs = ref.watch(viewAsTeacherProvider);
     // В режиме view-as заголовок показывает имя педагога, чьи данные смотрим.
     final headerName = viewAs?.displayName ?? user?.displayName ?? '';
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-
     final month = DateFormat('yyyy-MM').parse(monthYear);
     final monthLabel = DateFormat('MMMM yyyy', 'ru').format(month);
 
@@ -61,19 +59,7 @@ class SalaryScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Зарплата',
-                style: NebulaTypography.of(context)
-                    .displayL
-                    .copyWith(color: tokens.primaryText),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                headerName,
-                style: NebulaTypography.of(context)
-                    .bodyM
-                    .copyWith(color: tokens.mutedText),
-              ),
+              AppScreenHeader(title: 'Зарплата', subtitle: headerName),
               const SizedBox(height: 24),
               salaryAsync.when(
                 loading: () => const Center(
@@ -278,7 +264,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
             entered(
               NebulaSurface(
                 padding: const EdgeInsets.all(28),
-                borderRadius: NebulaTokens.radiusXL,
+                radiusRole: NebulaRadiusRole.hero,
                 child: Column(
                   children: [
                     // Amount text — glow in dark, clean ink in light.
@@ -498,7 +484,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
             entered(
               NebulaSurface(
                 padding: const EdgeInsets.all(20),
-                borderRadius: NebulaTokens.radiusLG,
+                radiusRole: NebulaRadiusRole.panel,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

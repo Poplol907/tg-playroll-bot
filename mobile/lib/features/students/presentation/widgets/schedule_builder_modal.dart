@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
-import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../shared/models/student.dart';
@@ -293,9 +293,7 @@ class _ScheduleBuilderModalState extends ConsumerState<ScheduleBuilderModal> {
         CosmoThemeTokens.darkInternals;
     return NebulaModalSurface(
       containerKey: const ValueKey('schedule-builder-modal-surface'),
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(NebulaTokens.radiusXL),
-      ),
+      borderRadius: NebulaRadii.sheetTopBorder,
       child: Column(
         children: [
           _Header(
@@ -376,7 +374,7 @@ class _Header extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: tokens.mutedText.withValues(alpha: NebulaAlpha.strong),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: NebulaRadii.pillBorder,
                 ),
               ),
             ),
@@ -487,7 +485,7 @@ class _ActionArea extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: tokens.error.withValues(alpha: NebulaAlpha.surface),
-              borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+              borderRadius: NebulaRadii.controlBorder,
               border: Border.all(
                 color: tokens.error.withValues(alpha: NebulaAlpha.accent),
               ),
@@ -549,7 +547,6 @@ class _WeekGrid extends StatelessWidget {
 
     return NebulaSurface(
       padding: EdgeInsets.zero,
-      borderRadius: NebulaTokens.radiusMD,
       child: Column(
         children: [
           // ── Day header row ────────────────────────────────────────────
@@ -632,11 +629,11 @@ class _WeekGrid extends StatelessWidget {
                                         ? tokens.primaryAccent.withValues(
                                             alpha: NebulaAlpha.border)
                                         : isWeekend
-                                            ? tokens.secondaryAccent
-                                                .withValues(
-                                                    alpha: NebulaAlpha.whisper)
+                                            ? tokens.secondaryAccent.withValues(
+                                                alpha: NebulaAlpha.whisper)
                                             : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius:
+                                        NebulaRadii.compactControlBorder,
                                     border: isSelected
                                         ? Border.all(
                                             color: tokens.primaryAccent
@@ -712,13 +709,11 @@ class _PreviewSection extends StatelessWidget {
 
     return NebulaSurface(
       padding: const EdgeInsets.all(16),
-      borderRadius: NebulaTokens.radiusMD,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(Icons.preview_rounded,
-                color: tokens.primaryAccent, size: 16),
+            Icon(Icons.preview_rounded, color: tokens.primaryAccent, size: 16),
             const SizedBox(width: 8),
             Text(
               'ПРЕДПРОСМОТР · $monthLabel',
@@ -757,8 +752,7 @@ class _PreviewSection extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: tokens.primaryAccent
                               .withValues(alpha: NebulaAlpha.surface),
-                          borderRadius:
-                              BorderRadius.circular(NebulaTokens.radiusSM),
+                          borderRadius: NebulaRadii.controlBorder,
                           border: Border.all(
                               color: tokens.primaryAccent
                                   .withValues(alpha: NebulaAlpha.border)),
@@ -859,8 +853,7 @@ class _Total extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: type.overline.copyWith(color: tokens.mutedText)),
+            Text(label, style: type.overline.copyWith(color: tokens.mutedText)),
             Text(value,
                 style: type.bodyS
                     .copyWith(fontWeight: FontWeight.w700, color: color)),
@@ -947,7 +940,7 @@ class _ConfirmButtonState extends State<_ConfirmButton>
                   )
                 : null,
             color: widget.enabled ? null : tokens.surface,
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+            borderRadius: NebulaRadii.cardBorder,
             boxShadow: widget.enabled
                 ? [
                     BoxShadow(
@@ -966,9 +959,8 @@ class _ConfirmButtonState extends State<_ConfirmButton>
                     label,
                     style: NebulaTypography.of(context).titleS.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: widget.enabled
-                              ? Colors.white
-                              : tokens.mutedText,
+                          color:
+                              widget.enabled ? Colors.white : tokens.mutedText,
                         ),
                   ),
           ),

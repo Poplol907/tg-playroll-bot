@@ -65,14 +65,11 @@ class _StatusToggleState extends State<_StatusToggle>
                   width: 54,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: Color.lerp(
-                        tokens.surfaceBorder, tokens.success, t),
-                    borderRadius: BorderRadius.circular(15),
+                    color: Color.lerp(tokens.surfaceBorder, tokens.success, t),
+                    borderRadius: NebulaRadii.pillBorder,
                     border: Border.all(
-                      color: Color.lerp(
-                              tokens.surfaceBorder,
-                              tokens.success.withValues(alpha: 0.6),
-                              t) ??
+                      color: Color.lerp(tokens.surfaceBorder,
+                              tokens.success.withValues(alpha: 0.6), t) ??
                           Colors.transparent,
                       width: 1.5,
                     ),
@@ -118,9 +115,7 @@ class _StatusToggleState extends State<_StatusToggle>
               _ctrl.value > 0.5 ? 'Активен' : 'Неактивен',
               style: TextStyle(
                 fontSize: 10,
-                color: _ctrl.value > 0.5
-                    ? tokens.success
-                    : tokens.mutedText,
+                color: _ctrl.value > 0.5 ? tokens.success : tokens.mutedText,
               ),
             ),
           ),

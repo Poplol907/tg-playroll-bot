@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/theme/nebula_typography.dart';
 import 'nebula_surface.dart';
@@ -70,7 +71,6 @@ class NebulaDialog extends StatelessWidget {
         child: NebulaSurface(
           dense: true,
           accent: accent,
-          borderRadius: NebulaTokens.radiusLG,
           padding: const EdgeInsets.all(NebulaTokens.sp24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -102,17 +102,18 @@ class NebulaDialog extends StatelessWidget {
                           Text(
                             title,
                             style: NebulaTypography.of(context).titleM.copyWith(
-                              color: tokens.primaryText,
-                            ),
+                                  color: tokens.primaryText,
+                                ),
                           ),
                           const SizedBox(height: NebulaTokens.sp8),
                           Flexible(
                             child: SingleChildScrollView(
                               child: Text(
                                 message,
-                                style: NebulaTypography.of(context).bodyM.copyWith(
-                                  color: tokens.secondaryText,
-                                ),
+                                style:
+                                    NebulaTypography.of(context).bodyM.copyWith(
+                                          color: tokens.secondaryText,
+                                        ),
                               ),
                             ),
                           ),
@@ -167,7 +168,7 @@ class _NebulaDialogAction extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+        borderRadius: NebulaRadii.controlBorder,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 44, minWidth: 82),
           child: Ink(
@@ -179,7 +180,7 @@ class _NebulaDialogAction extends StatelessWidget {
               color: filled
                   ? color.withValues(alpha: NebulaAlpha.surface)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+              borderRadius: NebulaRadii.controlBorder,
               border: Border.all(
                 color: filled
                     ? color.withValues(alpha: NebulaAlpha.accent)
@@ -193,9 +194,9 @@ class _NebulaDialogAction extends StatelessWidget {
                 return Text(
                   label,
                   style: NebulaTypography.of(ctx).bodyM.copyWith(
-                    color: filled ? color : tokens.mutedText,
-                    fontWeight: filled ? FontWeight.w700 : FontWeight.w600,
-                  ),
+                        color: filled ? color : tokens.mutedText,
+                        fontWeight: filled ? FontWeight.w700 : FontWeight.w600,
+                      ),
                 );
               }),
             ),

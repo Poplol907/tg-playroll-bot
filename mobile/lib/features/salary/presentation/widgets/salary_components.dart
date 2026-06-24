@@ -105,7 +105,6 @@ class _StatCard extends StatelessWidget {
     final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
-      borderRadius: NebulaTokens.radiusMD,
       accent: color,
       glow: [
         BoxShadow(
@@ -197,7 +196,7 @@ class _MakeupBanner extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderRadius: NebulaTokens.radiusSM,
+      radiusRole: NebulaRadiusRole.control,
       accent: tokens.focusAccent,
       child: Row(
         children: [
@@ -239,7 +238,7 @@ class _DebtBanner extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderRadius: NebulaTokens.radiusSM,
+      radiusRole: NebulaRadiusRole.control,
       accent: tokens.error,
       child: Row(
         children: [
@@ -281,7 +280,7 @@ class _PendingBanner extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderRadius: NebulaTokens.radiusSM,
+      radiusRole: NebulaRadiusRole.control,
       accent: tokens.warning,
       child: Row(
         children: [
@@ -368,7 +367,7 @@ class _RatesCard extends StatelessWidget {
     final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(20),
-      borderRadius: NebulaTokens.radiusLG,
+      radiusRole: NebulaRadiusRole.panel,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -472,7 +471,7 @@ class _ErrorCard extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(24),
-      borderRadius: NebulaTokens.radiusLG,
+      radiusRole: NebulaRadiusRole.panel,
       child: Column(
         children: [
           Icon(
@@ -520,7 +519,6 @@ class _InlineErrorCard extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
-      borderRadius: NebulaTokens.radiusMD,
       child: Row(
         children: [
           Icon(

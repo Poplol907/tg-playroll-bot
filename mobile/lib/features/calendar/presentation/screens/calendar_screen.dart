@@ -8,6 +8,7 @@ import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
@@ -19,6 +20,7 @@ import '../../../../shared/widgets/pulse_indicator.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/widgets/app_screen_header.dart';
 import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../providers/calendar_provider.dart';
@@ -45,7 +47,6 @@ class CalendarScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final isLight = Theme.of(context).brightness == Brightness.light;
     final month = ref.watch(selectedMonthProvider);
     final monthYear = DateFormat('yyyy-MM').format(month);
     final lessonsAsync = ref.watch(lessonsProvider(monthYear));
@@ -83,165 +84,169 @@ class CalendarScreen extends ConsumerWidget {
       },
     );
 
+    final header = AppScreenHeader(
+      title: user?.displayName ?? 'Педагог',
+      subtitle: 'Расписание уроков',
+    );
+
+    Widget contentFor(List<LessonModel> lessons, {required bool desktop}) {
+      void onDayTap(DateTime date) {
+        ref.read(selectedDayProvider.notifier).state = date;
+        final dayLessons = lessons
+            .where((l) =>
+                l.scheduledDate.year == date.year &&
+                l.scheduledDate.month == date.month &&
+                l.scheduledDate.day == date.day)
+            .toList();
+        _showDayLessons(context, date, dayLessons);
+      }
+
+      if (desktop) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Column(
+            children: [
+              Expanded(
+                child: NebulaSurface(
+                  padding: const EdgeInsets.all(16),
+                  radiusRole: NebulaRadiusRole.panel,
+                  child: ConstellationCalendar(
+                    month: month,
+                    lessons: lessons,
+                    onDayTap: onDayTap,
+                    enableAmbientMotion: true,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _MonthStats(lessons: lessons),
+            ],
+          ),
+        );
+      }
+
+      return AppCustomScrollView(
+        header: header,
+        padding: AppSafeInsets.screen(
+          context,
+          left: 16,
+          right: 16,
+          bottom: 24,
+        ),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                NebulaSurface(
+                  padding: const EdgeInsets.all(16),
+                  radiusRole: NebulaRadiusRole.panel,
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: ConstellationCalendar(
+                      month: month,
+                      lessons: lessons,
+                      onDayTap: onDayTap,
+                      enableAmbientMotion: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _MonthStats(lessons: lessons),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            // ── App bar ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
+        child: AppPlatform.isDesktop
+            ? Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.displayName ?? 'Педагог',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: tokens.primaryText,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.displayName ?? 'Педагог',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: tokens.primaryText,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Расписание уроков',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: tokens.mutedText,
+                          Text(
+                            'Расписание уроков',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: tokens.mutedText,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Logout button
-                  GestureDetector(
-                    onTap: () => _confirmLogout(context, ref),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: isLight
-                            ? const Color(0xFFE8EDF8)
-                            : NebulaColors.nebulaSurface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: tokens.surfaceBorder),
+                  Expanded(
+                    child: lessonsAsync.when(
+                      loading: () => const Center(child: OrbitLoader()),
+                      error: (e, _) => Center(
+                        child: AppErrorCard(
+                          message: parseApiError(
+                            e,
+                            fallback: 'Нет подключения',
+                          ),
+                          onRetry: () => invalidateMonthData(ref, monthYear),
+                          isConnectionError: isConnectionError(e),
+                        ),
                       ),
-                      child: Icon(
-                        Icons.logout_rounded,
-                        color: tokens.mutedText,
-                        size: 18,
-                      ),
+                      data: (lessons) => contentFor(lessons, desktop: true),
                     ),
                   ),
                 ],
-              ),
-            ),
-
-            // ── Calendar ──
-            Expanded(
-              child: lessonsAsync.when(
-                loading: () => const Center(child: OrbitLoader()),
-                error: (e, _) => Center(
-                  child: AppErrorCard(
-                    message: parseApiError(e, fallback: 'Нет подключения'),
-                    onRetry: () => invalidateMonthData(ref, monthYear),
-                    isConnectionError: isConnectionError(e),
-                  ),
+              )
+            : lessonsAsync.when(
+                loading: () => AppCustomScrollView(
+                  header: header,
+                  slivers: const [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: OrbitLoader()),
+                    ),
+                  ],
                 ),
-                data: (lessons) {
-                  // Shared tap handler
-                  void onDayTap(DateTime date) {
-                    ref.read(selectedDayProvider.notifier).state = date;
-                    final dayLessons = lessons
-                        .where((l) =>
-                            l.scheduledDate.year == date.year &&
-                            l.scheduledDate.month == date.month &&
-                            l.scheduledDate.day == date.day)
-                        .toList();
-                    _showDayLessons(context, date, dayLessons);
-                  }
-
-                  if (AppPlatform.isDesktop) {
-                    // Desktop: calendar fills available height — no scroll needed
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: NebulaSurface(
-                              padding: const EdgeInsets.all(16),
-                              borderRadius: NebulaTokens.radiusLG,
-                              child: ConstellationCalendar(
-                                month: month,
-                                lessons: lessons,
-                                onDayTap: onDayTap,
-                                enableAmbientMotion: true,
-                              ),
-                            ),
+                error: (e, _) => AppCustomScrollView(
+                  header: header,
+                  slivers: [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: AppErrorCard(
+                          message: parseApiError(
+                            e,
+                            fallback: 'Нет подключения',
                           ),
-                          const SizedBox(height: 12),
-                          _MonthStats(lessons: lessons),
-                        ],
-                      ),
-                    );
-                  }
-
-                  // Mobile: aspect-ratio square, scrollable if content overflows
-                  return AppScrollView(
-                    includeKeyboardInset: false,
-                    padding: AppSafeInsets.screen(
-                      context,
-                      left: 16,
-                      top: 0,
-                      right: 16,
-                      bottom: 24,
-                    ),
-                    child: Column(
-                      children: [
-                        NebulaSurface(
-                          padding: const EdgeInsets.all(16),
-                          borderRadius: NebulaTokens.radiusLG,
-                          child: AspectRatio(
-                            aspectRatio: 1,
-                            child: ConstellationCalendar(
-                              month: month,
-                              lessons: lessons,
-                              onDayTap: onDayTap,
-                              enableAmbientMotion: true,
-                            ),
-                          ),
+                          onRetry: () => invalidateMonthData(ref, monthYear),
+                          isConnectionError: isConnectionError(e),
                         ),
-                        const SizedBox(height: 20),
-                        _MonthStats(lessons: lessons),
-                      ],
+                      ),
                     ),
-                  );
-                },
+                  ],
+                ),
+                data: (lessons) => contentFor(lessons, desktop: false),
               ),
-            ),
-          ],
-        ),
       ),
     );
-  }
-
-  void _confirmLogout(BuildContext context, WidgetRef ref) {
-    NebulaDialog.confirm(
-      context,
-      title: 'Выйти из аккаунта?',
-      message: 'Текущая сессия будет завершена на этом устройстве.',
-      confirmLabel: 'Выйти',
-      destructive: true,
-      icon: Icons.logout_rounded,
-    ).then((confirmed) {
-      if (confirmed) ref.read(authProvider.notifier).logout();
-    });
   }
 
   void _showDayLessons(

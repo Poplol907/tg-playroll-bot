@@ -19,7 +19,6 @@ class _MonthStats extends StatelessWidget {
 
     return NebulaSurface(
       padding: const EdgeInsets.all(NebulaTokens.sp20),
-      borderRadius: NebulaTokens.radiusMD,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -81,8 +80,9 @@ class _StatChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: color.withValues(alpha: NebulaAlpha.surface),
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-          border: Border.all(color: color.withValues(alpha: NebulaAlpha.border)),
+          borderRadius: NebulaRadii.controlBorder,
+          border:
+              Border.all(color: color.withValues(alpha: NebulaAlpha.border)),
         ),
         child: Column(
           children: [

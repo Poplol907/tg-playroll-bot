@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/nebula_tokens.dart';
+import 'app_chrome_metrics.dart';
 
 /// Shared insets for screens that sit inside AppShell.
 ///
@@ -8,16 +9,6 @@ import '../../core/theme/nebula_tokens.dart';
 /// breathing room plus keyboard inset so focused controls are never pinned under
 /// the keyboard.
 abstract class AppSafeInsets {
-  /// Approximate height of the floating GlowMenuBar capsule + its bottom
-  /// inset. Used to push scroll content above the floating bar so the last
-  /// items aren't hidden behind the pill.
-  static const double floatingNavBarHeight = 84.0;
-
-  /// Approximate height of the floating top island (month pill + arrows).
-  /// Doesn't include the status-bar / Dynamic Island inset — that's added
-  /// dynamically from MediaQuery so it adapts to the device.
-  static const double floatingTopBarHeight = 58.0;
-
   static EdgeInsets screen(
     BuildContext context, {
     double left = NebulaTokens.sp20,
@@ -34,11 +25,16 @@ abstract class AppSafeInsets {
     // here — never the status-bar viewPadding again, or it stacks twice.
     return EdgeInsets.fromLTRB(
       left,
-      top + (includeFloatingTopBar ? floatingTopBarHeight : 0),
+      top +
+          (includeFloatingTopBar
+              ? AppChromeMetrics.routeContentTopReservation
+              : 0),
       right,
       bottom +
           media.viewPadding.bottom +
-          (includeFloatingNavBar ? floatingNavBarHeight : 0) +
+          (includeFloatingNavBar
+              ? AppChromeMetrics.floatingBottomNavReservation
+              : 0) +
           (includeKeyboard ? media.viewInsets.bottom : 0),
     );
   }
@@ -89,25 +85,102 @@ abstract class AppSafeInsets {
 /// and AppListView so every screen scrolls the same way.
 class ScrollEdgeFade extends StatelessWidget {
   final Widget child;
+  final double topFadeExtent;
+  final double bottomFadeExtent;
 
-  const ScrollEdgeFade({super.key, required this.child});
+  const ScrollEdgeFade({
+    super.key,
+    required this.child,
+    this.topFadeExtent = 32,
+    this.bottomFadeExtent = 32,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
-      shaderCallback: (rect) => const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.transparent,
-          Colors.white,
-          Colors.white,
-          Colors.transparent,
-        ],
-        stops: [0.0, 0.04, 0.96, 1.0],
-      ).createShader(rect),
+      shaderCallback: (rect) {
+        final height = rect.height <= 0 ? 1.0 : rect.height;
+        final topStop = (topFadeExtent / height).clamp(0.0, 0.45);
+        final bottomStop = (1 - (bottomFadeExtent / height)).clamp(0.55, 1.0);
+        return LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: const [
+            Colors.transparent,
+            Colors.white,
+            Colors.white,
+            Colors.transparent,
+          ],
+          stops: [0, topStop, bottomStop, 1],
+        ).createShader(rect);
+      },
       blendMode: BlendMode.dstIn,
       child: child,
+    );
+  }
+}
+
+class AppCustomScrollView extends StatelessWidget {
+  final Widget header;
+  final List<Widget> slivers;
+  final EdgeInsetsGeometry? padding;
+  final ScrollController? controller;
+  final ScrollPhysics? physics;
+  final bool includeKeyboardInset;
+
+  const AppCustomScrollView({
+    super.key,
+    required this.header,
+    required this.slivers,
+    this.padding,
+    this.controller,
+    this.physics,
+    this.includeKeyboardInset = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final insets = (padding ??
+            AppSafeInsets.screen(
+              context,
+              includeKeyboard: includeKeyboardInset,
+            ))
+        .resolve(Directionality.of(context));
+
+    return ScrollEdgeFade(
+      child: CustomScrollView(
+        key: const ValueKey('app-custom-scroll-view'),
+        controller: controller,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        physics: physics ??
+            const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              insets.left,
+              insets.top,
+              insets.right,
+              0,
+            ),
+            sliver: SliverToBoxAdapter(child: header),
+          ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: NebulaTokens.sp20),
+          ),
+          ...slivers.map(
+            (sliver) => SliverPadding(
+              padding: EdgeInsets.only(
+                left: insets.left,
+                right: insets.right,
+              ),
+              sliver: sliver,
+            ),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: insets.bottom)),
+        ],
+      ),
     );
   }
 }

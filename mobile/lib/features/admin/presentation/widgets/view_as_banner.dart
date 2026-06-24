@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../data/admin_repository.dart';
@@ -60,7 +61,7 @@ class ViewAsOverlay extends ConsumerWidget {
             right: 16,
             bottom: bottomOffset,
             child: NebulaSurface(
-              borderRadius: 999,
+              radiusRole: NebulaRadiusRole.pill,
               accent: tokens.warning,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               onTap: () => _exit(context, ref),
@@ -122,7 +123,7 @@ class _ViewAsFramePainter extends CustomPainter {
 
     final rrect = RRect.fromRectAndRadius(
       (Offset.zero & size).deflate(5),
-      const Radius.circular(30),
+      const Radius.circular(NebulaRadii.hero),
     );
 
     // Мягкое рассеянное свечение внутрь — широкая размытая обводка.

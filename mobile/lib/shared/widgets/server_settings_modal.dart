@@ -7,7 +7,7 @@ import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_colors.dart';
-import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_typography.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../providers/bottom_bar_visibility_provider.dart';
@@ -111,7 +111,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: tokens.mutedText.withValues(alpha: NebulaAlpha.strong),
-                  borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
+                  borderRadius: NebulaRadii.compactControlBorder,
                 ),
               ),
             ),
@@ -171,7 +171,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
             // ── Hint ──────────────────────────────────────────────────────
             NebulaSurface(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              borderRadius: NebulaTokens.radiusSM,
+              radiusRole: NebulaRadiusRole.control,
               accent: NebulaColors.stellarBlue,
               child: Row(
                 children: [
@@ -205,7 +205,6 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
             if (isAdmin) ...[
               NebulaSurface(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                borderRadius: NebulaTokens.radiusMD,
                 accent: NebulaColors.nebulaPurple,
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -260,7 +259,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
                           .withValues(alpha: NebulaAlpha.surface)
                       : NebulaColors.stellarBlue
                           .withValues(alpha: NebulaAlpha.surface),
-                  borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+                  borderRadius: NebulaRadii.cardBorder,
                   border: Border.all(
                     color: _saved
                         ? NebulaColors.successMint

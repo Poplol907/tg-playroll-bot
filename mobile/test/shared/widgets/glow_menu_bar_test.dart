@@ -226,8 +226,13 @@ void main() {
   });
 
   testWidgets(
-      'GlowMenuBar admin layout centers Studio and keeps empty bar inert',
+      'GlowMenuBar admin layout uses the standard two-tab capsule row',
       (tester) async {
+    // Admin pair (Studio + Settings) was historically rendered as Studio
+    // centered + Settings tucked right with the pill suppressed. Unified
+    // with the teacher layout: both tabs Expanded to half-width and the
+    // liquid pill participates, so the capsule navbar reads consistently
+    // across roles.
     final taps = <int>[];
 
     await tester.pumpWidget(
@@ -235,6 +240,7 @@ void main() {
         home: Scaffold(
           bottomNavigationBar: GlowMenuBar(
             currentIndex: 0,
+            magnify: ValueNotifier<double>(0),
             onTap: taps.add,
             items: const [
               GlowMenuItem(
@@ -260,20 +266,22 @@ void main() {
     final settingsCenter =
         tester.getCenter(find.byIcon(Icons.settings_outlined));
 
-    expect(
-        studioCenter.dx, moreOrLessEquals(surfaceRect.center.dx, epsilon: 1));
-    expect(settingsCenter.dx, greaterThan(surfaceRect.right - 64));
+    // Studio sits in the left half, Settings in the right half — equal
+    // Expanded children.
+    expect(studioCenter.dx, lessThan(surfaceRect.center.dx));
+    expect(settingsCenter.dx, greaterThan(surfaceRect.center.dx));
 
+    // Tap on the left half should fire Studio (index 0).
     await tester.tapAt(Offset(surfaceRect.left + 32, surfaceRect.center.dy));
-    await tester.pump();
-    expect(taps, isEmpty);
-
-    await tester.tapAt(studioCenter);
     await tester.pump();
     expect(taps, [0]);
 
+    await tester.tapAt(studioCenter);
+    await tester.pump();
+    expect(taps, [0, 0]);
+
     await tester.tapAt(settingsCenter);
     await tester.pump();
-    expect(taps, [0, 1]);
+    expect(taps, [0, 0, 1]);
   });
 }

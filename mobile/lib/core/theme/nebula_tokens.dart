@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'nebula_alpha.dart';
 import 'nebula_colors.dart';
+import 'nebula_radii.dart';
 
 abstract class NebulaTokens {
   // ── Alpha tokens ────────────────────────────────────────────────────────────
@@ -16,13 +17,6 @@ abstract class NebulaTokens {
   static const double alphaStrong = NebulaAlpha.strong;
   static const double alphaHigh = NebulaAlpha.high;
   static const double alphaSolid = NebulaAlpha.solid;
-
-  // ── Radii ───────────────────────────────────────────────────────────────────
-  static const double radiusXS = 8;
-  static const double radiusSM = 12;
-  static const double radiusMD = 18;
-  static const double radiusLG = 24;
-  static const double radiusXL = 32; // pill badges
 
   // ── Spacing (8px grid) ──────────────────────────────────────────────────────
   static const double sp2 = 2;
@@ -142,7 +136,7 @@ abstract class NebulaTokens {
 
   // ── Luminous border-edge glow (border + matching outer shadow) ───────────────
   static BoxDecoration luminousBorder(Color accent,
-          {double borderRadius = radiusMD}) =>
+          {double borderRadius = NebulaRadii.card}) =>
       BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
         border:

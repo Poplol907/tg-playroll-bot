@@ -15,6 +15,7 @@ import '../../features/salary/presentation/screens/salary_screen.dart';
 import '../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../shared/providers/month_provider.dart';
 import '../../shared/widgets/app_background_host.dart';
+import '../../shared/widgets/app_chrome_metrics.dart';
 import '../../shared/widgets/space_page_transition.dart';
 import '../../shared/widgets/glow_menu_bar.dart';
 import '../../shared/widgets/desktop_sidebar.dart';
@@ -22,6 +23,7 @@ import '../../shared/widgets/desktop_content_frame.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../shared/widgets/nebula_surface.dart';
@@ -248,26 +250,39 @@ class _AppShellState extends ConsumerState<AppShell> {
     final month = ref.watch(globalMonthProvider);
     final now = DateTime.now();
     final isCurrentMonth = month.year == now.year && month.month == now.month;
+    void selectPreviousMonth() {
+      HapticFeedback.selectionClick();
+      ref.read(globalMonthProvider.notifier).state =
+          DateTime(month.year, month.month - 1);
+    }
 
-    final monthBar = _GlobalMonthBar(
-      month: month,
-      isCurrentMonth: isCurrentMonth,
-      onPrev: () {
-        HapticFeedback.selectionClick();
-        ref.read(globalMonthProvider.notifier).state =
-            DateTime(month.year, month.month - 1);
-      },
-      onNext: () {
-        HapticFeedback.selectionClick();
-        ref.read(globalMonthProvider.notifier).state =
-            DateTime(month.year, month.month + 1);
-      },
-      onToday: () {
-        HapticFeedback.lightImpact();
-        ref.read(globalMonthProvider.notifier).state =
-            DateTime(now.year, now.month);
-      },
-    );
+    void selectNextMonth() {
+      HapticFeedback.selectionClick();
+      ref.read(globalMonthProvider.notifier).state =
+          DateTime(month.year, month.month + 1);
+    }
+
+    void selectCurrentMonth() {
+      HapticFeedback.lightImpact();
+      ref.read(globalMonthProvider.notifier).state =
+          DateTime(now.year, now.month);
+    }
+
+    final monthBar = AppPlatform.isDesktop
+        ? _DesktopMonthBar(
+            month: month,
+            isCurrentMonth: isCurrentMonth,
+            onPrev: selectPreviousMonth,
+            onNext: selectNextMonth,
+            onToday: selectCurrentMonth,
+          )
+        : _MobileMonthBar(
+            month: month,
+            isCurrentMonth: isCurrentMonth,
+            onPrev: selectPreviousMonth,
+            onNext: selectNextMonth,
+            onToday: selectCurrentMonth,
+          );
 
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
@@ -365,6 +380,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     // back to true in dispose. The bar slides off the bottom in those cases
     // and the content reclaims the full screen.
     final barVisible = ref.watch(bottomBarVisibleProvider);
+    // Top month island has its own visibility signal — driven by a sheet
+    // crossing the full-expand threshold (see HideTopIslandOnFullSheetExpand),
+    // NOT by "any modal is open". A half-open sheet still wants the month
+    // pill in reach; only a full-screen take-over makes it slide away.
+    final topIslandVisible = ref.watch(topIslandVisibleProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -377,8 +397,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           // (SafeArea top:true) so nothing readable hides behind it. The
           // bottom is intentionally NOT inset so the matte glass nav bar
           // floats over the page tail and scroll content fades softly into
-          // it (matched by AppSafeInsets, which adds floatingTopBarHeight
-          // for the month island and floatingNavBarHeight for the nav).
+          // it (matched by AppSafeInsets, which consumes AppChromeMetrics for
+          // both the month island and floating navigation reservations).
           SafeArea(
             top: true,
             bottom: false,
@@ -409,14 +429,28 @@ class _AppShellState extends ConsumerState<AppShell> {
           // Floating top island — month pill + arrow pucks, glass overlay.
           // The status-bar inset lives here (top SafeArea around just the
           // bar) so the content below isn't squeezed out of those pixels.
+          // Slides upward off the screen when a draggable sheet is dragged
+          // to full-screen extent (mirrors the bottom nav's downward slide).
           Positioned(
             left: 0,
             right: 0,
             top: 0,
-            child: SafeArea(
-              top: true,
-              bottom: false,
-              child: monthBar,
+            child: IgnorePointer(
+              ignoring: !topIslandVisible,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                offset: topIslandVisible ? Offset.zero : const Offset(0, -1.4),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 220),
+                  opacity: topIslandVisible ? 1.0 : 0.0,
+                  child: SafeArea(
+                    top: true,
+                    bottom: false,
+                    child: monthBar,
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -462,17 +496,17 @@ class _AppShellState extends ConsumerState<AppShell> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Global month bar
+//  Global month controls
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _GlobalMonthBar extends StatelessWidget {
+class _MobileMonthBar extends StatelessWidget {
   final DateTime month;
   final bool isCurrentMonth;
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onToday;
 
-  const _GlobalMonthBar({
+  const _MobileMonthBar({
     required this.month,
     required this.isCurrentMonth,
     required this.onPrev,
@@ -482,68 +516,164 @@ class _GlobalMonthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('mobile-top-island'),
+      height: AppChromeMetrics.mobileTopIslandExtent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppChromeMetrics.mobileTopIslandHorizontalInset,
+          vertical: AppChromeMetrics.mobileTopIslandOuterVerticalGap,
+        ),
+        child: _MonthControls(
+          month: month,
+          isCurrentMonth: isCurrentMonth,
+          onPrev: onPrev,
+          onNext: onNext,
+          onToday: onToday,
+          showTooltip: false,
+          maxPillWidth: AppChromeMetrics.monthPillMaxWidth,
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopMonthBar extends StatelessWidget {
+  final DateTime month;
+  final bool isCurrentMonth;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onToday;
+
+  const _DesktopMonthBar({
+    required this.month,
+    required this.isCurrentMonth,
+    required this.onPrev,
+    required this.onNext,
+    required this.onToday,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: _MonthControls(
+        month: month,
+        isCurrentMonth: isCurrentMonth,
+        onPrev: onPrev,
+        onNext: onNext,
+        onToday: onToday,
+        showTooltip: true,
+      ),
+    );
+  }
+}
+
+class _MonthControls extends StatelessWidget {
+  final DateTime month;
+  final bool isCurrentMonth;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onToday;
+  final bool showTooltip;
+  final double? maxPillWidth;
+
+  const _MonthControls({
+    required this.month,
+    required this.isCurrentMonth,
+    required this.onPrev,
+    required this.onNext,
+    required this.onToday,
+    required this.showTooltip,
+    this.maxPillWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final label = DateFormat('MMMM yyyy', 'ru').format(month);
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final semanticsLabel = isCurrentMonth
+        ? 'Текущий месяц: $label'
+        : 'Выбран $label. Нажмите, чтобы вернуться к текущему месяцу';
+    final labelText = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: tokens.primaryText,
+      ),
+    );
 
-    // Floating glass islands instead of a full-width strip: an oval month
-    // pill in the middle, circular arrow pucks on the sides. The bar chrome
-    // itself is transparent — the background breathes between the islands.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    Widget pill = NebulaSurface(
+      key: const ValueKey('month-pill'),
+      profile: NebulaSurfaceProfile.nav,
+      radiusRole: NebulaRadiusRole.pill,
+      height: AppChromeMetrics.monthControlHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      onTap: isCurrentMonth ? null : onToday,
       child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _MonthArrow(icon: Icons.chevron_left_rounded, onTap: onPrev),
-
-          // Month pill — tappable to jump to today
-          Expanded(
-            child: Center(
-              child: MouseRegion(
-                cursor: isCurrentMonth
-                    ? SystemMouseCursors.basic
-                    : SystemMouseCursors.click,
-                child: NebulaSurface(
-                  // Same nav-profile glass recipe as the floating bottom bar
-                  // so all three islands read as the same material.
-                  profile: NebulaSurfaceProfile.nav,
-                  borderRadius: 999,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
-                  onTap: isCurrentMonth ? null : onToday,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: tokens.primaryText,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      if (!isCurrentMonth) ...[
-                        const SizedBox(height: 1),
-                        Text(
-                          'нажмите для возврата',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: tokens.primaryAccent
-                                .withValues(alpha: NebulaAlpha.high),
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+          if (maxPillWidth != null) Flexible(child: labelText) else labelText,
+          if (!isCurrentMonth) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: tokens.primaryAccent,
+                shape: BoxShape.circle,
               ),
             ),
-          ),
+          ],
+        ],
+      ),
+    );
 
-          _MonthArrow(icon: Icons.chevron_right_rounded, onTap: onNext),
+    pill = Semantics(
+      button: !isCurrentMonth,
+      label: semanticsLabel,
+      child: pill,
+    );
+    if (showTooltip && !isCurrentMonth) {
+      pill = Tooltip(
+        message: 'Вернуться к текущему месяцу',
+        child: pill,
+      );
+    }
+
+    Widget centeredPill = pill;
+    if (maxPillWidth != null) {
+      centeredPill = ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxPillWidth!),
+        child: SizedBox(width: double.infinity, child: pill),
+      );
+    }
+
+    return SizedBox(
+      height: AppChromeMetrics.monthControlHeight,
+      child: Row(
+        children: [
+          _MonthArrow(
+            key: const ValueKey('previous-month-arrow'),
+            icon: Icons.chevron_left_rounded,
+            onTap: onPrev,
+          ),
+          Expanded(
+            child: Center(
+              child: centeredPill,
+            ),
+          ),
+          _MonthArrow(
+            key: const ValueKey('next-month-arrow'),
+            icon: Icons.chevron_right_rounded,
+            onTap: onNext,
+          ),
         ],
       ),
     );
@@ -556,7 +686,7 @@ class _MonthArrow extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _MonthArrow({required this.icon, required this.onTap});
+  const _MonthArrow({super.key, required this.icon, required this.onTap});
 
   @override
   State<_MonthArrow> createState() => _MonthArrowState();
@@ -581,9 +711,9 @@ class _MonthArrowState extends State<_MonthArrow> {
         // Same nav-profile glass recipe → arrow pucks match the month pill
         // and the floating bottom bar.
         profile: NebulaSurfaceProfile.nav,
-        borderRadius: 999,
-        width: 38,
-        height: 38,
+        shape: BoxShape.circle,
+        width: AppChromeMetrics.monthControlHeight,
+        height: AppChromeMetrics.monthControlHeight,
         padding: EdgeInsets.zero,
         onTap: widget.onTap,
         glow: _hovered

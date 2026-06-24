@@ -11,6 +11,76 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///      slides back once the last one is dismissed.
 final bottomBarVisibleProvider = StateProvider<bool>((ref) => true);
 
+/// Controls whether the floating TOP island (month pill) is shown.
+///
+/// Unlike [bottomBarVisibleProvider], this is NOT driven by "any modal is
+/// open". A bottom sheet at its initial half-screen size shouldn't hide the
+/// month — the user is still interacting with the page. Only when the sheet
+/// is dragged up to full-screen does the top chrome retract, to give the
+/// content the entire viewport.
+///
+/// Wire it by wrapping a [DraggableScrollableSheet] with
+/// [HideTopIslandOnFullSheetExpand], which flips the provider once the
+/// sheet's extent crosses [_fullExpandThreshold].
+final topIslandVisibleProvider = StateProvider<bool>((ref) => true);
+
+/// Extent threshold (0..1) at which a draggable sheet counts as "full
+/// screen" for the purposes of hiding the top island. Slightly below 1.0
+/// so a tiny gap during the spring animation still reads as fully expanded.
+const double _fullExpandThreshold = 0.95;
+
+/// Listens to [DraggableScrollableNotification]s bubbling up through its
+/// subtree and toggles [topIslandVisibleProvider] when the sheet crosses
+/// [_fullExpandThreshold]. Restores visibility on dispose so the island
+/// always returns when the sheet pops.
+///
+/// Wrap the root of each [DraggableScrollableSheet] builder result with
+/// this so the notification chain stays inside the modal's element tree
+/// (notifications don't bubble across route boundaries).
+class HideTopIslandOnFullSheetExpand extends ConsumerStatefulWidget {
+  final Widget child;
+  const HideTopIslandOnFullSheetExpand({super.key, required this.child});
+
+  @override
+  ConsumerState<HideTopIslandOnFullSheetExpand> createState() =>
+      _HideTopIslandOnFullSheetExpandState();
+}
+
+class _HideTopIslandOnFullSheetExpandState
+    extends ConsumerState<HideTopIslandOnFullSheetExpand> {
+  bool _hidden = false;
+
+  @override
+  void dispose() {
+    // Always restore the island when this widget leaves the tree — the
+    // sheet might pop while still expanded, and the next route shouldn't
+    // inherit a hidden island.
+    if (_hidden) {
+      final container = ProviderScope.containerOf(context, listen: false);
+      Future.microtask(
+        () => container.read(topIslandVisibleProvider.notifier).state = true,
+      );
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<DraggableScrollableNotification>(
+      onNotification: (notification) {
+        final shouldHide = notification.extent >= _fullExpandThreshold;
+        if (shouldHide != _hidden) {
+          _hidden = shouldHide;
+          ref.read(topIslandVisibleProvider.notifier).state = !shouldHide;
+        }
+        // Let other listeners (snap animations, parent observers) see it too.
+        return false;
+      },
+      child: widget.child,
+    );
+  }
+}
+
 /// Hide the floating nav bar while [show] is in flight, restore on completion.
 ///
 /// Used by MistModal.show / AdaptiveModal.show / direct showModalBottomSheet

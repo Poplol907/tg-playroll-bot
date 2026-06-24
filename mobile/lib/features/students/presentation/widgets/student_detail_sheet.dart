@@ -9,7 +9,7 @@ import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_component_styles.dart';
 import '../../../../core/theme/nebula_semantic.dart';
-import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/models/student.dart';
@@ -174,7 +174,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
 
-    return DraggableScrollableSheet(
+    return HideTopIslandOnFullSheetExpand(
+      child: DraggableScrollableSheet(
       controller: _sheetCtrl,
       initialChildSize: 0.65,
       minChildSize: 0.0,
@@ -185,9 +186,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
       builder: (ctx, scrollCtrl) {
         return NebulaModalSurface(
           containerKey: const ValueKey('student-detail-modal-surface'),
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(NebulaTokens.radiusXL),
-          ),
+          borderRadius: NebulaRadii.sheetTopBorder,
           child: Column(
             children: [
               // ── Handle + header ──
@@ -207,8 +206,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                             height: 4,
                             decoration: BoxDecoration(
                               color: tokens.mutedText.withValues(alpha: 0.5),
-                              borderRadius:
-                                  BorderRadius.circular(NebulaTokens.radiusXS),
+                              borderRadius: NebulaRadii.compactControlBorder,
                             ),
                           ),
                         ),
@@ -277,6 +275,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
           ),
         );
       },
+    ),
     );
   }
 }

@@ -9,7 +9,7 @@ import '../../../../core/utils/error_parser.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
-import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
@@ -194,8 +194,8 @@ class _LessonModalState extends ConsumerState<LessonModal>
               surfaceContainerHighest: tokens.surface,
               onSurfaceVariant: tokens.mutedText,
               outline: tokens.surfaceBorder,
-              secondaryContainer: tokens.primaryAccent
-                  .withValues(alpha: NebulaAlpha.border),
+              secondaryContainer:
+                  tokens.primaryAccent.withValues(alpha: NebulaAlpha.border),
               onSecondaryContainer: tokens.primaryAccent,
             ),
             dialogTheme: DialogThemeData(
@@ -267,7 +267,8 @@ class _LessonModalState extends ConsumerState<LessonModal>
     // Only allow scheduling a makeup when no makeup is pending or done yet
     final canMarkMakeup = needsMakeup && lesson.makeupStatus == 'none';
 
-    return DraggableScrollableSheet(
+    return HideTopIslandOnFullSheetExpand(
+      child: DraggableScrollableSheet(
       controller: _sheetCtrl,
       initialChildSize: 0.65,
       minChildSize: 0.0,
@@ -311,7 +312,7 @@ class _LessonModalState extends ConsumerState<LessonModal>
                             decoration: BoxDecoration(
                               color: NebulaColors.nebulaPurple
                                   .withValues(alpha: NebulaAlpha.subtle),
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: NebulaRadii.pillBorder,
                               border: Border.all(
                                   color: NebulaColors.nebulaPurple
                                       .withValues(alpha: NebulaAlpha.medium)),
@@ -364,8 +365,8 @@ class _LessonModalState extends ConsumerState<LessonModal>
                         const SizedBox(height: 16),
                         NebulaSurface(
                           dense: true,
+                          radiusRole: NebulaRadiusRole.control,
                           padding: const EdgeInsets.all(14),
-                          borderRadius: NebulaTokens.radiusSM,
                           child: Text(
                             lesson.notes!,
                             style: NebulaTypography.of(context)
@@ -416,6 +417,7 @@ class _LessonModalState extends ConsumerState<LessonModal>
           ),
         );
       },
+    ),
     );
   }
 }
@@ -496,7 +498,7 @@ class _MakeupChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: NebulaAlpha.mist),
-        borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+        borderRadius: NebulaRadii.controlBorder,
         border: Border.all(color: color.withValues(alpha: NebulaAlpha.accent)),
       ),
       child: Row(
@@ -545,7 +547,7 @@ class _SheetHandle extends StatelessWidget {
                   (Theme.of(context).extension<CosmoThemeTokens>()?.mutedText ??
                           NebulaColors.dimText)
                       .withValues(alpha: NebulaAlpha.medium),
-              borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
+              borderRadius: NebulaRadii.compactControlBorder,
             ),
           ),
         ),
@@ -584,7 +586,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: NebulaAlpha.subtle),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: NebulaRadii.pillBorder,
         border: Border.all(color: color.withValues(alpha: NebulaAlpha.medium)),
       ),
       child: Text(
@@ -761,8 +763,8 @@ class _LessonModalDesktopState extends ConsumerState<_LessonModalDesktop> {
             const SizedBox(height: 16),
             NebulaSurface(
               dense: true,
+              radiusRole: NebulaRadiusRole.control,
               padding: const EdgeInsets.all(14),
-              borderRadius: NebulaTokens.radiusSM,
               child: Text(lesson.notes!,
                   style: NebulaTypography.of(context)
                       .bodyM

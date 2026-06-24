@@ -96,7 +96,7 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
-  testWidgets('adaptive desktop modal uses card surface profile in light theme',
+  testWidgets('adaptive desktop modal uses modal profile in light theme',
       (tester) async {
     AppPlatform.debugOverrideIsDesktop = true;
 
@@ -127,7 +127,7 @@ void main() {
 
     expect(
       decoration.color,
-      CosmoThemeTokens.lightLite.surface.withValues(
+      CosmoThemeTokens.lightLite.denseSurface.withValues(
         alpha: NebulaAlpha.occludingSurface,
       ),
     );
@@ -204,7 +204,7 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
   });
 
-  testWidgets('server settings modal uses card surface profile in light theme',
+  testWidgets('server settings modal uses modal profile in light theme',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -225,7 +225,7 @@ void main() {
 
     expect(
       decoration.color,
-      CosmoThemeTokens.lightLite.surface.withValues(
+      CosmoThemeTokens.lightLite.denseSurface.withValues(
         alpha: NebulaAlpha.occludingSurface,
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,10 +84,11 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: NebulaRadii.controlBorder,
                   border: Border.symmetric(
                     horizontal: BorderSide(
-                      color: widget.glowColor.withValues(alpha: NebulaAlpha.accent),
+                      color: widget.glowColor
+                          .withValues(alpha: NebulaAlpha.accent),
                       width: 0.6,
                     ),
                   ),
@@ -145,16 +147,14 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
                         duration: const Duration(milliseconds: 180),
                         style: TextStyle(
                           fontFamily: 'Courier',
-                          fontSize: selected
-                              ? widget.fontSize + 1
-                              : widget.fontSize,
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w300,
+                          fontSize:
+                              selected ? widget.fontSize + 1 : widget.fontSize,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.w300,
                           color: selected
                               ? widget.glowColor
-                              : NebulaColors.softWhite.withValues(
-                                  alpha: _opacity(index)),
+                              : NebulaColors.softWhite
+                                  .withValues(alpha: _opacity(index)),
                           shadows: selected
                               ? [
                                   Shadow(

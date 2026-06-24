@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'cosmo_theme_tokens.dart';
 import 'nebula_alpha.dart';
+import 'nebula_radii.dart';
 import 'nebula_tokens.dart';
 
 enum NebulaBlurPolicy {
@@ -113,13 +114,13 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
       };
 
   double get _radius => switch (this) {
-        NebulaSurfaceProfile.input => NebulaTokens.radiusSM,
-        NebulaSurfaceProfile.card => NebulaTokens.radiusMD,
-        NebulaSurfaceProfile.panel => NebulaTokens.radiusLG,
-        NebulaSurfaceProfile.modal => NebulaTokens.radiusLG,
-        NebulaSurfaceProfile.nav => NebulaTokens.radiusLG,
-        NebulaSurfaceProfile.status => NebulaTokens.radiusSM,
-        NebulaSurfaceProfile.frostedSmall => NebulaTokens.radiusMD,
+        NebulaSurfaceProfile.input => NebulaRadii.control,
+        NebulaSurfaceProfile.card => NebulaRadii.card,
+        NebulaSurfaceProfile.panel => NebulaRadii.panel,
+        NebulaSurfaceProfile.modal => NebulaRadii.modal,
+        NebulaSurfaceProfile.nav => NebulaRadii.nav,
+        NebulaSurfaceProfile.status => NebulaRadii.control,
+        NebulaSurfaceProfile.frostedSmall => NebulaRadii.card,
       };
 
   EdgeInsetsGeometry get _padding => switch (this) {

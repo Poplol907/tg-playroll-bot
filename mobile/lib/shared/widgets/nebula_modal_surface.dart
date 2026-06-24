@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
-import '../../core/theme/nebula_tokens.dart';
 
 enum NebulaModalChrome {
   sheet,
@@ -35,8 +35,8 @@ class NebulaModalSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = NebulaSurfaceProfile.card.resolve(context);
-    final radius = borderRadius ?? _defaultRadius(surface.radius);
+    final surface = NebulaSurfaceProfile.modal.resolve(context);
+    final radius = borderRadius ?? _defaultRadius;
     final border = chrome == NebulaModalChrome.dialog
         ? Border.all(
             color: surface.border,
@@ -85,11 +85,7 @@ class NebulaModalSurface extends StatelessWidget {
     );
   }
 
-  BorderRadius _defaultRadius(double resolvedRadius) {
-    return chrome == NebulaModalChrome.dialog
-        ? BorderRadius.circular(resolvedRadius)
-        : const BorderRadius.vertical(
-            top: Radius.circular(NebulaTokens.radiusLG),
-          );
-  }
+  BorderRadius get _defaultRadius => chrome == NebulaModalChrome.dialog
+      ? NebulaRadii.modalBorder
+      : NebulaRadii.sheetTopBorder;
 }

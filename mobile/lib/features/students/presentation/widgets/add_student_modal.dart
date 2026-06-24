@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_colors.dart';
-import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/mist_modal.dart';
@@ -156,9 +156,10 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: _isForeign
-                  ? NebulaColors.warningAmber.withValues(alpha: NebulaAlpha.mist)
+                  ? NebulaColors.warningAmber
+                      .withValues(alpha: NebulaAlpha.mist)
                   : tokens.surface,
-              borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+              borderRadius: NebulaRadii.controlBorder,
               border: Border.all(
                 color: _isForeign
                     ? NebulaColors.warningAmber
@@ -171,9 +172,8 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                 Icon(
                   Icons.translate_rounded,
                   size: 18,
-                  color: _isForeign
-                      ? NebulaColors.warningAmber
-                      : tokens.mutedText,
+                  color:
+                      _isForeign ? NebulaColors.warningAmber : tokens.mutedText,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -191,7 +191,7 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
                   width: 44,
                   height: 24,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: NebulaRadii.pillBorder,
                     color: _isForeign
                         ? NebulaColors.warningAmber
                             .withValues(alpha: NebulaAlpha.accent)
@@ -272,39 +272,37 @@ class _TeacherPicker extends ConsumerWidget {
       data: (teachers) {
         final type = NebulaTypography.of(context);
         return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        decoration: BoxDecoration(
-          color: tokens.surface,
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
-          border: Border.all(
-            color: selectedId != null
-                ? tokens.primaryAccent
-                    .withValues(alpha: NebulaAlpha.medium)
-                : tokens.surfaceBorder,
-          ),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<int>(
-            value: selectedId,
-            hint: Text(
-              'Выберите педагога',
-              style: type.bodyM.copyWith(color: tokens.mutedText),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: tokens.surface,
+            borderRadius: NebulaRadii.controlBorder,
+            border: Border.all(
+              color: selectedId != null
+                  ? tokens.primaryAccent.withValues(alpha: NebulaAlpha.medium)
+                  : tokens.surfaceBorder,
             ),
-            dropdownColor: tokens.denseSurface,
-            icon: Icon(Icons.expand_more_rounded,
-                color: tokens.mutedText),
-            isExpanded: true,
-            style: type.bodyM.copyWith(color: tokens.primaryText),
-            items: teachers
-                .map((t) => DropdownMenuItem(
-                      value: t.id,
-                      child: Text(t.name),
-                    ))
-                .toList(),
-            onChanged: onSelected,
           ),
-        ),
-      );
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: selectedId,
+              hint: Text(
+                'Выберите педагога',
+                style: type.bodyM.copyWith(color: tokens.mutedText),
+              ),
+              dropdownColor: tokens.denseSurface,
+              icon: Icon(Icons.expand_more_rounded, color: tokens.mutedText),
+              isExpanded: true,
+              style: type.bodyM.copyWith(color: tokens.primaryText),
+              items: teachers
+                  .map((t) => DropdownMenuItem(
+                        value: t.id,
+                        child: Text(t.name),
+                      ))
+                  .toList(),
+              onChanged: onSelected,
+            ),
+          ),
+        );
       },
     );
   }

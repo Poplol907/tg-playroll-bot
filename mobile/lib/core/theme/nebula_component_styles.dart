@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'nebula_radii.dart';
 import 'nebula_tokens.dart';
 
 /// Component style "configs" — pure data classes that describe how a
@@ -39,7 +40,7 @@ class BadgeStyle {
     padding: EdgeInsets.symmetric(horizontal: NebulaTokens.sp8 + 2),
     iconSize: 12,
     iconGap: NebulaTokens.sp4,
-    borderRadius: BorderRadius.all(Radius.circular(999)),
+    borderRadius: NebulaRadii.pillBorder,
   );
 
   static const BadgeStyle regular = BadgeStyle(
@@ -50,7 +51,7 @@ class BadgeStyle {
     ),
     iconSize: 14,
     iconGap: NebulaTokens.sp4 + 2,
-    borderRadius: BorderRadius.all(Radius.circular(999)),
+    borderRadius: NebulaRadii.pillBorder,
   );
 }
 
@@ -59,8 +60,10 @@ class IconCalloutStyle {
   /// Size of the circular icon "puck".
   final double iconBoxSize;
   final double iconSize;
+
   /// Spacing between the icon puck and the textual content.
   final double gap;
+
   /// Padding around the whole callout when rendered as a card row.
   final EdgeInsetsGeometry padding;
   final BorderRadius borderRadius;
@@ -81,7 +84,7 @@ class IconCalloutStyle {
       horizontal: NebulaTokens.sp16,
       vertical: 14,
     ),
-    borderRadius: BorderRadius.all(Radius.circular(NebulaTokens.radiusMD)),
+    borderRadius: NebulaRadii.cardBorder,
   );
 
   static const IconCalloutStyle compact = IconCalloutStyle(
@@ -92,7 +95,7 @@ class IconCalloutStyle {
       horizontal: NebulaTokens.sp12,
       vertical: NebulaTokens.sp8,
     ),
-    borderRadius: BorderRadius.all(Radius.circular(NebulaTokens.radiusSM)),
+    borderRadius: NebulaRadii.controlBorder,
   );
 }
 
@@ -183,7 +186,7 @@ class ActionRowStyle {
     iconBoxSize: 36,
     iconSize: 18,
     iconGap: NebulaTokens.sp12 + 2,
-    borderRadius: BorderRadius.all(Radius.circular(NebulaTokens.radiusMD)),
+    borderRadius: NebulaRadii.cardBorder,
   );
 }
 

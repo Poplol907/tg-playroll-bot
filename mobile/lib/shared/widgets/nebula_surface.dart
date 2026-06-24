@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -13,7 +14,8 @@ import '../../core/theme/nebula_tokens.dart';
 class NebulaSurface extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
-  final double? borderRadius;
+  final NebulaRadiusRole? radiusRole;
+  final BoxShape shape;
   final List<BoxShadow>? glow;
   final NebulaSurfaceProfile? profile;
   final bool dense;
@@ -27,7 +29,8 @@ class NebulaSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.borderRadius,
+    this.radiusRole,
+    this.shape = BoxShape.rectangle,
     this.glow,
     this.profile,
     this.dense = false,
@@ -52,8 +55,9 @@ class NebulaSurface extends StatelessWidget {
     final blurSigma = selectedProfile == NebulaSurfaceProfile.frostedSmall
         ? surfaceStyle.blurSigma
         : (frosted ? NebulaTokens.frostedBlurSigma : NebulaTokens.blurDense);
-    final radius = borderRadius ?? surfaceStyle.radius;
-    final br = BorderRadius.circular(radius);
+    final radius = radiusRole?.value ?? surfaceStyle.radius;
+    final isCircle = shape == BoxShape.circle;
+    final br = isCircle ? null : BorderRadius.circular(radius);
 
     // Frosted surfaces drop fill opacity so the blurred backdrop reads as
     // a frosted pane. Without this the blur hides behind a ~90% opaque fill
@@ -75,6 +79,7 @@ class NebulaSurface extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: fill,
+        shape: shape,
         borderRadius: br,
         border: Border.all(
           color: surfaceStyle.border,
@@ -89,6 +94,7 @@ class NebulaSurface extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               gradient: surfaceStyle.sheen,
+              shape: shape,
               borderRadius: br,
             ),
             padding: padding ?? surfaceStyle.padding,
@@ -103,8 +109,11 @@ class NebulaSurface extends StatelessWidget {
             Positioned.fill(
               child: IgnorePointer(
                 child: CustomPaint(
-                  painter:
-                      _SpecularBorderPainter(radius: radius, isLight: isLight),
+                  painter: _SpecularBorderPainter(
+                    radius: radius,
+                    shape: shape,
+                    isLight: isLight,
+                  ),
                 ),
               ),
             ),
@@ -112,18 +121,18 @@ class NebulaSurface extends StatelessWidget {
       ),
     );
 
-    final clipped = ClipRRect(
-      borderRadius: br,
-      child: isFrosted
-          ? BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: blurSigma,
-                sigmaY: blurSigma,
-              ),
-              child: inner,
-            )
-          : inner,
-    );
+    final filtered = isFrosted
+        ? BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: blurSigma,
+              sigmaY: blurSigma,
+            ),
+            child: inner,
+          )
+        : inner;
+    final clipped = isCircle
+        ? ClipOval(child: filtered)
+        : ClipRRect(borderRadius: br!, child: filtered);
 
     if (onTap != null) {
       return GestureDetector(
@@ -138,18 +147,28 @@ class NebulaSurface extends StatelessWidget {
 
 class _SpecularBorderPainter extends CustomPainter {
   final double radius;
+  final BoxShape shape;
   final bool isLight;
 
-  const _SpecularBorderPainter({required this.radius, required this.isLight});
+  const _SpecularBorderPainter({
+    required this.radius,
+    required this.shape,
+    required this.isLight,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
 
     final rect = Offset.zero & size;
-    final rrect =
-        RRect.fromRectAndRadius(rect.deflate(0.5), Radius.circular(radius));
-    final path = Path()..addRRect(rrect);
+    final path = Path();
+    if (shape == BoxShape.circle) {
+      path.addOval(rect.deflate(0.5));
+    } else {
+      final rrect =
+          RRect.fromRectAndRadius(rect.deflate(0.5), Radius.circular(radius));
+      path.addRRect(rrect);
+    }
 
     void drawEdge(Rect shaderRect, List<Color> colors) {
       final paint = Paint()
@@ -198,5 +217,7 @@ class _SpecularBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SpecularBorderPainter oldDelegate) =>
-      oldDelegate.radius != radius || oldDelegate.isLight != isLight;
+      oldDelegate.radius != radius ||
+      oldDelegate.shape != shape ||
+      oldDelegate.isLight != isLight;
 }

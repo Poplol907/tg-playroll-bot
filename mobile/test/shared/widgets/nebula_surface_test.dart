@@ -74,4 +74,33 @@ void main() {
 
     expect(find.byType(BackdropFilter), findsOneWidget);
   });
+
+  testWidgets('NebulaSurface circle keeps decoration and clip geometry aligned',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: NebulaSurface(
+              width: 38,
+              height: 38,
+              shape: BoxShape.circle,
+              child: Icon(Icons.chevron_left_rounded),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final decoratedContainers = tester
+        .widgetList<Container>(find.byType(Container))
+        .where((container) => container.decoration is BoxDecoration)
+        .map((container) => container.decoration! as BoxDecoration)
+        .where((decoration) => decoration.shape == BoxShape.circle);
+
+    expect(decoratedContainers, hasLength(2));
+    expect(find.byType(ClipOval), findsOneWidget);
+    expect(find.byType(ClipRRect), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
