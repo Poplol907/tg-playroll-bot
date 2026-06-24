@@ -136,7 +136,6 @@ class _Body extends StatelessWidget {
           else
             NebulaSurface(
               padding: const EdgeInsets.all(16),
-              borderRadius: NebulaTokens.radiusMD,
               child: Column(
                 children: schedule
                     .map((s) =>
@@ -161,9 +160,9 @@ class _Body extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: tokens.primaryAccent
-                    .withValues(alpha: NebulaAlpha.subtle),
-                borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+                color:
+                    tokens.primaryAccent.withValues(alpha: NebulaAlpha.subtle),
+                borderRadius: NebulaRadii.cardBorder,
                 border: Border.all(
                     color: tokens.primaryAccent
                         .withValues(alpha: NebulaAlpha.medium)),

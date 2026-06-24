@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../network/api_client.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
-import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../shared/widgets/nebula_modal_surface.dart';
 
 // ── Текущая версия приложения ─────────────────────────────────────────────────
@@ -183,7 +183,7 @@ class _UpdateDialog extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: NebulaColors.auroraCyan.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+                    borderRadius: NebulaRadii.cardBorder,
                     border: Border.all(
                         color: NebulaColors.auroraCyan.withValues(alpha: 0.35)),
                     boxShadow: [

@@ -127,8 +127,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                             ? tokens.primaryAccent
                                 .withValues(alpha: NebulaAlpha.subtle)
                             : tokens.surface,
-                        borderRadius:
-                            BorderRadius.circular(NebulaTokens.radiusSM),
+                        borderRadius: NebulaRadii.controlBorder,
                         border: Border.all(
                           color: selected
                               ? tokens.primaryAccent
@@ -182,7 +181,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: tokens.surface,
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+            borderRadius: NebulaRadii.controlBorder,
             border: Border.all(color: tokens.surfaceBorder),
           ),
           child: DropdownButton<String>(
@@ -226,16 +225,12 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
     // Mobile: bottom sheet chrome + handle pill
     final bottomPad = MediaQuery.of(context).viewPadding.bottom;
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(NebulaTokens.radiusLG),
-      ),
+      borderRadius: NebulaRadii.sheetTopBorder,
       child: Container(
         padding: EdgeInsets.fromLTRB(24, 20, 24, bottomPad + 24),
         decoration: BoxDecoration(
           color: tokens.denseSurface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(NebulaTokens.radiusLG),
-          ),
+          borderRadius: NebulaRadii.sheetTopBorder,
           border: Border(
             top: BorderSide(color: tokens.surfaceBorder, width: 1),
             left: BorderSide(color: tokens.surfaceBorder, width: 1),
@@ -253,7 +248,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: tokens.mutedText.withValues(alpha: NebulaAlpha.strong),
-                  borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
+                  borderRadius: NebulaRadii.compactControlBorder,
                 ),
               ),
             ),

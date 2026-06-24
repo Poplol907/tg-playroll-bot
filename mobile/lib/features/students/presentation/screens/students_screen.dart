@@ -2,21 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_component_styles.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_semantic.dart';
-import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/models/student.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
-import '../../../../shared/widgets/nebula_parallax_frame.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/widgets/app_screen_header.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
@@ -33,93 +34,95 @@ class StudentsScreen extends ConsumerWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header — wrapped for subtle pointer parallax depth
-            NebulaParallaxFrame(
-              strength: 0.018,
-              maxOffset: 4.0,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Row(
-                  children: [
-                    Builder(builder: (ctx) {
-                      final isLight =
-                          Theme.of(ctx).brightness == Brightness.light;
-                      final titleText = Text(
-                        'Ученики',
-                        style: NebulaTypography.of(ctx).displayL.copyWith(
-                              color: isLight
-                                  ? Colors.white
-                                  : NebulaColors.softWhite,
-                            ),
-                      );
-                      if (!isLight) return titleText;
-                      return ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF1A2540), Color(0xFF0D1117)],
-                        ).createShader(bounds),
-                        child: titleText,
-                      );
-                    }),
-                    const Spacer(),
-                    studentsAsync.whenOrNull(
-                          data: (students) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: tokens.primaryAccent
-                                  .withValues(alpha: NebulaAlpha.surface),
-                              borderRadius:
-                                  BorderRadius.circular(NebulaTokens.radiusSM),
-                              border: Border.all(
-                                  color: tokens.primaryAccent
-                                      .withValues(alpha: NebulaAlpha.accent)),
-                            ),
-                            child: Text(
-                              '${students.length}',
-                              style:
-                                  NebulaTypography.of(context).bodyM.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: tokens.primaryAccent,
-                                      ),
-                            ),
-                          ),
-                        ) ??
-                        const SizedBox.shrink(),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () => _openAddStudent(context, ref),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: tokens.primaryAccent
-                              .withValues(alpha: NebulaAlpha.surface),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: tokens.primaryAccent
-                                  .withValues(alpha: NebulaAlpha.medium)),
-                        ),
-                        child: Icon(
-                          Icons.add_rounded,
-                          color: tokens.primaryAccent,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
+    final header = AppScreenHeader(
+      title: 'Ученики',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (studentsAsync.valueOrNull != null)
+            StatusBadge(
+              label: '${studentsAsync.valueOrNull!.length}',
+              intent: SemanticIntent.primary,
+            ),
+          IconButton(
+            tooltip: 'Добавить ученика',
+            onPressed: () => _openAddStudent(context, ref),
+            icon: Icon(Icons.add_rounded, color: tokens.primaryAccent),
+          ),
+        ],
+      ),
+    );
+
+    Widget buildCard(List<StudentModel> students, int i) {
+      const stagger = 7;
+      final card = _StudentCard(student: students[i], index: i);
+      if (i >= stagger) return card;
+      final delay = (i * 55).ms;
+      return card
+          .animate()
+          .fadeIn(delay: delay, duration: 240.ms, curve: Curves.easeOut)
+          .slideY(
+            begin: 0.08,
+            end: 0,
+            delay: delay,
+            duration: 260.ms,
+            curve: Curves.easeOutCubic,
+          );
+    }
+
+    Widget mobileBody() => studentsAsync.when(
+          loading: () => AppCustomScrollView(
+            header: header,
+            slivers: const [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: OrbitLoader()),
+              ),
+            ],
+          ),
+          error: (e, _) => AppCustomScrollView(
+            header: header,
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: AppErrorCard(
+                    message: parseApiError(e, fallback: 'Ошибка загрузки'),
+                    onRetry: () => ref.invalidate(studentsProvider),
+                    isConnectionError: isConnectionError(e),
+                  ),
                 ),
               ),
-            ), // NebulaParallaxFrame
-            // List
+            ],
+          ),
+          data: (students) => AppCustomScrollView(
+            header: header,
+            padding: AppSafeInsets.list(context, top: 20, bottom: 24),
+            slivers: [
+              if (students.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: AppEmptyState(
+                    message: 'Нет учеников',
+                    subtitle: 'Нажмите + чтобы добавить первого ученика',
+                    icon: Icons.people_outline_rounded,
+                  ),
+                )
+              else
+                SliverList.builder(
+                  itemCount: students.length,
+                  itemBuilder: (_, i) => buildCard(students, i),
+                ),
+            ],
+          ),
+        );
+
+    Widget desktopBody() => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: header,
+            ),
             Expanded(
               child: studentsAsync.when(
                 loading: () => const Center(child: OrbitLoader()),
@@ -130,50 +133,20 @@ class StudentsScreen extends ConsumerWidget {
                     isConnectionError: isConnectionError(e),
                   ),
                 ),
-                data: (students) => students.isEmpty
-                    ? const AppEmptyState(
-                        message: 'Нет учеников',
-                        subtitle: 'Нажмите + чтобы добавить первого ученика',
-                        icon: Icons.people_outline_rounded,
-                      )
-                    : AppListView.builder(
-                        padding: AppSafeInsets.list(
-                          context,
-                          top: 0,
-                          bottom: 24,
-                        ),
-                        itemCount: students.length,
-                        itemBuilder: (context, i) {
-                          // Stagger ONLY the first viewport (cards 0..7) so a
-                          // fresh open feels like a cascade. Anything beyond
-                          // that — including cards revealed by fast scroll —
-                          // appears instantly: no per-row delay can keep up
-                          // with a flick, and any delay shows as a blank gap.
-                          const stagger = 7;
-                          final card =
-                              _StudentCard(student: students[i], index: i);
-                          if (i >= stagger) return card;
-                          final delay = (i * 55).ms;
-                          return card
-                              .animate()
-                              .fadeIn(
-                                delay: delay,
-                                duration: 240.ms,
-                                curve: Curves.easeOut,
-                              )
-                              .slideY(
-                                begin: 0.08,
-                                end: 0,
-                                delay: delay,
-                                duration: 260.ms,
-                                curve: Curves.easeOutCubic,
-                              );
-                        },
-                      ),
+                data: (students) => AppListView.builder(
+                  itemCount: students.length,
+                  itemBuilder: (_, i) => buildCard(students, i),
+                ),
               ),
             ),
           ],
-        ),
+        );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        top: false,
+        child: AppPlatform.isDesktop ? desktopBody() : mobileBody(),
       ),
     );
   }
@@ -242,7 +215,7 @@ class _StudentCard extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: JiggleDeleteWrapper(
         jiggleIndex: index,
-        borderRadius: NebulaTokens.radiusMD,
+        borderRadius: NebulaRadii.card,
         onTap: () => StudentDetailSheet.show(context, student),
         onDeleteConfirmed: () async {
           final confirmed = await _confirmDelete(context);
@@ -262,7 +235,6 @@ class _StudentCard extends ConsumerWidget {
           // Same solid card mechanism as the salary / calendar cards —
           // opaque, readable, no excess transparency.
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          borderRadius: NebulaTokens.radiusMD,
           child: Row(
             children: [
               // Avatar

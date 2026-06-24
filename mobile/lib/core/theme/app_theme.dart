@@ -9,8 +9,8 @@ import 'nebula_alpha.dart';
 import 'nebula_colors.dart';
 import 'nebula_component_styles.dart';
 import 'nebula_layout.dart';
+import 'nebula_radii.dart';
 import 'nebula_semantic.dart';
-import 'nebula_tokens.dart';
 import 'nebula_typography.dart';
 
 class AppTheme {
@@ -78,20 +78,20 @@ class AppTheme {
         filled: true,
         fillColor: NebulaColors.nebulaSurface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: const BorderSide(color: NebulaColors.surfaceBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: const BorderSide(color: NebulaColors.surfaceBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide:
               const BorderSide(color: NebulaColors.auroraCyan, width: 1.2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: const BorderSide(color: NebulaColors.errorRose),
         ),
         labelStyle:
@@ -110,7 +110,7 @@ class AppTheme {
           foregroundColor: NebulaColors.softWhite,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+            borderRadius: NebulaRadii.controlBorder,
           ),
           textStyle: TextStyle(
             fontFamily: 'SpaceMono',
@@ -124,7 +124,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: NebulaColors.spaceBlack,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusLG),
+          borderRadius: NebulaRadii.modalBorder,
           side: const BorderSide(color: NebulaColors.surfaceBorder),
         ),
         elevation: 0,
@@ -184,24 +184,24 @@ class AppTheme {
         filled: true,
         fillColor: tokens.surface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: BorderSide(color: tokens.surfaceBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: BorderSide(color: tokens.surfaceBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: BorderSide(color: tokens.focusAccent, width: 1.2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.controlBorder,
           borderSide: BorderSide(color: tokens.error),
         ),
         labelStyle: TextStyle(color: tokens.mutedText),
-        hintStyle:
-            TextStyle(color: tokens.mutedText.withValues(alpha: NebulaAlpha.high)),
+        hintStyle: TextStyle(
+            color: tokens.mutedText.withValues(alpha: NebulaAlpha.high)),
         prefixIconColor: tokens.mutedText,
         suffixIconColor: tokens.mutedText,
         contentPadding:
@@ -213,7 +213,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+            borderRadius: NebulaRadii.controlBorder,
           ),
           textStyle: const TextStyle(
             fontSize: 16,
@@ -226,7 +226,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: tokens.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusLG),
+          borderRadius: NebulaRadii.modalBorder,
           side: BorderSide(color: tokens.surfaceBorder),
         ),
         elevation: 0,

@@ -100,7 +100,7 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: JiggleDeleteWrapper(
-                borderRadius: NebulaTokens.radiusSM,
+                borderRadius: NebulaRadii.control,
                 onTap: () {
                   Navigator.pop(context);
                   LessonModal.show(context, l);
@@ -162,7 +162,7 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: l.statusColor.withValues(alpha: NebulaAlpha.mist),
-                    borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+                    borderRadius: NebulaRadii.controlBorder,
                     border: Border.all(
                         color: l.statusColor
                             .withValues(alpha: NebulaAlpha.border)),
@@ -239,7 +239,7 @@ class _DayLessonsDialogState extends ConsumerState<_DayLessonsDialog> {
                 decoration: BoxDecoration(
                   color: NebulaColors.stellarBlue
                       .withValues(alpha: NebulaAlpha.subtle),
-                  borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+                  borderRadius: NebulaRadii.cardBorder,
                   border: Border.all(
                       color: NebulaColors.stellarBlue
                           .withValues(alpha: NebulaAlpha.medium)),

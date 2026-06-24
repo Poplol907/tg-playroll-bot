@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
-import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/app_background_host.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
@@ -103,7 +103,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     colors: isLight
                                         ? [
                                             tokens.surface.withValues(
-                                                alpha: NebulaAlpha.occludingSurface),
+                                                alpha: NebulaAlpha
+                                                    .occludingSurface),
                                             tokens.focusAccent.withValues(
                                                 alpha: NebulaAlpha.subtle),
                                             tokens.primaryAccent.withValues(
@@ -153,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     NebulaSurface(
                       dense: true,
                       padding: const EdgeInsets.all(24),
-                      borderRadius: NebulaTokens.radiusLG,
+                      radiusRole: NebulaRadiusRole.panel,
                       child: Form(
                         key: _formKey,
                         child: Column(
@@ -212,11 +213,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 decoration: BoxDecoration(
                                   color: tokens.error
                                       .withValues(alpha: NebulaAlpha.surface),
-                                  borderRadius: BorderRadius.circular(
-                                      NebulaTokens.radiusSM),
+                                  borderRadius: NebulaRadii.controlBorder,
                                   border: Border.all(
-                                      color: tokens.error
-                                          .withValues(alpha: NebulaAlpha.accent)),
+                                      color: tokens.error.withValues(
+                                          alpha: NebulaAlpha.accent)),
                                 ),
                                 child: Row(
                                   children: [

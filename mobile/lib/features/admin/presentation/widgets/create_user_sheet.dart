@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
-import '../../../../core/theme/nebula_tokens.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../shared/widgets/mist_modal.dart';
 import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
@@ -49,13 +49,17 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
       return;
     }
 
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       await ref.read(adminRepositoryProvider).createUser(
             login: login,
             role: _role,
-            teacherName: _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
+            teacherName:
+                _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
             password: _passCtrl.text.isEmpty ? null : _passCtrl.text,
           );
       HapticFeedback.mediumImpact();
@@ -110,8 +114,11 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
           obscure: !_showPass,
           suffix: IconButton(
             icon: Icon(
-              _showPass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: tokens.mutedText, size: 18,
+              _showPass
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              color: tokens.mutedText,
+              size: 18,
             ),
             onPressed: () => setState(() => _showPass = !_showPass),
           ),
@@ -197,22 +204,30 @@ class _RoleChip extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _RoleChip({required this.label, required this.selected, required this.color, required this.onTap});
+  const _RoleChip(
+      {required this.label,
+      required this.selected,
+      required this.color,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     return GestureDetector(
-      onTap: () { HapticFeedback.selectionClick(); onTap(); },
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+          borderRadius: NebulaRadii.controlBorder,
           border: Border.all(
-            color: selected ? color.withValues(alpha: 0.5) : tokens.surfaceBorder,
+            color:
+                selected ? color.withValues(alpha: 0.5) : tokens.surfaceBorder,
           ),
         ),
         child: Text(

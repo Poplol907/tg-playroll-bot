@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_semantic.dart';
-import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
@@ -19,6 +19,8 @@ import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/widgets/app_screen_header.dart';
+import '../../../../core/platform/app_platform.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
@@ -55,111 +57,98 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     final statsAsync = ref.watch(studioStatsProvider);
     final usersAsync = ref.watch(orgUsersProvider);
     final canPop = Navigator.of(context).canPop();
-    final type = NebulaTypography.of(context);
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+
+    Future<void> addUser() async {
+      HapticFeedback.lightImpact();
+      final ok = await CreateUserSheet.show(context);
+      if (ok) {
+        ref.invalidate(orgUsersProvider);
+        ref.invalidate(studioStatsProvider);
+      }
+    }
+
+    final header = AppScreenHeader(
+      title: 'Студия',
+      subtitle: 'Обзор и педагоги',
+      leading: canPop
+          ? IconButton(
+              tooltip: 'Назад',
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(Icons.arrow_back_rounded, color: tokens.mutedText),
+            )
+          : null,
+      trailing: IconButton(
+        tooltip: 'Добавить пользователя',
+        onPressed: addUser,
+        icon: const Icon(
+          Icons.person_add_outlined,
+          color: NebulaColors.stellarBlue,
+        ),
+      ),
+    );
+
+    final teachers = _TeachersList(
+      statsAsync: statsAsync,
+      usersAsync: usersAsync,
+      query: _query,
+      onChanged: () {
+        ref.invalidate(orgUsersProvider);
+        ref.invalidate(studioStatsProvider);
+      },
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            // ── Header ─────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
+        child: AppPlatform.isDesktop
+            ? Column(
                 children: [
-                  if (canPop) ...[
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: NebulaColors.nebulaSurface,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: NebulaColors.surfaceBorder),
-                        ),
-                        child: Icon(Icons.arrow_back_rounded,
-                            color: tokens.mutedText, size: 18),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
                     ),
-                    const SizedBox(width: 14),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Студия',
-                          style:
-                              type.displayM.copyWith(color: tokens.primaryText),
-                        ),
-                        Text(
-                          'Обзор и педагоги',
-                          style: type.labelM.copyWith(color: tokens.mutedText),
-                        ),
-                      ],
+                    child: header,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: _StudioStatsCard(statsAsync: statsAsync),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: _SearchField(
+                      onChanged: (s) => setState(() => _query = s.trim()),
                     ),
                   ),
-                  // Add user button
-                  GestureDetector(
-                    onTap: () async {
-                      HapticFeedback.lightImpact();
-                      final ok = await CreateUserSheet.show(context);
-                      if (ok) {
-                        ref.invalidate(orgUsersProvider);
-                        ref.invalidate(studioStatsProvider);
-                      }
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: NebulaColors.stellarBlue
-                            .withValues(alpha: NebulaAlpha.surface),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: NebulaColors.stellarBlue
-                                .withValues(alpha: NebulaAlpha.medium)),
-                      ),
-                      child: const Icon(Icons.person_add_outlined,
-                          color: NebulaColors.stellarBlue, size: 18),
+                  Expanded(child: teachers),
+                ],
+              )
+            : AppCustomScrollView(
+                header: header,
+                includeKeyboardInset: true,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _StudioStatsCard(statsAsync: statsAsync),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  SliverToBoxAdapter(
+                    child: _SearchField(
+                      onChanged: (s) => setState(() => _query = s.trim()),
                     ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  _TeachersList(
+                    statsAsync: statsAsync,
+                    usersAsync: usersAsync,
+                    query: _query,
+                    onChanged: teachers.onChanged,
+                    sliver: true,
                   ),
                 ],
               ),
-            ),
-
-            // ── Studio stats card (compact) ─────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: _StudioStatsCard(statsAsync: statsAsync),
-            ),
-
-            // ── Search field ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: _SearchField(
-                onChanged: (s) => setState(() => _query = s.trim()),
-              ),
-            ),
-
-            // ── Teachers list ───────────────────────────────────────────
-            Expanded(
-              child: _TeachersList(
-                statsAsync: statsAsync,
-                usersAsync: usersAsync,
-                query: _query,
-                onChanged: () {
-                  ref.invalidate(orgUsersProvider);
-                  ref.invalidate(studioStatsProvider);
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -182,12 +171,12 @@ class _StudioStatsCard extends StatelessWidget {
     return statsAsync.when(
       loading: () => const NebulaSurface(
         padding: EdgeInsets.symmetric(vertical: 28),
-        borderRadius: NebulaTokens.radiusLG,
+        radiusRole: NebulaRadiusRole.panel,
         child: Center(child: OrbitLoader()),
       ),
       error: (e, _) => NebulaSurface(
         padding: const EdgeInsets.all(16),
-        borderRadius: NebulaTokens.radiusLG,
+        radiusRole: NebulaRadiusRole.panel,
         child: Row(
           children: [
             const Icon(Icons.cloud_off_rounded,
@@ -204,7 +193,7 @@ class _StudioStatsCard extends StatelessWidget {
       ),
       data: (s) => NebulaSurface(
         padding: const EdgeInsets.all(16),
-        borderRadius: NebulaTokens.radiusLG,
+        radiusRole: NebulaRadiusRole.panel,
         accent: NebulaColors.stellarBlue,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +268,7 @@ class _SearchField extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: NebulaColors.nebulaSurface,
-        borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+        borderRadius: NebulaRadii.cardBorder,
         border: Border.all(color: NebulaColors.surfaceBorder),
       ),
       child: TextField(
@@ -314,22 +303,27 @@ class _TeachersList extends ConsumerWidget {
   final AsyncValue<List<OrgUser>> usersAsync;
   final String query;
   final VoidCallback onChanged;
+  final bool sliver;
 
   const _TeachersList({
     required this.statsAsync,
     required this.usersAsync,
     required this.query,
     required this.onChanged,
+    this.sliver = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Ждём оба провайдера
     if (usersAsync.isLoading) {
-      return const Center(child: OrbitLoader());
+      const child = Center(child: OrbitLoader());
+      return sliver
+          ? const SliverFillRemaining(hasScrollBody: false, child: child)
+          : child;
     }
     if (usersAsync.hasError) {
-      return Center(
+      final child = Center(
         child: AppErrorCard(
           message: parseApiError(usersAsync.error!,
               fallback: 'Ошибка загрузки списка'),
@@ -340,6 +334,9 @@ class _TeachersList extends ConsumerWidget {
           isConnectionError: isConnectionError(usersAsync.error!),
         ),
       );
+      return sliver
+          ? SliverFillRemaining(hasScrollBody: false, child: child)
+          : child;
     }
 
     final users = usersAsync.value ?? [];
@@ -364,12 +361,26 @@ class _TeachersList extends ConsumerWidget {
     });
 
     if (filtered.isEmpty) {
-      return AppEmptyState(
+      final child = AppEmptyState(
         message: q.isEmpty ? 'Нет педагогов' : 'Никого не нашли',
         subtitle: q.isEmpty
             ? 'Нажмите + чтобы добавить педагога'
             : 'Попробуй другой запрос',
         icon: Icons.school_outlined,
+      );
+      return sliver
+          ? SliverFillRemaining(hasScrollBody: false, child: child)
+          : child;
+    }
+
+    if (sliver) {
+      return SliverList.builder(
+        itemCount: filtered.length,
+        itemBuilder: (context, i) => _TeacherTile(
+          user: filtered[i],
+          stats: statsByTeacher[filtered[i].id],
+          onUpdated: onChanged,
+        ),
       );
     }
 
@@ -425,7 +436,6 @@ class _TeacherTile extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: NebulaSurface(
         padding: EdgeInsets.zero,
-        borderRadius: NebulaTokens.radiusMD,
         child: IconCallout(
           icon: Icons.school_outlined,
           title: user.displayName,
@@ -540,8 +550,8 @@ class _TeacherProfileDialog extends ConsumerWidget {
               // ── Stats island — grouped so the numbers read as one block ──
               NebulaSurface(
                 dense: true,
+                radiusRole: NebulaRadiusRole.card,
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                borderRadius: NebulaTokens.radiusMD,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -583,9 +593,9 @@ class _TeacherProfileDialog extends ConsumerWidget {
               // ── Payout island — the headline number gets its own surface ──
               NebulaSurface(
                 dense: true,
+                radiusRole: NebulaRadiusRole.card,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                borderRadius: NebulaTokens.radiusMD,
                 accent: tokens.success,
                 child: Row(
                   children: [

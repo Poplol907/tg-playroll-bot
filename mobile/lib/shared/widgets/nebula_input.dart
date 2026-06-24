@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -66,7 +67,7 @@ class NebulaInput extends StatefulWidget {
     this.onSubmitted,
     this.onTap,
     this.glowColor = NebulaColors.stellarBlue,
-    this.borderRadius = NebulaTokens.radiusSM,
+    this.borderRadius = NebulaRadii.control,
   });
 
   @override

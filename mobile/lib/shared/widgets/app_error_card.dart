@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
-import '../../core/theme/nebula_tokens.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_typography.dart';
 import 'nebula_surface.dart';
 import 'nebula_text_button.dart';
@@ -57,6 +57,7 @@ class AppEmptyState extends StatelessWidget {
 class AppErrorCard extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
+
   /// Если true — показывает иконку отсутствия связи вместо общей ошибки.
   final bool isConnectionError;
 
@@ -74,7 +75,7 @@ class AppErrorCard extends StatelessWidget {
     final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(24),
-      borderRadius: NebulaTokens.radiusLG,
+      radiusRole: NebulaRadiusRole.panel,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -126,7 +127,6 @@ class AppInlineErrorCard extends StatelessWidget {
     final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(14),
-      borderRadius: NebulaTokens.radiusMD,
       child: Row(
         children: [
           Icon(

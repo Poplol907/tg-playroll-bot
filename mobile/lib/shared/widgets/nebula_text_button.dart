@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_tokens.dart';
 
 class NebulaTextButton extends StatelessWidget {
@@ -42,7 +43,7 @@ class NebulaTextButton extends StatelessWidget {
             color: filled
                 ? color.withValues(alpha: enabled ? 0.08 : 0.04)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+            borderRadius: NebulaRadii.controlBorder,
             border: filled
                 ? Border.all(
                     color: color.withValues(alpha: enabled ? 0.25 : 0.10),

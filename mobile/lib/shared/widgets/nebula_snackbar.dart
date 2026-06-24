@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/theme/nebula_typography.dart';
 import 'nebula_surface.dart';
@@ -47,7 +48,7 @@ void showNebulaSnackBar(
       content: NebulaSurface(
         dense: true,
         accent: accent,
-        borderRadius: NebulaTokens.radiusMD,
+        radiusRole: NebulaRadiusRole.card,
         padding: const EdgeInsets.symmetric(
           horizontal: NebulaTokens.sp16,
           vertical: 14,

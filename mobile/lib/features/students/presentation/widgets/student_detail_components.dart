@@ -56,7 +56,6 @@ class _StatsBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return NebulaSurface(
       padding: EdgeInsets.zero,
-      borderRadius: NebulaTokens.radiusMD,
       child: Row(
         children: [
           _StatItem(
@@ -155,7 +154,7 @@ class _ScheduleRow extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color: role.tint,
-            borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+            borderRadius: NebulaRadii.controlBorder,
             border: Border.all(color: role.border),
           ),
           child: Center(
@@ -210,7 +209,6 @@ class _SubscriptionBlock extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     return NebulaSurface(
       padding: const EdgeInsets.all(16),
-      borderRadius: NebulaTokens.radiusMD,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Text(monthName,
@@ -292,7 +290,7 @@ class _ProgressBar extends StatelessWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(NebulaRadii.micro),
       child: Stack(children: [
         Container(height: 6, color: tokens.surfaceBorder),
         FractionallySizedBox(
@@ -328,7 +326,7 @@ class _DateChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: NebulaAlpha.surface),
-        borderRadius: BorderRadius.circular(NebulaTokens.radiusSM),
+        borderRadius: NebulaRadii.controlBorder,
         border: Border.all(color: color.withValues(alpha: NebulaAlpha.accent)),
       ),
       child: Column(children: [
@@ -364,8 +362,8 @@ class _LessonRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: NebulaSurface(
         dense: true,
+        radiusRole: NebulaRadiusRole.control,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        borderRadius: NebulaTokens.radiusSM,
         accent: color,
         child: Row(children: [
           Container(
@@ -429,14 +427,14 @@ class _AddScheduleButton extends ConsumerWidget {
               tokens.secondaryAccent.withValues(alpha: NebulaAlpha.subtle),
             ],
           ),
-          borderRadius: BorderRadius.circular(NebulaTokens.radiusMD),
+          borderRadius: NebulaRadii.cardBorder,
           border: Border.all(
             color: tokens.primaryAccent.withValues(alpha: NebulaAlpha.medium),
           ),
           boxShadow: [
             BoxShadow(
-              color: tokens.primaryAccent
-                  .withValues(alpha: NebulaAlpha.surface),
+              color:
+                  tokens.primaryAccent.withValues(alpha: NebulaAlpha.surface),
               blurRadius: 12,
               offset: Offset.zero,
             ),

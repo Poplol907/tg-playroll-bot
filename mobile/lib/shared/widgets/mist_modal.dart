@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../providers/bottom_bar_visibility_provider.dart';
 import 'adaptive_modal.dart';
@@ -78,7 +79,7 @@ class MistModal extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 color: tokens.mutedText.withValues(alpha: NebulaAlpha.medium),
-                borderRadius: BorderRadius.circular(NebulaTokens.radiusXS),
+                borderRadius: NebulaRadii.compactControlBorder,
               ),
             ),
             const SizedBox(height: 8),

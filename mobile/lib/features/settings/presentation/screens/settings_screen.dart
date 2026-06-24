@@ -7,8 +7,8 @@ import '../../../../core/theme/app_visual_mode.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_semantic.dart';
-import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -16,6 +16,7 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
+import '../../../../shared/widgets/app_screen_header.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/theme_reveal_overlay.dart';
 
@@ -114,15 +115,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Title ────────────────────────────────────────────────────
-              Text(
-                'Настройки',
-                style: type.displayM.copyWith(color: tokens.primaryText),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user != null ? '@${user.login}' : '',
-                style: type.labelM.copyWith(color: tokens.mutedText),
+              AppScreenHeader(
+                title: 'Настройки',
+                subtitle: user != null ? '@${user.login}' : null,
               ),
               const SizedBox(height: 24),
 
@@ -130,7 +125,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _SectionLabel(label: 'СЕРВЕР'),
               NebulaSurface(
                 padding: const EdgeInsets.all(16),
-                borderRadius: NebulaTokens.radiusMD,
                 accent: NebulaColors.stellarBlue,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,8 +168,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   .withValues(alpha: NebulaAlpha.surface)
                               : NebulaColors.stellarBlue
                                   .withValues(alpha: NebulaAlpha.surface),
-                          borderRadius:
-                              BorderRadius.circular(NebulaTokens.radiusMD),
+                          borderRadius: NebulaRadii.cardBorder,
                           border: Border.all(
                             color: _saved
                                 ? NebulaColors.successMint
@@ -224,7 +217,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _SectionLabel(label: 'ИНТЕРФЕЙС'),
               NebulaSurface(
                 padding: EdgeInsets.zero,
-                borderRadius: NebulaTokens.radiusMD,
                 child: IconCallout(
                   icon: mode == AppVisualMode.lightLite
                       ? Icons.light_mode_rounded
@@ -246,7 +238,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _SectionLabel(label: 'АККАУНТ'),
               NebulaSurface(
                 padding: EdgeInsets.zero,
-                borderRadius: NebulaTokens.radiusMD,
                 child: ActionRow(
                   icon: Icons.logout_rounded,
                   label: 'Выйти из аккаунта',
