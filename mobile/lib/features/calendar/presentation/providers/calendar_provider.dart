@@ -9,25 +9,33 @@ import '../../data/calendar_repository.dart';
 // so any screen that writes to selectedMonthProvider also affects salary/students.
 final selectedMonthProvider = globalMonthProvider;
 
-// Lessons for current month.
-// Когда админ в режиме view-as — подмешиваем teacher_id, чтобы сервер
-// вернул уроки выбранного педагога, а не текущего пользователя.
+// Cache key for a month of lessons in a specific teacher context. Including
+// teacherId means admin/view-as never shares a cache slot with another teacher
+// — eliminates the "lessons of one teacher briefly show for everyone" leak.
+typedef LessonsQuery = ({String monthYear, int? teacherId});
+
+// Lessons for a month in an explicit teacher context.
 final lessonsProvider =
-    FutureProvider.family<List<LessonModel>, String>((ref, monthYear) async {
+    FutureProvider.family<List<LessonModel>, LessonsQuery>((ref, query) async {
   final repo = ref.watch(calendarRepositoryProvider);
-  final viewAs = ref.watch(viewAsTeacherProvider);
   return repo.getLessons(
-    monthYear: monthYear,
-    teacherId: viewAs?.id,
+    monthYear: query.monthYear,
+    teacherId: query.teacherId,
   );
 });
 
-// Derived: lessons for currently selected month
+// Derived: lessons for the currently selected month in the current view-as
+// context. Synchronous Provider (not FutureProvider) so switching teacher
+// returns the new context's AsyncValue immediately instead of lingering on the
+// previous teacher's data during the refetch gap.
 final currentMonthLessonsProvider =
-    FutureProvider<List<LessonModel>>((ref) async {
+    Provider<AsyncValue<List<LessonModel>>>((ref) {
   final month = ref.watch(selectedMonthProvider);
   final monthYear = DateFormat('yyyy-MM').format(month);
-  return ref.watch(lessonsProvider(monthYear).future);
+  final viewAs = ref.watch(viewAsTeacherProvider);
+  return ref.watch(
+    lessonsProvider((monthYear: monthYear, teacherId: viewAs?.id)),
+  );
 });
 
 // Selected day's lessons

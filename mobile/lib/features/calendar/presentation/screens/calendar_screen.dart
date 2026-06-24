@@ -28,6 +28,7 @@ import '../../data/calendar_repository.dart';
 import '../widgets/constellation_calendar.dart';
 import '../widgets/lesson_modal.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../features/students/data/students_repository.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
@@ -49,12 +50,14 @@ class CalendarScreen extends ConsumerWidget {
         CosmoThemeTokens.darkInternals;
     final month = ref.watch(selectedMonthProvider);
     final monthYear = DateFormat('yyyy-MM').format(month);
-    final lessonsAsync = ref.watch(lessonsProvider(monthYear));
+    final viewAs = ref.watch(viewAsTeacherProvider);
+    final lessonsQuery = (monthYear: monthYear, teacherId: viewAs?.id);
+    final lessonsAsync = ref.watch(lessonsProvider(lessonsQuery));
     final user = ref.watch(currentUserProvider);
 
     // ── Haptic vibration scaled by unfilled lesson count ──
     ref.listen<AsyncValue<List<LessonModel>>>(
-      lessonsProvider(monthYear),
+      lessonsProvider(lessonsQuery),
       (_, next) {
         next.whenData((lessons) {
           final now = DateTime.now();
