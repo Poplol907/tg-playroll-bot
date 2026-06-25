@@ -66,7 +66,7 @@ class _LegendDot extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '$value сум',
+                  '$value ${Money.active.symbol}',
                   maxLines: 1,
                   style: type.labelM.copyWith(
                     fontWeight: FontWeight.w700,
@@ -292,7 +292,7 @@ class _PendingBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '$amount сум — пропуски ученика, будут зачислены в конце месяца',
+              '$amount — пропуски ученика, будут зачислены в конце месяца',
               style: NebulaTypography.of(context)
                   .bodyS
                   .copyWith(color: tokens.warning),
@@ -434,7 +434,7 @@ class _RatesCard extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
                       child: Text(
-                        '${fmt(r.ratePerLesson)} сум',
+                        '${fmt(r.ratePerLesson)} ${Money.active.symbol}',
                         maxLines: 1,
                         style: type.bodyM.copyWith(
                           fontWeight: FontWeight.w700,
