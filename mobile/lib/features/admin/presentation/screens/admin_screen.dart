@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/money/currency.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
@@ -208,7 +208,7 @@ class _StudioStatsCard extends StatelessWidget {
                 Expanded(
                   child: MetricStat(
                     label: 'Заработок',
-                    value: _formatMoney(s.totalAmount),
+                    value: Money.format(s.totalAmount),
                     intent: SemanticIntent.success,
                   ),
                 ),
@@ -246,10 +246,6 @@ class _StudioStatsCard extends StatelessWidget {
     );
   }
 
-  String _formatMoney(int amount) {
-    final formatter = NumberFormat.decimalPattern('ru');
-    return '${formatter.format(amount)} ₽';
-  }
 }
 
 // ─────────────────────────────────────────────
@@ -440,19 +436,13 @@ class _TeacherTile extends ConsumerWidget {
           icon: Icons.school_outlined,
           title: user.displayName,
           subtitle:
-              '${user.login} · $lessonsDone уроков · ${_formatMoney(totalAmount)}',
+              '${user.login} · $lessonsDone уроков · ${Money.format(totalAmount)}',
           intent: SemanticIntent.info,
           onTap: () => _openProfile(context, ref),
           trailing: trailing,
         ),
       ),
     );
-  }
-
-  String _formatMoney(int amount) {
-    if (amount == 0) return '0 ₽';
-    final formatter = NumberFormat.decimalPattern('ru');
-    return '${formatter.format(amount)} ₽';
   }
 
   void _openProfile(BuildContext context, WidgetRef ref) {
@@ -614,7 +604,7 @@ class _TeacherProfileDialog extends ConsumerWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerRight,
                         child: Text(
-                          _formatMoney(s?.totalAmount ?? 0),
+                          Money.format(s?.totalAmount ?? 0),
                           maxLines: 1,
                           style: type.titleM.copyWith(
                             color: tokens.success,
@@ -700,11 +690,6 @@ class _TeacherProfileDialog extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String _formatMoney(int amount) {
-    final formatter = NumberFormat.decimalPattern('ru');
-    return '${formatter.format(amount)} ₽';
   }
 
   Future<void> _confirmAndDisable(BuildContext context, WidgetRef ref) async {
