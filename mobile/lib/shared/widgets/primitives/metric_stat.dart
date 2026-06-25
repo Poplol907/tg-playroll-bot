@@ -44,7 +44,7 @@ class MetricStat extends StatelessWidget {
           ),
         ),
         SizedBox(height: style.valueToLabelGap),
-        // Values like money ("1 234 567 ₽") use non-breaking spaces and can't
+        // Values like money ("1 234 567 сум") use non-breaking spaces and can't
         // wrap — scaleDown shrinks an oversized number to fit its column
         // instead of overflowing the row.
         FittedBox(
