@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/money/currency.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
@@ -223,8 +224,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
     }
   }
 
-  String _fmt(int amount) =>
-      NumberFormat('#,###', 'ru').format(amount).replaceAll(',', ' ');
+  String _fmt(int amount) => Money.amount(amount);
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +273,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '${_fmt((d.totalCurrent * ring).round())} сум',
+                        Money.format((d.totalCurrent * ring).round()),
                         maxLines: 1,
                         style: NebulaTypography.of(context).displayL.copyWith(
                               fontSize: NebulaTypography.of(context)
@@ -311,7 +311,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'из ${_fmt(d.goalAmount)} сум',
+                      'из ${Money.format(d.goalAmount)}',
                       style: NebulaTypography.of(context).bodyM.copyWith(
                             color: tokens.secondaryText,
                             letterSpacing: 0.2,
@@ -476,7 +476,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
             ],
 
             if (d.lessonsMissed > 0) ...[
-              entered(_PendingBanner(amount: _fmt(d.pendingAmount)), 0.35, 0.9),
+              entered(_PendingBanner(amount: Money.format(d.pendingAmount)), 0.35, 0.9),
               const SizedBox(height: 16),
             ],
 
@@ -502,26 +502,26 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
                     const SizedBox(height: 16),
                     _PayRow(
                       label: 'Аванс (1–15)',
-                      value: '${_fmt(d.advanceAmount)} сум',
+                      value: Money.format(d.advanceAmount),
                       color: tokens.primaryAccent,
                     ),
                     Divider(color: tokens.surfaceBorder, height: 24),
                     _PayRow(
                       label: 'Доплата (16–конец)',
-                      value: '${_fmt(d.finalAmount)} сум',
+                      value: Money.format(d.finalAmount),
                       color: tokens.secondaryAccent,
                     ),
                     Divider(color: tokens.surfaceBorder, height: 24),
                     _PayRow(
                       label: 'Итого к выплате',
-                      value: '${_fmt(d.totalAmount)} сум',
+                      value: Money.format(d.totalAmount),
                       color: tokens.success,
                       bold: true,
                     ),
                     const SizedBox(height: 12),
                     Center(
                       child: Text(
-                        'Куплено уроков: ${d.totalSubscribed}  •  Цель: ${_fmt(d.goalAmount)} сум',
+                        'Куплено уроков: ${d.totalSubscribed}  •  Цель: ${Money.format(d.goalAmount)}',
                         style: NebulaTypography.of(context).labelS.copyWith(
                               color: tokens.mutedText,
                             ),
