@@ -24,9 +24,11 @@ import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
+import '../../data/rates_repository.dart';
 import '../providers/view_as_teacher_provider.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
+import '../widgets/set_rate_sheet.dart';
 
 // ─────────────────────────────────────────────
 //  AdminScreen — главный экран администратора
@@ -427,6 +429,67 @@ class _TeacherProfileScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 10),
+
+                      // ── Rate island ──
+                      Builder(builder: (context) {
+                        final rateAsync =
+                            ref.watch(teacherDefaultRateProvider(user.id));
+                        return NebulaSurface(
+                          dense: true,
+                          radiusRole: NebulaRadiusRole.card,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          child: Row(
+                            children: [
+                              Icon(Icons.payments_outlined,
+                                  color: tokens.focusAccent, size: 18),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text('Ставка за урок',
+                                    style: type.bodyM
+                                        .copyWith(color: tokens.secondaryText)),
+                              ),
+                              const SizedBox(width: 10),
+                              rateAsync.when(
+                                data: (rate) => Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      Money.format(rate),
+                                      maxLines: 1,
+                                      style: type.titleM.copyWith(
+                                        color: tokens.primaryText,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                loading: () => const OrbitLoader(size: 18),
+                                error: (_, __) => Text('—',
+                                    style: type.titleM
+                                        .copyWith(color: tokens.mutedText)),
+                              ),
+                              const SizedBox(width: 10),
+                              NebulaTextButton(
+                                label: 'Изменить',
+                                compact: true,
+                                onPressed: () async {
+                                  final currentRate =
+                                      rateAsync.valueOrNull ?? 0;
+                                  final ok = await SetRateSheet.show(
+                                      context, user.id, currentRate);
+                                  if (ok) {
+                                    ref.invalidate(
+                                        teacherDefaultRateProvider(user.id));
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                       const SizedBox(height: 18),
 
                       // ── Primary action: view as teacher ──
