@@ -16,6 +16,9 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
+import '../../../students/data/students_repository.dart';
+import '../../../students/presentation/widgets/student_detail_sheet.dart';
+import '../../../../shared/models/student.dart';
 import '../../data/admin_repository.dart';
 import 'teacher_students_screen.dart';
 
@@ -268,10 +271,129 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-// Placeholder tab — filled in by Task 3.
-class _StudentsSearchTab extends StatelessWidget {
+// ─────────────────────────────────────────────
+//  Ученики segment — studio-wide student search, tap opens detail sheet
+// ─────────────────────────────────────────────
+
+class _StudentsSearchTab extends ConsumerStatefulWidget {
   const _StudentsSearchTab();
+
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Ученики'));
+  ConsumerState<_StudentsSearchTab> createState() => _StudentsSearchTabState();
+}
+
+class _StudentsSearchTabState extends ConsumerState<_StudentsSearchTab> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final studentsAsync = ref.watch(studentsProvider);
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: _SearchField(
+            hintText: 'Поиск по ученикам...',
+            onChanged: (s) => setState(() => _query = s.trim()),
+          ),
+        ),
+        Expanded(
+          child: _StudentSearchList(
+            studentsAsync: studentsAsync,
+            query: _query,
+            onChanged: () => ref.invalidate(studentsProvider),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StudentSearchList extends ConsumerWidget {
+  final AsyncValue<List<StudentModel>> studentsAsync;
+  final String query;
+  final VoidCallback onChanged;
+
+  const _StudentSearchList({
+    required this.studentsAsync,
+    required this.query,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (studentsAsync.isLoading) {
+      return const Center(child: OrbitLoader());
+    }
+    if (studentsAsync.hasError) {
+      return Center(
+        child: AppErrorCard(
+          message: parseApiError(studentsAsync.error!,
+              fallback: 'Ошибка загрузки списка'),
+          onRetry: onChanged,
+          isConnectionError: isConnectionError(studentsAsync.error!),
+        ),
+      );
+    }
+
+    final students = studentsAsync.value ?? [];
+
+    final q = query.toLowerCase();
+    final filtered = q.isEmpty
+        ? students
+        : students.where((s) {
+            final firstName = s.firstName.toLowerCase();
+            final lastName = s.lastName.toLowerCase();
+            return firstName.contains(q) || lastName.contains(q);
+          }).toList();
+
+    if (filtered.isEmpty) {
+      return AppEmptyState(
+        message: q.isEmpty ? 'Нет учеников' : 'Никого не нашли',
+        subtitle: q.isEmpty ? null : 'Попробуй другой запрос',
+        icon: Icons.person_outline_rounded,
+      );
+    }
+
+    return AppListView.builder(
+      includeKeyboardInset: true,
+      padding: AppSafeInsets.list(
+        context,
+        top: 4,
+        bottom: 24,
+        includeKeyboard: true,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, i) => _StudentSearchTile(student: filtered[i]),
+    );
+  }
+}
+
+class _StudentSearchTile extends StatelessWidget {
+  final StudentModel student;
+
+  const _StudentSearchTile({required this.student});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: NebulaSurface(
+        padding: EdgeInsets.zero,
+        child: IconCallout(
+          icon: Icons.person_outline_rounded,
+          title: student.fullName,
+          subtitle: student.phone,
+          intent: SemanticIntent.info,
+          onTap: () => StudentDetailSheet.show(context, student),
+          trailing: Icon(Icons.chevron_right_rounded,
+              color: tokens.mutedText, size: 20),
+        ),
+      ),
+    );
+  }
 }
