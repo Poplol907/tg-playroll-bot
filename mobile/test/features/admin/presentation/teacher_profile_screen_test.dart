@@ -1,4 +1,5 @@
 import 'package:cosmo_studio/features/admin/data/admin_repository.dart';
+import 'package:cosmo_studio/features/admin/data/payouts_repository.dart';
 import 'package:cosmo_studio/features/admin/data/rates_repository.dart';
 import 'package:cosmo_studio/features/admin/presentation/screens/admin_screen.dart';
 import 'package:dio/dio.dart';
@@ -11,6 +12,13 @@ class _FakeRatesRepository extends RatesRepository {
 
   @override
   Future<int> getDefaultRate(int teacherId) async => 60000;
+}
+
+class _FakePayoutsRepository extends PayoutsRepository {
+  _FakePayoutsRepository() : super(Dio());
+
+  @override
+  Future<int> getPaidSum(int teacherId, String monthYear) async => 0;
 }
 
 void main() {
@@ -38,6 +46,8 @@ void main() {
       ProviderScope(
         overrides: [
           ratesRepositoryProvider.overrideWithValue(_FakeRatesRepository()),
+          payoutsRepositoryProvider
+              .overrideWithValue(_FakePayoutsRepository()),
         ],
         child: MaterialApp(
           home: Scaffold(
