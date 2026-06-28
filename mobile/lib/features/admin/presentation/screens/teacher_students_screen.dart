@@ -67,7 +67,11 @@ class TeacherStudentsScreen extends ConsumerWidget {
                 ),
               ),
               Expanded(
-                child: _StudentsList(studentsAsync: studentsAsync, ref: ref),
+                child: _StudentsList(
+                  teacherId: user.id,
+                  studentsAsync: studentsAsync,
+                  ref: ref,
+                ),
               ),
             ],
           ),
@@ -78,10 +82,15 @@ class TeacherStudentsScreen extends ConsumerWidget {
 }
 
 class _StudentsList extends StatelessWidget {
+  final int teacherId;
   final AsyncValue<List<StudentModel>> studentsAsync;
   final WidgetRef ref;
 
-  const _StudentsList({required this.studentsAsync, required this.ref});
+  const _StudentsList({
+    required this.teacherId,
+    required this.studentsAsync,
+    required this.ref,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +99,7 @@ class _StudentsList extends StatelessWidget {
       error: (e, _) => Center(
         child: AppErrorCard(
           message: parseApiError(e, fallback: 'Ошибка загрузки учеников'),
-          onRetry: () => ref.invalidate(studentsByTeacherProvider),
+          onRetry: () => ref.invalidate(studentsByTeacherProvider(teacherId)),
           isConnectionError: isConnectionError(e),
         ),
       ),
