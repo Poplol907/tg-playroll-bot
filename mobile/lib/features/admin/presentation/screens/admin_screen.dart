@@ -10,7 +10,6 @@ import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/app_background_host.dart';
-import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
@@ -50,12 +49,9 @@ class AdminScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminScreenState extends ConsumerState<AdminScreen> {
-  String _query = '';
-
   @override
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(studioStatsProvider);
-    final usersAsync = ref.watch(orgUsersProvider);
     final canPop = Navigator.of(context).canPop();
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
@@ -89,16 +85,6 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
       ),
     );
 
-    final teachers = _TeachersList(
-      statsAsync: statsAsync,
-      usersAsync: usersAsync,
-      query: _query,
-      onChanged: () {
-        ref.invalidate(orgUsersProvider);
-        ref.invalidate(studioStatsProvider);
-      },
-    );
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -117,13 +103,6 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: _StudioStatsCard(statsAsync: statsAsync),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: _SearchField(
-                      onChanged: (s) => setState(() => _query = s.trim()),
-                    ),
-                  ),
-                  Expanded(child: teachers),
                 ],
               )
             : AppCustomScrollView(
@@ -132,20 +111,6 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                 slivers: [
                   SliverToBoxAdapter(
                     child: _StudioStatsCard(statsAsync: statsAsync),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                  SliverToBoxAdapter(
-                    child: _SearchField(
-                      onChanged: (s) => setState(() => _query = s.trim()),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                  _TeachersList(
-                    statsAsync: statsAsync,
-                    usersAsync: usersAsync,
-                    query: _query,
-                    onChanged: teachers.onChanged,
-                    sliver: true,
                   ),
                 ],
               ),
@@ -246,214 +211,6 @@ class _StudioStatsCard extends StatelessWidget {
     );
   }
 
-}
-
-// ─────────────────────────────────────────────
-//  Search field
-// ─────────────────────────────────────────────
-
-class _SearchField extends StatelessWidget {
-  final ValueChanged<String> onChanged;
-
-  const _SearchField({required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-    return Container(
-      decoration: BoxDecoration(
-        color: NebulaColors.nebulaSurface,
-        borderRadius: NebulaRadii.cardBorder,
-        border: Border.all(color: NebulaColors.surfaceBorder),
-      ),
-      child: TextField(
-        onChanged: onChanged,
-        style: NebulaTypography.of(context)
-            .bodyM
-            .copyWith(color: tokens.primaryText),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: InputBorder.none,
-          hintText: 'Поиск по имени или логину...',
-          hintStyle: NebulaTypography.of(context)
-              .bodyM
-              .copyWith(color: tokens.mutedText),
-          prefixIcon:
-              Icon(Icons.search_rounded, color: tokens.mutedText, size: 18),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Teachers list
-//  Объединяет данные из orgUsersProvider (user info) и studioStatsProvider (stats)
-// ─────────────────────────────────────────────
-
-class _TeachersList extends ConsumerWidget {
-  final AsyncValue<StudioStats> statsAsync;
-  final AsyncValue<List<OrgUser>> usersAsync;
-  final String query;
-  final VoidCallback onChanged;
-  final bool sliver;
-
-  const _TeachersList({
-    required this.statsAsync,
-    required this.usersAsync,
-    required this.query,
-    required this.onChanged,
-    this.sliver = false,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Ждём оба провайдера
-    if (usersAsync.isLoading) {
-      const child = Center(child: OrbitLoader());
-      return sliver
-          ? const SliverFillRemaining(hasScrollBody: false, child: child)
-          : child;
-    }
-    if (usersAsync.hasError) {
-      final child = Center(
-        child: AppErrorCard(
-          message: parseApiError(usersAsync.error!,
-              fallback: 'Ошибка загрузки списка'),
-          onRetry: () {
-            ref.invalidate(orgUsersProvider);
-            ref.invalidate(studioStatsProvider);
-          },
-          isConnectionError: isConnectionError(usersAsync.error!),
-        ),
-      );
-      return sliver
-          ? SliverFillRemaining(hasScrollBody: false, child: child)
-          : child;
-    }
-
-    final users = usersAsync.value ?? [];
-    final teachers = users.where((u) => !u.isAdmin).toList();
-
-    // Фильтр по поиску (нечувствительный к регистру)
-    final q = query.toLowerCase();
-    final filtered = q.isEmpty
-        ? teachers
-        : teachers.where((t) {
-            final name = (t.teacherName ?? '').toLowerCase();
-            final login = t.login.toLowerCase();
-            return name.contains(q) || login.contains(q);
-          }).toList();
-
-    // Маппинг user → stats
-    final statsByTeacher = <int, TeacherStats>{};
-    statsAsync.whenData((s) {
-      for (final t in s.teachers) {
-        statsByTeacher[t.teacherId] = t;
-      }
-    });
-
-    if (filtered.isEmpty) {
-      final child = AppEmptyState(
-        message: q.isEmpty ? 'Нет педагогов' : 'Никого не нашли',
-        subtitle: q.isEmpty
-            ? 'Нажмите + чтобы добавить педагога'
-            : 'Попробуй другой запрос',
-        icon: Icons.school_outlined,
-      );
-      return sliver
-          ? SliverFillRemaining(hasScrollBody: false, child: child)
-          : child;
-    }
-
-    if (sliver) {
-      return SliverList.builder(
-        itemCount: filtered.length,
-        itemBuilder: (context, i) => _TeacherTile(
-          user: filtered[i],
-          stats: statsByTeacher[filtered[i].id],
-          onUpdated: onChanged,
-        ),
-      );
-    }
-
-    return AppListView.builder(
-      includeKeyboardInset: true,
-      padding: AppSafeInsets.list(
-        context,
-        top: 4,
-        bottom: 24,
-        includeKeyboard: true,
-      ),
-      itemCount: filtered.length,
-      itemBuilder: (context, i) => _TeacherTile(
-        user: filtered[i],
-        stats: statsByTeacher[filtered[i].id],
-        onUpdated: onChanged,
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Teacher tile
-// ─────────────────────────────────────────────
-
-class _TeacherTile extends ConsumerWidget {
-  final OrgUser user;
-  final TeacherStats? stats;
-  final VoidCallback onUpdated;
-
-  const _TeacherTile({
-    required this.user,
-    required this.stats,
-    required this.onUpdated,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final lessonsDone = stats?.lessonsDone ?? 0;
-    final totalAmount = stats?.totalAmount ?? 0;
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-
-    final trailing = user.hasPassword
-        ? Icon(Icons.chevron_right_rounded, color: tokens.mutedText, size: 20)
-        : const StatusBadge(
-            label: 'НЕТ ПАРОЛЯ',
-            icon: Icons.lock_open_rounded,
-            intent: SemanticIntent.warning,
-          );
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: NebulaSurface(
-        padding: EdgeInsets.zero,
-        child: IconCallout(
-          icon: Icons.school_outlined,
-          title: user.displayName,
-          subtitle:
-              '${user.login} · $lessonsDone уроков · ${Money.format(totalAmount)}',
-          intent: SemanticIntent.info,
-          onTap: () => _openProfile(context, ref),
-          trailing: trailing,
-        ),
-      ),
-    );
-  }
-
-  void _openProfile(BuildContext context, WidgetRef ref) {
-    HapticFeedback.selectionClick();
-    TeacherProfileEntry.open(
-      context,
-      user: user,
-      stats: stats,
-      onUpdated: onUpdated,
-    );
-  }
 }
 
 // ─────────────────────────────────────────────
