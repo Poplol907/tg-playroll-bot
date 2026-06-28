@@ -25,9 +25,11 @@ import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
+import '../../data/payouts_repository.dart';
 import '../../data/rates_repository.dart';
 import '../payout_summary.dart';
 import '../providers/view_as_teacher_provider.dart';
+import '../widgets/add_payout_sheet.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
 import '../widgets/set_rate_sheet.dart';
@@ -422,41 +424,88 @@ class _TeacherProfileScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
 
-                      // ── Payout island ──
-                      NebulaSurface(
-                        dense: true,
-                        radiusRole: NebulaRadiusRole.card,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
-                        accent: tokens.success,
-                        child: Row(
+                      // ── Payout island: owed / paid / remaining ──
+                      Builder(builder: (context) {
+                        final month = ref.watch(globalMonthYearProvider);
+                        final paidAsync = ref.watch(teacherPaidProvider(
+                            (teacherId: user.id, monthYear: month)));
+                        final owed = s?.totalAmount ?? 0;
+                        final paid = paidAsync.valueOrNull;
+                        final remaining =
+                            paid == null ? null : (owed - paid).clamp(0, owed);
+
+                        Future<void> markPayout() async {
+                          final ok = await AddPayoutSheet.show(context,
+                              user.id, month, remaining ?? owed);
+                          if (ok) {
+                            ref.invalidate(teacherPaidProvider(
+                                (teacherId: user.id, monthYear: month)));
+                          }
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Icon(Icons.payments_outlined,
-                                color: tokens.success, size: 18),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text('К выплате',
-                                  style: type.bodyM
-                                      .copyWith(color: tokens.secondaryText)),
-                            ),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  Money.format(s?.totalAmount ?? 0),
-                                  maxLines: 1,
-                                  style: type.titleM.copyWith(
+                            NebulaSurface(
+                              dense: true,
+                              radiusRole: NebulaRadiusRole.card,
+                              padding: const EdgeInsets.fromLTRB(
+                                  16, 14, 16, 10),
+                              accent: tokens.success,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _PayoutRow(
+                                    icon: Icons.payments_outlined,
+                                    label: 'К выплате',
+                                    value: Money.format(owed),
                                     color: tokens.success,
-                                    fontWeight: FontWeight.w700,
                                   ),
-                                ),
+                                  const SizedBox(height: 8),
+                                  paidAsync.when(
+                                    data: (paidValue) => Column(
+                                      children: [
+                                        _PayoutRow(
+                                          icon: Icons.check_circle_outline_rounded,
+                                          label: 'Выплачено',
+                                          value: Money.format(paidValue),
+                                          color: tokens.primaryText,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _PayoutRow(
+                                          icon: Icons.hourglass_bottom_rounded,
+                                          label: 'Осталось',
+                                          value: Money.format(
+                                              (owed - paidValue)
+                                                  .clamp(0, owed)),
+                                          color: tokens.warning,
+                                        ),
+                                      ],
+                                    ),
+                                    loading: () => const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      child: OrbitLoader(size: 18),
+                                    ),
+                                    error: (_, __) => _PayoutRow(
+                                      icon: Icons.error_outline_rounded,
+                                      label: 'Выплачено',
+                                      value: '—',
+                                      color: tokens.mutedText,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 10),
+                            NebulaTextButton(
+                              label: 'Отметить выплату',
+                              icon: Icons.add_circle_outline_rounded,
+                              onPressed: markPayout,
+                            ),
                           ],
-                        ),
-                      ),
+                        );
+                      }),
                       const SizedBox(height: 10),
 
                       // ── Rate island ──
@@ -667,6 +716,52 @@ class _TeacherProfileScreen extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+class _PayoutRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _PayoutRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(label,
+              style: type.bodyM.copyWith(color: tokens.secondaryText)),
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: type.titleM.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
