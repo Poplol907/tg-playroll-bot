@@ -1,8 +1,17 @@
 import 'package:cosmo_studio/features/admin/data/admin_repository.dart';
+import 'package:cosmo_studio/features/admin/data/rates_repository.dart';
 import 'package:cosmo_studio/features/admin/presentation/screens/admin_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class _FakeRatesRepository extends RatesRepository {
+  _FakeRatesRepository() : super(Dio());
+
+  @override
+  Future<int> getDefaultRate(int teacherId) async => 60000;
+}
 
 void main() {
   testWidgets(
@@ -27,6 +36,9 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          ratesRepositoryProvider.overrideWithValue(_FakeRatesRepository()),
+        ],
         child: MaterialApp(
           home: Scaffold(
             body: Builder(
