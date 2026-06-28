@@ -8,6 +8,7 @@ import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
+import '../../../../shared/models/student.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/app_screen_header.dart';
@@ -18,7 +19,6 @@ import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
 import '../../../students/data/students_repository.dart';
 import '../../../students/presentation/widgets/student_detail_sheet.dart';
-import '../../../../shared/models/student.dart';
 import '../../data/admin_repository.dart';
 import 'teacher_students_screen.dart';
 
