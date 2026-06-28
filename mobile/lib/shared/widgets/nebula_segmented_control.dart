@@ -36,28 +36,37 @@ class NebulaSegmentedControl extends StatelessWidget {
         children: [
           for (var i = 0; i < segments.length; i++)
             Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => onChanged(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  decoration: BoxDecoration(
-                    color: i == selectedIndex
-                        ? tokens.primaryAccent.withValues(alpha: NebulaAlpha.surface)
-                        : Colors.transparent,
-                    borderRadius: NebulaRadii.pillBorder,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    segments[i],
-                    style: type.labelM.copyWith(
+              child: Semantics(
+                button: true,
+                selected: i == selectedIndex,
+                label: segments[i],
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onChanged(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    decoration: BoxDecoration(
                       color: i == selectedIndex
-                          ? tokens.primaryText
-                          : tokens.mutedText,
-                      fontWeight:
-                          i == selectedIndex ? FontWeight.w700 : FontWeight.w500,
+                          ? tokens.primaryAccent
+                              .withValues(alpha: NebulaAlpha.surface)
+                          : Colors.transparent,
+                      borderRadius: NebulaRadii.pillBorder,
+                    ),
+                    alignment: Alignment.center,
+                    child: ExcludeSemantics(
+                      child: Text(
+                        segments[i],
+                        style: type.labelM.copyWith(
+                          color: i == selectedIndex
+                              ? tokens.primaryText
+                              : tokens.mutedText,
+                          fontWeight: i == selectedIndex
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ),
