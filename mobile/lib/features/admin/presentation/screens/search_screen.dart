@@ -196,6 +196,14 @@ class _TeacherSearchTile extends StatelessWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
 
+    final trailing = user.hasPassword
+        ? Icon(Icons.chevron_right_rounded, color: tokens.mutedText, size: 20)
+        : const StatusBadge(
+            label: 'НЕТ ПАРОЛЯ',
+            icon: Icons.lock_open_rounded,
+            intent: SemanticIntent.warning,
+          );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: NebulaSurface(
@@ -211,8 +219,7 @@ class _TeacherSearchTile extends StatelessWidget {
               builder: (_) => TeacherStudentsScreen(user: user),
             ),
           ),
-          trailing: Icon(Icons.chevron_right_rounded,
-              color: tokens.mutedText, size: 20),
+          trailing: trailing,
         ),
       ),
     );
