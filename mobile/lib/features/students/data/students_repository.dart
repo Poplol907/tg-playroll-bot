@@ -80,3 +80,9 @@ final studentsProvider = FutureProvider<List<StudentModel>>((ref) async {
 final teachersPickerProvider = FutureProvider<List<TeacherPickerItem>>((ref) async {
   return ref.watch(studentsRepositoryProvider).getTeachers();
 });
+
+/// Students of a specific teacher (admin drill). Keyed by teacher user id.
+final studentsByTeacherProvider =
+    FutureProvider.family<List<StudentModel>, int>((ref, teacherId) async {
+  return ref.watch(studentsRepositoryProvider).getStudents(teacherId: teacherId);
+});
