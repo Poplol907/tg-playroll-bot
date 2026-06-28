@@ -385,3 +385,28 @@ class DeviceToken(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+
+class Payout(Base):
+    """Выплата педагогу за месяц. Несколько записей на (teacher, month) =
+    частичные выплаты. owed считается из отчёта; paid = сумма этих записей."""
+
+    __tablename__ = "payouts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("orgs.id"), nullable=False, index=True
+    )
+    teacher_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    month_year: Mapped[str] = mapped_column(String(7), nullable=False, index=True)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    paid_at: Mapped[date] = mapped_column(Date, nullable=False)
+    note: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    created_by: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
