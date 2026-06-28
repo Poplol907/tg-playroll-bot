@@ -19,6 +19,7 @@ from backend.app.routers.auth import router as auth_router
 from backend.app.routers.teachers import router as teachers_router
 from backend.app.routers.reports_v2 import router as reports_v2_router
 from backend.app.routers.rates import router as rates_router
+from backend.app.routers.payouts import router as payouts_router
 from backend.app.routers.system import router as system_router
 from backend.app.routers.org import router as org_router
 
@@ -78,6 +79,7 @@ app.include_router(subscriptions_router)
 app.include_router(lessons_router)
 app.include_router(teachers_router)
 app.include_router(rates_router)
+app.include_router(payouts_router)
 app.include_router(reports_v2_router)
 app.include_router(system_router)
 app.include_router(org_router)
