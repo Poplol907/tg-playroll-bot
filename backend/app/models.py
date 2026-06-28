@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Boolean,
     UniqueConstraint,
+    CheckConstraint,
     func,
 )
 
@@ -407,6 +408,81 @@ class Payout(Base):
     created_by: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=False
     )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+
+
+class Room(Base):
+    __tablename__ = "rooms"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("orgs.id"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(64), nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+
+
+class RoomBlock(Base):
+    __tablename__ = "room_blocks"
+
+    __table_args__ = (
+        CheckConstraint(
+            "(weekday IS NULL) <> (specific_date IS NULL)",
+            name="ck_room_blocks_one_schedule",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("orgs.id"), nullable=False, index=True
+    )
+    room_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    teacher_user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    weekday: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    specific_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    start_time: Mapped[time] = mapped_column(Time, nullable=False)
+    end_time: Mapped[time] = mapped_column(Time, nullable=False)
+    note: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    created_by: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+
+
+class RoomBlockException(Base):
+    __tablename__ = "room_block_exceptions"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "block_id",
+            "exception_date",
+            name="uq_room_block_exception",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("orgs.id"), nullable=False, index=True
+    )
+    block_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("room_blocks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    exception_date: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
