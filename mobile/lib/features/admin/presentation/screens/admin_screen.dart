@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/money/currency.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
@@ -25,6 +26,7 @@ import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
 import '../../data/rates_repository.dart';
+import '../payout_summary.dart';
 import '../providers/view_as_teacher_provider.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
@@ -67,6 +69,22 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
       }
     }
 
+    Future<void> exportPayouts() async {
+      HapticFeedback.lightImpact();
+      final stats = statsAsync.valueOrNull;
+      if (stats == null) {
+        showNebulaSnackBar(
+          context,
+          title: 'Статистика ещё загружается',
+          tone: NebulaSnackTone.info,
+        );
+        return;
+      }
+      await SharePlus.instance.share(
+        ShareParams(text: buildPayoutSummary(stats)),
+      );
+    }
+
     final header = AppScreenHeader(
       title: 'Студия',
       subtitle: 'Обзор и педагоги',
@@ -77,13 +95,23 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
               icon: Icon(Icons.arrow_back_rounded, color: tokens.mutedText),
             )
           : null,
-      trailing: IconButton(
-        tooltip: 'Добавить пользователя',
-        onPressed: addUser,
-        icon: const Icon(
-          Icons.person_add_outlined,
-          color: NebulaColors.stellarBlue,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Экспорт выплат',
+            onPressed: exportPayouts,
+            icon: Icon(Icons.ios_share_rounded, color: tokens.mutedText),
+          ),
+          IconButton(
+            tooltip: 'Добавить пользователя',
+            onPressed: addUser,
+            icon: const Icon(
+              Icons.person_add_outlined,
+              color: NebulaColors.stellarBlue,
+            ),
+          ),
+        ],
       ),
     );
 
