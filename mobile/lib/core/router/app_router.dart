@@ -7,6 +7,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../features/admin/presentation/screens/admin_screen.dart';
+import '../../features/admin/presentation/screens/search_screen.dart';
 import '../../features/admin/presentation/widgets/view_as_banner.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
@@ -188,7 +189,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   // - Админ в view-as: те же вкладки что у педагога (он смотрит данные педагога).
   List<String> _routesForRole(
       {required bool isAdmin, required bool viewingAs}) {
-    if (isAdmin && !viewingAs) return ['/admin', '/settings'];
+    if (isAdmin && !viewingAs) return ['/admin', '/search', '/settings'];
     return ['/calendar', '/students', '/salary', '/settings'];
   }
 
@@ -211,6 +212,12 @@ class _AppShellState extends ConsumerState<AppShell> {
         icon: Icons.shield_outlined,
         label: 'Студия',
         glowColor: t.primaryAccent,
+      );
+
+  GlowMenuItem _searchMenuItem(CosmoThemeTokens t) => GlowMenuItem(
+        icon: Icons.search_rounded,
+        label: 'Поиск',
+        glowColor: t.secondaryAccent,
       );
 
   List<GlowMenuItem> _teacherMenuItems(CosmoThemeTokens t) => [
@@ -237,6 +244,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   static const _adminSidebarItem = DesktopSidebarItem(
     icon: Icons.shield_outlined,
     label: 'Студия',
+  );
+
+  static const _searchSidebarItem = DesktopSidebarItem(
+    icon: Icons.search_rounded,
+    label: 'Поиск',
   );
 
   static const _teacherSidebarItems = [
@@ -292,10 +304,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     final navItems = showAdminTabs
-        ? [_adminMenuItem(tokens), _settingsMenuItem(tokens)]
+        ? [_adminMenuItem(tokens), _searchMenuItem(tokens), _settingsMenuItem(tokens)]
         : [..._teacherMenuItems(tokens), _settingsMenuItem(tokens)];
     final sidebarItems = showAdminTabs
-        ? [_adminSidebarItem, _settingsSidebarItem]
+        ? [_adminSidebarItem, _searchSidebarItem, _settingsSidebarItem]
         : [..._teacherSidebarItems, _settingsSidebarItem];
 
     return UpdateChecker(
@@ -772,7 +784,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // После логина: админа кидаем на /admin, педагога — на /calendar
       if (isAuth && onLogin) return isAdmin ? '/admin' : '/calendar';
       // Педагог не может зайти в /admin
-      if (isAuth && !isAdmin && state.matchedLocation.startsWith('/admin')) {
+      if (isAuth &&
+          !isAdmin &&
+          (state.matchedLocation.startsWith('/admin') ||
+              state.matchedLocation.startsWith('/search'))) {
         return '/calendar';
       }
       // Админ в обычном режиме не может зайти в /calendar, /students, /salary —
@@ -805,7 +820,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final showAdminTabs = isAdmin && !viewingAs;
           final int index;
           if (showAdminTabs) {
-            index = loc.startsWith('/settings') ? 1 : 0;
+            index = loc.startsWith('/settings')
+                ? 2
+                : loc.startsWith('/search')
+                    ? 1
+                    : 0;
           } else {
             index = loc.startsWith('/students')
                 ? 1
@@ -823,6 +842,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => shellPage(
               key: state.pageKey,
               child: const AdminScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/search',
+            pageBuilder: (context, state) => shellPage(
+              key: state.pageKey,
+              child: const SearchScreen(),
             ),
           ),
           GoRoute(
