@@ -24,6 +24,7 @@ import '../../../../core/platform/app_platform.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
+import '../../../rooms/presentation/screens/rooms_admin_screen.dart';
 import '../../data/admin_repository.dart';
 import '../../data/payouts_repository.dart';
 import '../../data/rates_repository.dart';
@@ -135,6 +136,14 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: _StudioStatsCard(statsAsync: statsAsync),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: NebulaTextButton(
+                      label: 'Управление кабинетами',
+                      icon: Icons.meeting_room_outlined,
+                      onPressed: () => RoomsAdminScreen.show(context),
+                    ),
+                  ),
                 ],
               )
             : AppCustomScrollView(
@@ -143,6 +152,16 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                 slivers: [
                   SliverToBoxAdapter(
                     child: _StudioStatsCard(statsAsync: statsAsync),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                      child: NebulaTextButton(
+                        label: 'Управление кабинетами',
+                        icon: Icons.meeting_room_outlined,
+                        onPressed: () => RoomsAdminScreen.show(context),
+                      ),
+                    ),
                   ),
                 ],
               ),
