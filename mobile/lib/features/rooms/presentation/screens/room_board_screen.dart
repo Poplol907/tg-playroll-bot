@@ -41,9 +41,10 @@ const _monthsRu = [
   'декабря',
 ];
 
-/// Read-only day board screen — rooms as columns, time as rows.
-/// Admins will get tap-to-act affordances in a later task; for now taps are
-/// wired but no-op for non-admins (and TODO for admins).
+/// Day board screen — rooms as columns, time as rows. Admins can tap an empty
+/// cell to assign a block or tap a block to cancel/delete it; teachers see a
+/// read-only board filtered to their own blocks. Swipe the header (or use the
+/// arrows) to move between days.
 class RoomBoardScreen extends ConsumerWidget {
   const RoomBoardScreen({super.key});
 
@@ -134,23 +135,24 @@ class RoomBoardScreen extends ConsumerWidget {
         if (changed) ref.invalidate(roomBlocksForDateProvider(blocksQuery));
       }
 
-      body = GestureDetector(
-        onHorizontalDragEnd: (details) {
-          final velocity = details.primaryVelocity ?? 0;
-          if (velocity < 0) {
-            goToNextDay();
-          } else if (velocity > 0) {
-            goToPreviousDay();
-          }
-        },
-        child: RoomBoardGrid(
-          rooms: rooms,
-          blocks: blocks,
-          conflictIds: conflictIds,
-          onEmptyTap: onEmptyTap,
-          onBlockTap: onBlockTap,
-        ),
+      body = RoomBoardGrid(
+        rooms: rooms,
+        blocks: blocks,
+        conflictIds: conflictIds,
+        onEmptyTap: onEmptyTap,
+        onBlockTap: onBlockTap,
       );
+    }
+
+    // Day-swipe lives on the header only — wrapping the board would fight the
+    // room columns' horizontal scroll in the gesture arena.
+    void onHeaderDragEnd(DragEndDetails details) {
+      final velocity = details.primaryVelocity ?? 0;
+      if (velocity < 0) {
+        goToNextDay();
+      } else if (velocity > 0) {
+        goToPreviousDay();
+      }
     }
 
     return Scaffold(
@@ -158,39 +160,44 @@ class RoomBoardScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left_rounded),
-                    color: tokens.primaryText,
-                    onPressed: goToPreviousDay,
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Text(
-                          weekdayLabel,
-                          style: type.titleM.copyWith(
-                            color: tokens.primaryText,
-                          ),
-                        ),
-                        Text(
-                          dateLabel,
-                          style: type.bodyS.copyWith(
-                            color: tokens.mutedText,
-                          ),
-                        ),
-                      ],
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragEnd: onHeaderDragEnd,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left_rounded),
+                      color: tokens.primaryText,
+                      onPressed: goToPreviousDay,
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right_rounded),
-                    color: tokens.primaryText,
-                    onPressed: goToNextDay,
-                  ),
-                ],
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            weekdayLabel,
+                            style: type.titleM.copyWith(
+                              color: tokens.primaryText,
+                            ),
+                          ),
+                          Text(
+                            dateLabel,
+                            style: type.bodyS.copyWith(
+                              color: tokens.mutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      color: tokens.primaryText,
+                      onPressed: goToNextDay,
+                    ),
+                  ],
+                ),
               ),
             ),
             Expanded(child: body),
