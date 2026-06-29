@@ -36,6 +36,7 @@ import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/nebula_segmented_control.dart';
 import '../../../rooms/presentation/providers/room_board_providers.dart';
 import '../../../rooms/presentation/screens/room_board_screen.dart';
+import '../../../rooms/presentation/widgets/rooms_today_card.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/models/student.dart';
 
@@ -113,6 +114,7 @@ class CalendarScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Column(
             children: [
+              const RoomsTodayCard(),
               Expanded(
                 child: NebulaSurface(
                   padding: const EdgeInsets.all(16),
@@ -144,6 +146,7 @@ class CalendarScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Column(
               children: [
+                const RoomsTodayCard(),
                 NebulaSurface(
                   padding: const EdgeInsets.all(16),
                   radiusRole: NebulaRadiusRole.panel,

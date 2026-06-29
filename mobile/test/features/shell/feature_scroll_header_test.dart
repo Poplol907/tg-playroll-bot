@@ -7,6 +7,8 @@ import 'package:cosmo_studio/core/theme/app_theme.dart';
 import 'package:cosmo_studio/features/auth/presentation/providers/auth_provider.dart';
 import 'package:cosmo_studio/features/calendar/presentation/providers/calendar_provider.dart';
 import 'package:cosmo_studio/features/calendar/presentation/screens/calendar_screen.dart';
+import 'package:cosmo_studio/features/rooms/data/room_models.dart';
+import 'package:cosmo_studio/features/rooms/data/rooms_repository.dart';
 import 'package:cosmo_studio/features/students/data/students_repository.dart';
 import 'package:cosmo_studio/features/students/presentation/screens/students_screen.dart';
 import 'package:cosmo_studio/shared/models/student.dart';
@@ -87,6 +89,9 @@ void main() {
           currentUserProvider.overrideWithValue(teacher),
           globalMonthProvider.overrideWith((ref) => month),
           lessonsProvider.overrideWith((ref, monthYear) async => const []),
+          roomBlocksForDateProvider.overrideWith(
+            (ref, args) async => const <ResolvedRoomBlock>[],
+          ),
         ],
         child: testApp(
           const AppShell(
