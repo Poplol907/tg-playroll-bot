@@ -12,6 +12,8 @@ import '../../data/room_models.dart';
 import '../../data/rooms_repository.dart';
 import '../providers/room_board_providers.dart';
 import '../util/block_conflicts.dart';
+import '../widgets/assign_block_sheet.dart';
+import '../widgets/block_actions_sheet.dart';
 import '../widgets/room_board_grid.dart';
 
 const _weekdaysRu = [
@@ -71,16 +73,6 @@ class RoomBoardScreen extends ConsumerWidget {
           date.add(const Duration(days: 1));
     }
 
-    void handleEmptyTap(int roomId, int startMinutes) {
-      if (!isAdmin) return;
-      // TODO(task3): open assign/actions sheet
-    }
-
-    void handleBlockTap(ResolvedRoomBlock block) {
-      if (!isAdmin) return;
-      // TODO(task3): open assign/actions sheet
-    }
-
     void retry() {
       ref.invalidate(roomsProvider);
       ref.invalidate(roomBlocksForDateProvider(blocksQuery));
@@ -118,6 +110,30 @@ class RoomBoardScreen extends ConsumerWidget {
       final rooms = roomsAsync.requireValue;
       final blocks = blocksAsync.requireValue;
       final conflictIds = conflictingBlockIds(blocks);
+
+      Future<void> onEmptyTap(int roomId, int startMinutes) async {
+        if (!isAdmin) return;
+        final room = rooms.firstWhere((r) => r.id == roomId);
+        final created = await AssignBlockSheet.show(
+          context,
+          roomId: roomId,
+          roomName: room.name,
+          date: date,
+          initialStartMinutes: startMinutes,
+        );
+        if (created) ref.invalidate(roomBlocksForDateProvider(blocksQuery));
+      }
+
+      Future<void> onBlockTap(ResolvedRoomBlock block) async {
+        if (!isAdmin) return;
+        final changed = await BlockActionsSheet.show(
+          context,
+          block: block,
+          dateYmd: dateYmd,
+        );
+        if (changed) ref.invalidate(roomBlocksForDateProvider(blocksQuery));
+      }
+
       body = GestureDetector(
         onHorizontalDragEnd: (details) {
           final velocity = details.primaryVelocity ?? 0;
@@ -131,8 +147,8 @@ class RoomBoardScreen extends ConsumerWidget {
           rooms: rooms,
           blocks: blocks,
           conflictIds: conflictIds,
-          onEmptyTap: handleEmptyTap,
-          onBlockTap: handleBlockTap,
+          onEmptyTap: onEmptyTap,
+          onBlockTap: onBlockTap,
         ),
       );
     }
