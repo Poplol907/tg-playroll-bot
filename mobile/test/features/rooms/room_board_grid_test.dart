@@ -38,4 +38,27 @@ void main() {
     expect(find.textContaining('09:00'), findsWidgets);
     expect(find.text('Зал A'), findsWidgets);
   });
+
+  testWidgets('renders a column for every room (supports many rooms)',
+      (tester) async {
+    final rooms = [
+      for (var i = 1; i <= 6; i++)
+        Room(id: i, name: 'Зал $i', sortOrder: i, isActive: true),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.dark,
+      home: Scaffold(
+        body: RoomBoardGrid(
+          rooms: rooms,
+          blocks: const [],
+          conflictIds: const {},
+          onEmptyTap: (_, __) {},
+          onBlockTap: (_) {},
+        ),
+      ),
+    ));
+    for (var i = 1; i <= 6; i++) {
+      expect(find.text('Зал $i'), findsOneWidget);
+    }
+  });
 }
