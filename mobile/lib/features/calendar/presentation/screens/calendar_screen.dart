@@ -33,6 +33,9 @@ import '../../../../core/utils/error_parser.dart';
 import '../../../../features/students/data/students_repository.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_error_card.dart';
+import '../../../../shared/widgets/nebula_segmented_control.dart';
+import '../../../rooms/presentation/providers/room_board_providers.dart';
+import '../../../rooms/presentation/screens/room_board_screen.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/models/student.dart';
 
@@ -54,6 +57,7 @@ class CalendarScreen extends ConsumerWidget {
     final lessonsQuery = (monthYear: monthYear, teacherId: viewAs?.id);
     final lessonsAsync = ref.watch(lessonsProvider(lessonsQuery));
     final user = ref.watch(currentUserProvider);
+    final scope = ref.watch(calendarScopeProvider);
 
     // ── Haptic vibration scaled by unfilled lesson count ──
     ref.listen<AsyncValue<List<LessonModel>>>(
@@ -166,7 +170,22 @@ class CalendarScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: SafeArea(
         top: false,
-        child: AppPlatform.isDesktop
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: NebulaSegmentedControl(
+                segments: const ['Ученики', 'Кабинеты'],
+                selectedIndex: scope.index,
+                onChanged: (i) =>
+                    ref.read(calendarScopeProvider.notifier).state =
+                        CalendarScope.values[i],
+              ),
+            ),
+            Expanded(
+              child: scope == CalendarScope.rooms
+                  ? const RoomBoardScreen()
+                  : AppPlatform.isDesktop
             ? Column(
                 children: [
                   Padding(
@@ -248,6 +267,9 @@ class CalendarScreen extends ConsumerWidget {
                 ),
                 data: (lessons) => contentFor(lessons, desktop: false),
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
