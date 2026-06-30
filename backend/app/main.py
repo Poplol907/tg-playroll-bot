@@ -49,11 +49,22 @@ app = FastAPI(
     redoc_url="/redoc" if DEV_MODE else None,
 )
 
-# CORS — разрешаем любые origins (мобильные приложения не имеют origin)
+# CORS. Нативные мобильные клиенты не отправляют Origin и не подчиняются CORS —
+# ограничение origins их не затрагивает. Аутентификация идёт через Bearer-токен
+# (заголовок Authorization), а не cookie, поэтому allow_credentials не нужен
+# (а сочетание "*" + credentials к тому же небезопасно).
+# Прод: список доменов задаётся через ALLOWED_ORIGINS (через запятую).
+# По умолчанию пусто = браузерный кросс-оригин доступ запрещён; в DEV — "*".
+_allowed_origins = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
+]
+if not _allowed_origins and DEV_MODE:
+    _allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

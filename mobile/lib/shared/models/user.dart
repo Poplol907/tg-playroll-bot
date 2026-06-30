@@ -3,7 +3,6 @@ class UserModel {
   final int orgId;
   final String login;
   final String role;
-  final int? telegramUserId;
   final String? teacherName;
 
   const UserModel({
@@ -11,7 +10,6 @@ class UserModel {
     required this.orgId,
     required this.login,
     required this.role,
-    this.telegramUserId,
     this.teacherName,
   });
 
@@ -20,7 +18,6 @@ class UserModel {
         orgId: json['org_id'] as int,
         login: json['login'] as String,
         role: json['role'] as String,
-        telegramUserId: json['telegram_user_id'] as int?,
         teacherName: json['teacher_name'] as String?,
       );
 
