@@ -36,6 +36,7 @@ class TeacherStudentsScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: AppBackgroundHost(
         interactive: false,
+        darkBackground: AppDarkBackground.asciiWater,
         child: SafeArea(
           child: Column(
             children: [

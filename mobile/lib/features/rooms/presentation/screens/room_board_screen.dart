@@ -6,8 +6,10 @@ import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/widgets/app_background_host.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
+import '../../../../shared/widgets/space_page_transition.dart';
 import '../../data/room_models.dart';
 import '../../data/rooms_repository.dart';
 import '../providers/room_board_providers.dart';
@@ -41,12 +43,25 @@ const _monthsRu = [
   'декабря',
 ];
 
-/// Day board screen — rooms as columns, time as rows. Admins can tap an empty
-/// cell to assign a block or tap a block to cancel/delete it; teachers see a
-/// read-only board filtered to their own blocks. Swipe the header (or use the
-/// arrows) to move between days.
+/// Day board screen — rooms as columns, time as rows, showing the whole
+/// studio's schedule. Admins can tap an empty cell to assign a block or tap a
+/// block to cancel/delete it; teachers see the same board read-only. Swipe the
+/// header (or use the arrows) to move between days.
+///
+/// [standalone] is true when the board is pushed as its own route (admin opens
+/// it from rooms management): it then hosts its own background and shows a back
+/// button. When embedded in the calendar's "Кабинеты" scope it stays false.
 class RoomBoardScreen extends ConsumerWidget {
-  const RoomBoardScreen({super.key});
+  final bool standalone;
+  const RoomBoardScreen({super.key, this.standalone = false});
+
+  /// Pushes the board full-screen over the shell (its own background, no shell
+  /// chrome overlap).
+  static void show(BuildContext context) {
+    Navigator.of(context, rootNavigator: true).push(
+      SpacePageRoute(builder: (_) => const RoomBoardScreen(standalone: true)),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,11 +72,12 @@ class RoomBoardScreen extends ConsumerWidget {
     final date = ref.watch(boardDateProvider);
     final dateYmd = DateFormat('yyyy-MM-dd').format(date);
     final user = ref.watch(currentUserProvider);
-    final teacherId = (user?.isTeacher ?? false) ? user!.id : null;
     final isAdmin = user?.isAdmin ?? false;
 
+    // The board always shows the whole studio (all rooms, all teachers).
+    // Only admins get the tap-to-edit affordances; teachers read it.
     final roomsAsync = ref.watch(roomsProvider);
-    final blocksQuery = (date: dateYmd, teacherId: teacherId);
+    final blocksQuery = (date: dateYmd, teacherId: null);
     final blocksAsync = ref.watch(roomBlocksForDateProvider(blocksQuery));
 
     void goToPreviousDay() {
@@ -155,12 +171,23 @@ class RoomBoardScreen extends ConsumerWidget {
       }
     }
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            GestureDetector(
+    final content = SafeArea(
+      child: Column(
+        children: [
+          if (standalone)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
+                child: IconButton(
+                  tooltip: 'Назад',
+                  icon: Icon(Icons.arrow_back_rounded,
+                      color: tokens.mutedText),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ),
+          GestureDetector(
               behavior: HitTestBehavior.opaque,
               onHorizontalDragEnd: onHeaderDragEnd,
               child: Padding(
@@ -201,9 +228,18 @@ class RoomBoardScreen extends ConsumerWidget {
               ),
             ),
             Expanded(child: body),
-          ],
-        ),
+        ],
       ),
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: standalone
+          ? AppBackgroundHost(
+              darkBackground: AppDarkBackground.asciiWater,
+              child: content,
+            )
+          : content,
     );
   }
 }
