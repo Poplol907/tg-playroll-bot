@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LoginIn(BaseModel):
@@ -8,7 +8,7 @@ class LoginIn(BaseModel):
 
 class SetPasswordIn(BaseModel):
     login: str
-    password: str
+    password: str = Field(min_length=8, max_length=128)
 
 
 class TokenOut(BaseModel):

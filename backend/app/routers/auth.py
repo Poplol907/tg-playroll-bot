@@ -11,11 +11,16 @@ from backend.app.auth import (
 from backend.app.database import get_session
 from backend.app.models import User
 from backend.app.schemas.auth import LoginIn, SetPasswordIn, TokenOut
+from backend.app.services.ratelimit import login_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=TokenOut)
+@router.post(
+    "/login",
+    response_model=TokenOut,
+    dependencies=[Depends(login_rate_limit)],
+)
 async def login(payload: LoginIn, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(User).where(User.login == payload.login))
     user = result.scalar_one_or_none()
@@ -56,29 +61,6 @@ async def set_password(
         raise HTTPException(status_code=403, detail="forbidden")
 
     target.password_hash = hash_password(payload.password)
-    await session.commit()
-
-
-@router.post("/init-password", status_code=204)
-async def init_password(
-    payload: SetPasswordIn,
-    session: AsyncSession = Depends(get_session),
-):
-    """Установить пароль впервые — только если он ещё не задан.
-    Используется при первом входе пользователя в приложение."""
-    result = await session.execute(select(User).where(User.login == payload.login))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        raise HTTPException(status_code=404, detail="user not found")
-
-    if user.password_hash is not None:
-        raise HTTPException(status_code=409, detail="password already set, use /auth/set-password")
-
-    if user.role == "PENDING":
-        raise HTTPException(status_code=403, detail="account not activated")
-
-    user.password_hash = hash_password(payload.password)
     await session.commit()
 
 

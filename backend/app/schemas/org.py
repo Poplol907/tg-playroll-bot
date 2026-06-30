@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class OrgUserOut(BaseModel):
@@ -16,7 +16,7 @@ class OrgUserCreateIn(BaseModel):
     login: str
     role: str = "TEACHER"          # TEACHER | ADMIN
     teacher_name: str | None = None
-    password: str | None = None    # optional — can be set later
+    password: str | None = Field(default=None, min_length=8, max_length=128)  # optional — can be set later
 
 
 class OrgUserUpdateIn(BaseModel):
@@ -25,4 +25,4 @@ class OrgUserUpdateIn(BaseModel):
 
 
 class OrgSetPasswordIn(BaseModel):
-    password: str
+    password: str = Field(min_length=8, max_length=128)

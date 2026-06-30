@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../storage/app_storage.dart';
 
 const _kServerUrlKey = 'server_url';
-// Temporary production URL. Replace with the HTTPS domain when DNS is ready.
-const kDefaultServerUrl = 'http://5.223.55.57';
+// Production API over HTTPS (Caddy + Let's Encrypt). A-запись api.cosmo-studio.com → сервер.
+const kDefaultServerUrl = 'https://api.cosmo-studio.com';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Notifier — хранит URL сервера, персистит в AppStorage

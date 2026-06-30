@@ -49,7 +49,6 @@ class User(Base):
 
     login: Mapped[str] = mapped_column(String(64), nullable=False)
     role: Mapped[str] = mapped_column(String(16), nullable=False)  # ADMIN / TEACHER / PENDING
-    telegram_user_id: Mapped[int | None] = mapped_column(Integer, unique=True, nullable=True)
     teacher_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(256), nullable=True)
 

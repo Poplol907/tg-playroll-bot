@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.database import get_session
 from backend.app.models import User
-from backend.app.schemas.dev import CreateUserIn, BindIn
+from backend.app.schemas.dev import CreateUserIn
 
 
 def get_dev_router(dev_mode: bool, dev_key: str | None) -> APIRouter:
@@ -48,28 +47,5 @@ def get_dev_router(dev_mode: bool, dev_key: str | None) -> APIRouter:
         session.add(u)
         await session.commit()
         return {"ok": True, "id": u.id}
-
-    @router.post("/bind")
-    async def dev_bind(
-        payload: BindIn,
-        session: AsyncSession = Depends(get_session),
-    ):
-        q = await session.execute(select(User).where(User.login == payload.login))
-        u = q.scalar_one_or_none()
-
-        if u is None:
-            raise HTTPException(status_code=404, detail="user not found")
-
-        u.telegram_user_id = payload.telegram_user_id
-        try:
-            await session.commit()
-        except IntegrityError:
-            await session.rollback()
-            raise HTTPException(
-                status_code=409,
-                detail="telegram_user_id already bound to someone else",
-            )
-
-        return {"ok": True}
 
     return router
