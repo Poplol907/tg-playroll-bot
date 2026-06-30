@@ -217,7 +217,7 @@ class _TeacherSearchTile extends StatelessWidget {
           subtitle:
               '${user.login} · $lessonsDone уроков · ${Money.format(totalAmount)}',
           intent: SemanticIntent.info,
-          onTap: () => Navigator.of(context).push(
+          onTap: () => Navigator.of(context, rootNavigator: true).push(
             SpacePageRoute(
               builder: (_) => TeacherStudentsScreen(user: user),
             ),

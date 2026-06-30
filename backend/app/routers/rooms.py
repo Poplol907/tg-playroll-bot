@@ -63,7 +63,9 @@ async def list_rooms(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    require_admin(current_user)
+    # Teachers read the room list too — they see the studio's room board
+    # (read-only). Mutations below stay admin-only.
+    require_admin_or_teacher(current_user)
     q = select(Room).where(Room.org_id == current_user.org_id)
     if not include_inactive:
         q = q.where(Room.is_active.is_(True))
@@ -135,8 +137,10 @@ async def list_room_blocks(
     current_user: User = Depends(get_current_user),
 ):
     require_admin_or_teacher(current_user)
-    if current_user.role == "TEACHER":
-        teacher_id = current_user.id
+    # The room board shows the whole studio (all rooms, all teachers) to both
+    # admins and teachers — teachers just can't edit it. Per-teacher filtering
+    # still works when the caller passes an explicit `teacher_id` (e.g. the
+    # teacher's "Мои кабинеты сегодня" card).
 
     exception_exists = exists().where(
         RoomBlockException.org_id == current_user.org_id,

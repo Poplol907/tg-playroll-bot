@@ -277,7 +277,7 @@ abstract final class TeacherProfileEntry {
     required TeacherStats? stats,
     required VoidCallback onUpdated,
   }) {
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       SpacePageRoute(
         builder: (_) => _TeacherProfileScreen(
           user: user,
@@ -329,6 +329,7 @@ class _TeacherProfileScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: AppBackgroundHost(
         interactive: false,
+        darkBackground: AppDarkBackground.asciiWater,
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

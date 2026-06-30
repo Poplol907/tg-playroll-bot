@@ -7,15 +7,19 @@ import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
+import '../../../../shared/widgets/app_background_host.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/app_screen_header.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
+import '../../../../shared/widgets/nebula_segmented_control.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
+import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
 import '../../data/room_models.dart';
 import '../../data/rooms_repository.dart';
 import '../widgets/room_edit_sheet.dart';
+import 'room_board_screen.dart';
 
 /// Rooms for the admin screen, optionally including archived ones.
 final _adminRoomsProvider =
@@ -30,8 +34,7 @@ class RoomsAdminScreen extends ConsumerStatefulWidget {
   const RoomsAdminScreen({super.key});
 
   static void show(BuildContext context) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: true).push(
       SpacePageRoute(builder: (_) => const RoomsAdminScreen()),
     );
   }
@@ -98,88 +101,89 @@ class _RoomsAdminScreenState extends ConsumerState<RoomsAdminScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
-              child: AppScreenHeader(
-                title: 'Кабинеты',
-                subtitle: 'Управление',
-                leading: canPop
-                    ? IconButton(
-                        tooltip: 'Назад',
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.arrow_back_rounded,
-                            color: tokens.mutedText),
-                      )
-                    : null,
-                trailing: IconButton(
-                  tooltip: 'Добавить кабинет',
-                  onPressed: _add,
-                  icon: const Icon(Icons.add_rounded),
+      body: AppBackgroundHost(
+        darkBackground: AppDarkBackground.asciiWater,
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+                child: AppScreenHeader(
+                  title: 'Кабинеты',
+                  subtitle: 'Управление',
+                  leading: canPop
+                      ? IconButton(
+                          tooltip: 'Назад',
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.arrow_back_rounded,
+                              color: tokens.mutedText),
+                        )
+                      : null,
+                  trailing: IconButton(
+                    tooltip: 'Добавить кабинет',
+                    onPressed: _add,
+                    icon: const Icon(Icons.add_rounded),
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Показать архивные',
-                      style: type.bodyM.copyWith(color: tokens.secondaryText),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: NebulaTextButton(
+                  label: 'Расписание кабинетов',
+                  icon: Icons.calendar_month_outlined,
+                  onPressed: () => RoomBoardScreen.show(context),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: NebulaSegmentedControl(
+                  segments: const ['Активные', 'Архив'],
+                  selectedIndex: _showArchived ? 1 : 0,
+                  onChanged: (i) => setState(() => _showArchived = i == 1),
+                ),
+              ),
+              Expanded(
+                child: roomsAsync.when(
+                  loading: () => const Center(child: OrbitLoader()),
+                  error: (e, _) => Center(
+                    child: AppErrorCard(
+                      message: parseApiError(e,
+                          fallback: 'Не удалось загрузить кабинеты'),
+                      onRetry: _refresh,
+                      isConnectionError: isConnectionError(e),
                     ),
                   ),
-                  Switch(
-                    value: _showArchived,
-                    onChanged: (v) => setState(() => _showArchived = v),
-                    activeThumbColor: tokens.primaryAccent,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: roomsAsync.when(
-                loading: () => const Center(child: OrbitLoader()),
-                error: (e, _) => Center(
-                  child: AppErrorCard(
-                    message: parseApiError(e,
-                        fallback: 'Не удалось загрузить кабинеты'),
-                    onRetry: _refresh,
-                    isConnectionError: isConnectionError(e),
-                  ),
-                ),
-                data: (rooms) {
-                  if (rooms.isEmpty) {
-                    return Center(
-                      child: Text(
-                        _showArchived
-                            ? 'Кабинетов пока нет'
-                            : 'Активных кабинетов нет',
-                        style: type.bodyM.copyWith(color: tokens.mutedText),
+                  data: (rooms) {
+                    if (rooms.isEmpty) {
+                      return Center(
+                        child: Text(
+                          _showArchived
+                              ? 'Кабинетов пока нет'
+                              : 'Активных кабинетов нет',
+                          style: type.bodyM.copyWith(color: tokens.mutedText),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      itemCount: rooms.length,
+                      itemBuilder: (_, i) => _RoomRow(
+                        room: rooms[i],
+                        onTap: () => _rename(rooms[i]),
+                        onArchive: rooms[i].isActive
+                            ? () => _setActive(rooms[i], false)
+                            : null,
+                        onRestore: rooms[i].isActive
+                            ? null
+                            : () => _setActive(rooms[i], true),
                       ),
                     );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    itemCount: rooms.length,
-                    itemBuilder: (_, i) => _RoomRow(
-                      room: rooms[i],
-                      onTap: () => _rename(rooms[i]),
-                      onArchive: rooms[i].isActive
-                          ? () => _setActive(rooms[i], false)
-                          : null,
-                      onRestore: rooms[i].isActive
-                          ? null
-                          : () => _setActive(rooms[i], true),
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
