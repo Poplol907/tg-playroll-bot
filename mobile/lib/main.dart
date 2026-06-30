@@ -8,6 +8,7 @@ import 'core/storage/app_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_visual_mode.dart';
 import 'core/router/app_router.dart';
+import 'core/session/session_reset.dart';
 import 'shared/widgets/global_touch_overlay.dart';
 import 'shared/widgets/theme_reveal_overlay.dart';
 
@@ -69,8 +70,10 @@ class CosmoApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
-        return ThemeRevealOverlay(
-          child: GlobalTouchOverlay(child: child),
+        return SessionResetGate(
+          child: ThemeRevealOverlay(
+            child: GlobalTouchOverlay(child: child),
+          ),
         );
       },
       localizationsDelegates: const [
