@@ -156,28 +156,40 @@ class _RoomsAdminScreenState extends ConsumerState<RoomsAdminScreen> {
                     ),
                   ),
                   data: (rooms) {
-                    if (rooms.isEmpty) {
+                    // "Архив" shows only inactive rooms (getRooms(includeInactive)
+                    // returns active + inactive, so filter down here).
+                    final shown = _showArchived
+                        ? rooms.where((r) => !r.isActive).toList()
+                        : rooms;
+                    if (shown.isEmpty) {
                       return Center(
                         child: Text(
                           _showArchived
-                              ? 'Кабинетов пока нет'
+                              ? 'Архив пуст'
                               : 'Активных кабинетов нет',
                           style: type.bodyM.copyWith(color: tokens.mutedText),
                         ),
                       );
                     }
-                    return ListView.builder(
+                    return GridView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                      itemCount: rooms.length,
-                      itemBuilder: (_, i) => _RoomRow(
-                        room: rooms[i],
-                        onTap: () => _rename(rooms[i]),
-                        onArchive: rooms[i].isActive
-                            ? () => _setActive(rooms[i], false)
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 1.25,
+                      ),
+                      itemCount: shown.length,
+                      itemBuilder: (_, i) => _RoomCard(
+                        room: shown[i],
+                        onTap: () => _rename(shown[i]),
+                        onArchive: shown[i].isActive
+                            ? () => _setActive(shown[i], false)
                             : null,
-                        onRestore: rooms[i].isActive
+                        onRestore: shown[i].isActive
                             ? null
-                            : () => _setActive(rooms[i], true),
+                            : () => _setActive(shown[i], true),
                       ),
                     );
                   },
@@ -191,13 +203,14 @@ class _RoomsAdminScreenState extends ConsumerState<RoomsAdminScreen> {
   }
 }
 
-class _RoomRow extends StatelessWidget {
+/// Compact room tile in the 2-column management grid.
+class _RoomCard extends StatelessWidget {
   final Room room;
   final VoidCallback onTap;
   final VoidCallback? onArchive;
   final VoidCallback? onRestore;
 
-  const _RoomRow({
+  const _RoomCard({
     required this.room,
     required this.onTap,
     this.onArchive,
@@ -209,64 +222,108 @@ class _RoomRow extends StatelessWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
+    final archived = !room.isActive;
+    final accent = archived ? tokens.mutedText : tokens.primaryAccent;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: tokens.surface,
           borderRadius: NebulaRadii.cardBorder,
-          border: Border.all(color: tokens.surfaceBorder),
+          border: Border.all(
+            color: archived
+                ? tokens.surfaceBorder
+                : tokens.primaryAccent.withValues(alpha: NebulaAlpha.border),
+          ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.meeting_room_outlined,
-              size: 20,
-              color: room.isActive ? tokens.primaryText : tokens.mutedText,
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: NebulaAlpha.surface),
+                    borderRadius: NebulaRadii.controlBorder,
+                  ),
+                  child: Icon(Icons.meeting_room_rounded,
+                      size: 18, color: accent),
+                ),
+                const Spacer(),
+                if (onArchive != null)
+                  _CornerAction(
+                    icon: Icons.archive_outlined,
+                    color: tokens.mutedText,
+                    tooltip: 'Архивировать',
+                    onTap: onArchive!,
+                  ),
+                if (onRestore != null)
+                  _CornerAction(
+                    icon: Icons.unarchive_outlined,
+                    color: tokens.primaryAccent,
+                    tooltip: 'Вернуть из архива',
+                    onTap: onRestore!,
+                  ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            const Spacer(),
+            Text(
+              room.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: type.titleS.copyWith(
+                color: archived ? tokens.mutedText : tokens.primaryText,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: NebulaAlpha.subtle),
+                borderRadius: NebulaRadii.compactControlBorder,
+              ),
               child: Text(
-                room.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: type.bodyL.copyWith(
-                  color: room.isActive ? tokens.primaryText : tokens.mutedText,
-                ),
+                archived ? 'В архиве' : 'Активен',
+                style: type.labelS.copyWith(color: accent),
               ),
             ),
-            if (!room.isActive) ...[
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: tokens.mutedText.withValues(alpha: NebulaAlpha.subtle),
-                  borderRadius: NebulaRadii.compactControlBorder,
-                ),
-                child: Text(
-                  'в архиве',
-                  style: type.labelS.copyWith(color: tokens.mutedText),
-                ),
-              ),
-              const SizedBox(width: 4),
-            ],
-            if (onArchive != null)
-              IconButton(
-                tooltip: 'Архивировать',
-                onPressed: onArchive,
-                icon: Icon(Icons.archive_outlined, color: tokens.mutedText),
-              ),
-            if (onRestore != null)
-              IconButton(
-                tooltip: 'Вернуть из архива',
-                onPressed: onRestore,
-                icon: Icon(Icons.unarchive_outlined,
-                    color: tokens.primaryAccent),
-              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small tap target for a card corner action (compact — the whole card is the
+/// primary tap; these are secondary).
+class _CornerAction extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _CornerAction({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, size: 20, color: color),
         ),
       ),
     );
