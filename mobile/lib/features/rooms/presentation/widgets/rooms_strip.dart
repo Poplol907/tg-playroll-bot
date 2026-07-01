@@ -85,7 +85,8 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
     return SizedBox(
       height: 112,
       child: roomsAsync.when(
-        skipLoadingOnRefresh: false,
+        // Keep tiles visible during a refresh so an in-flight drag isn't
+        // interrupted by a loader (order is tracked locally anyway).
         loading: () => const Center(child: OrbitLoader()),
         error: (_, __) => Center(
           child: Text('Не удалось загрузить кабинеты',
@@ -105,6 +106,13 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     buildDefaultDragHandles: true,
+                    // Transparent lift — no default white Material card/shadow
+                    // around the dragged tile.
+                    proxyDecorator: (child, index, animation) => Material(
+                      color: Colors.transparent,
+                      elevation: 0,
+                      child: child,
+                    ),
                     onReorder: _onReorder,
                     footer: _AddTile(onTap: _add),
                     itemCount: _order.length,

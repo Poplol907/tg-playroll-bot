@@ -131,10 +131,6 @@ void main() {
 
   test('mathematical micro-geometry exceptions stay exact and documented', () {
     const exceptions = <String, Map<String, String>>{
-      'lib/features/admin/presentation/widgets/view_as_banner.dart': {
-        'Radius.circular(NebulaRadii.hero)':
-            'derived clipping for the banner notch transition',
-      },
       'lib/features/students/presentation/widgets/student_detail_components.dart':
           {
         'BorderRadius.circular(NebulaRadii.micro)':
