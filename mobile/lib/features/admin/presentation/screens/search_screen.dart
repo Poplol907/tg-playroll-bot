@@ -9,6 +9,7 @@ import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../shared/models/student.dart';
+import '../../../../shared/widgets/app_chrome_metrics.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/app_screen_header.dart';
@@ -43,7 +44,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Column(
           children: [
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+              // Clear the floating month island (shell handles the hardware
+              // inset via SafeArea(top:true)).
+              padding: EdgeInsets.fromLTRB(
+                20,
+                AppChromeMetrics.routeContentTopReservation + 12,
+                20,
+                0,
+              ),
               child: AppScreenHeader(
                 title: 'Поиск',
                 subtitle: 'Педагоги и ученики студии',
