@@ -633,16 +633,6 @@ class _MonthControls extends StatelessWidget {
       height: AppChromeMetrics.monthControlHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       onTap: isCurrentMonth ? null : onToday,
-      // Ambient "view-as" cue: a soft orange edge glow on the month island.
-      glow: viewAsGlow
-          ? [
-              BoxShadow(
-                color: tokens.warning.withValues(alpha: NebulaAlpha.accent),
-                blurRadius: 16,
-                spreadRadius: -1,
-              ),
-            ]
-          : null,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -662,6 +652,28 @@ class _MonthControls extends StatelessWidget {
         ],
       ),
     );
+
+    // Ambient "view-as" cue: a soft orange glow around the month island. Applied
+    // OUTSIDE the surface's own clip so the shadow isn't clipped away.
+    if (viewAsGlow) {
+      pill = DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(NebulaRadii.pill),
+          boxShadow: [
+            BoxShadow(
+              color: tokens.warning.withValues(alpha: NebulaAlpha.medium),
+              blurRadius: 18,
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: tokens.warning.withValues(alpha: NebulaAlpha.subtle),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+        child: pill,
+      );
+    }
 
     pill = Semantics(
       button: !isCurrentMonth,
