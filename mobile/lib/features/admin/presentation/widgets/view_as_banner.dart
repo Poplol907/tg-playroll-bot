@@ -8,6 +8,7 @@ import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
+import '../../../../shared/widgets/app_chrome_metrics.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../data/admin_repository.dart';
 import '../providers/view_as_teacher_provider.dart';
@@ -35,15 +36,17 @@ class ViewAsOverlay extends ConsumerWidget {
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
 
-    // Над плавающей овальной капсулой нижнего бара (мобайл);
-    // на десктопе нижнего бара нет — прижимаем к нижнему краю.
-    final bottomOffset = AppPlatform.isDesktop
-        ? 24.0
-        : MediaQuery.of(context).viewPadding.bottom + 96.0;
+    // Just below the month island, top-right — reads together with the island's
+    // orange view-as glow instead of floating over the bottom nav.
+    final topOffset = AppPlatform.isDesktop
+        ? 16.0
+        : MediaQuery.of(context).viewPadding.top +
+            AppChromeMetrics.mobileTopIslandExtent +
+            6;
 
     return Positioned(
       right: 16,
-      bottom: bottomOffset,
+      top: topOffset,
       child: NebulaSurface(
         radiusRole: NebulaRadiusRole.pill,
         accent: tokens.warning,
