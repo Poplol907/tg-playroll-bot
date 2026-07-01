@@ -65,8 +65,8 @@ void main() {
     await tester.pump(); // rebuild into the board (rooms loading)
     await tester.pump(const Duration(milliseconds: 50)); // resolve rooms/blocks
 
-    // The weekly agenda board renders (header + empty day sections).
-    expect(find.text('Расписание кабинетов'), findsOneWidget);
-    expect(find.text('Нет назначений'), findsWidgets);
+    // The rooms scope shows the digital-rooms strip + hint.
+    expect(find.text('Выберите кабинет, чтобы открыть расписание'),
+        findsOneWidget);
   });
 }
