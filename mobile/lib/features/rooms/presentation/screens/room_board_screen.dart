@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/cosmo_theme_tokens.dart';
+import '../../../../core/theme/nebula_alpha.dart';
 import '../../../../core/theme/nebula_colors.dart';
 import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
@@ -230,12 +231,22 @@ class _DaySection extends StatelessWidget {
     final type = NebulaTypography.of(context);
     final isToday = DateUtils.isSameDay(day, DateTime.now());
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 14, 4, 6),
-          child: Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        borderRadius: NebulaRadii.cardBorder,
+        border: Border.all(
+          color: isToday
+              ? tokens.primaryAccent.withValues(alpha: NebulaAlpha.border)
+              : tokens.surfaceBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Text(
                 _weekdaysRu[day.weekday - 1],
@@ -248,33 +259,66 @@ class _DaySection extends StatelessWidget {
                 '${day.day} ${_monthsRuGen[day.month - 1]}',
                 style: type.bodyS.copyWith(color: tokens.mutedText),
               ),
+              const Spacer(),
+              if (blocks.isNotEmpty)
+                Text('${blocks.length}',
+                    style: type.labelM.copyWith(color: tokens.mutedText)),
             ],
           ),
-        ),
-        if (blocks.isEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-            child: Text('Нет назначений',
+          if (blocks.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text('Нет назначений',
                 style: type.bodyS.copyWith(color: tokens.mutedText)),
-          )
-        else
-          for (final block in blocks)
-            _AgendaRow(
-              block: block,
-              isConflict: conflictIds.contains(block.id),
-              onTap: onBlockTap == null ? null : () => onBlockTap!(block),
-            ),
-      ],
+          ] else
+            for (final entry in _groupByRoom(blocks).entries) ...[
+              const SizedBox(height: 12),
+              Text(entry.key,
+                  style: type.labelM.copyWith(color: tokens.secondaryText)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final block in entry.value)
+                    _BlockChip(
+                      block: block,
+                      isConflict: conflictIds.contains(block.id),
+                      onTap: onBlockTap == null
+                          ? null
+                          : () => onBlockTap!(block),
+                    ),
+                ],
+              ),
+            ],
+        ],
+      ),
     );
+  }
+
+  /// Groups a day's blocks by room (rooms alphabetical, slots by start time).
+  Map<String, List<ResolvedRoomBlock>> _groupByRoom(
+      List<ResolvedRoomBlock> blocks) {
+    final map = <String, List<ResolvedRoomBlock>>{};
+    for (final b in blocks) {
+      (map[b.roomName] ??= []).add(b);
+    }
+    final keys = map.keys.toList()..sort();
+    return {
+      for (final k in keys)
+        k: (map[k]!
+          ..sort((a, b) => hhmmToMinutes(a.startTime)
+              .compareTo(hhmmToMinutes(b.startTime)))),
+    };
   }
 }
 
-class _AgendaRow extends StatelessWidget {
+/// A single assignment on the schedule — a teacher-tinted time chip.
+class _BlockChip extends StatelessWidget {
   final ResolvedRoomBlock block;
   final bool isConflict;
   final VoidCallback? onTap;
 
-  const _AgendaRow({
+  const _BlockChip({
     required this.block,
     required this.isConflict,
     this.onTap,
@@ -286,70 +330,43 @@ class _AgendaRow extends StatelessWidget {
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
     final color = teacherColor(block.teacherUserId);
-    final borderColor = isConflict
-        ? NebulaColors.errorRose
-        : tokens.surfaceBorder;
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: tokens.surface,
-          borderRadius: NebulaRadii.cardBorder,
-          border: Border.all(color: borderColor),
+          color: color.withValues(alpha: NebulaAlpha.surface),
+          borderRadius: NebulaRadii.controlBorder,
+          border: Border.all(
+            color: isConflict
+                ? NebulaColors.errorRose
+                : color.withValues(alpha: NebulaAlpha.border),
+          ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 4,
-              height: 34,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: NebulaRadii.compactControlBorder,
-              ),
+            Text(
+              '${block.startTime}–${block.endTime}',
+              style: type.labelM.copyWith(color: tokens.primaryText).copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()]),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    block.roomName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: type.titleS.copyWith(color: tokens.primaryText),
-                  ),
-                  Text(
-                    block.teacherName ?? '—',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: type.bodyS.copyWith(color: tokens.secondaryText),
-                  ),
-                ],
-              ),
+            const SizedBox(width: 6),
+            Text(
+              block.teacherName ?? '—',
+              style: type.labelM.copyWith(color: tokens.secondaryText),
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${block.startTime}–${block.endTime}',
-                  style: type.bodyM
-                      .copyWith(color: tokens.primaryText)
-                      .copyWith(
-                          fontFeatures: const [FontFeature.tabularFigures()]),
-                ),
-                if (isConflict)
-                  Text('конфликт',
-                      style: type.labelS.copyWith(color: NebulaColors.errorRose)),
-                if (!block.isRecurring)
-                  Text('разово',
-                      style: type.labelS.copyWith(color: tokens.mutedText)),
-              ],
-            ),
+            if (!block.isRecurring) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.event_rounded, size: 12, color: tokens.mutedText),
+            ],
+            if (isConflict) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.warning_amber_rounded,
+                  size: 12, color: NebulaColors.errorRose),
+            ],
           ],
         ),
       ),
