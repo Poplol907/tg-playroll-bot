@@ -338,6 +338,20 @@ class SlideUpPageRoute<T> extends PageRouteBuilder<T> {
         );
 }
 
+/// Minimal, fast cross-fade route — for opening lightweight detail views
+/// (e.g. a room schedule) without a heavy directional/nebula transition.
+class FadePageRoute<T> extends PageRouteBuilder<T> {
+  FadePageRoute({required WidgetBuilder builder})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              builder(context),
+          transitionDuration: const Duration(milliseconds: 200),
+          reverseTransitionDuration: const Duration(milliseconds: 160),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+}
+
 CustomTransitionPage<T> spaceTransitionPage<T>({
   required LocalKey key,
   required Widget child,

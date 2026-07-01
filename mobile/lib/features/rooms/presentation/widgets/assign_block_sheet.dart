@@ -24,15 +24,39 @@ const _weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 class AssignBlockSheet extends ConsumerStatefulWidget {
   final DateTime weekStart;
 
-  const AssignBlockSheet({super.key, required this.weekStart});
+  /// When opened from a room grid cell, room / weekday / start are fixed and
+  /// their pickers are hidden.
+  final int? fixedRoomId;
+  final String? fixedRoomName;
+  final int? fixedWeekdayIndex;
+  final int? fixedStartMin;
+
+  const AssignBlockSheet({
+    super.key,
+    required this.weekStart,
+    this.fixedRoomId,
+    this.fixedRoomName,
+    this.fixedWeekdayIndex,
+    this.fixedStartMin,
+  });
 
   static Future<bool> show(
     BuildContext context, {
     required DateTime weekStart,
+    int? fixedRoomId,
+    String? fixedRoomName,
+    int? fixedWeekdayIndex,
+    int? fixedStartMin,
   }) async {
     final result = await MistModal.show<bool>(
       context: context,
-      builder: (_) => AssignBlockSheet(weekStart: weekStart),
+      builder: (_) => AssignBlockSheet(
+        weekStart: weekStart,
+        fixedRoomId: fixedRoomId,
+        fixedRoomName: fixedRoomName,
+        fixedWeekdayIndex: fixedWeekdayIndex,
+        fixedStartMin: fixedStartMin,
+      ),
     );
     return result ?? false;
   }
@@ -66,12 +90,23 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
   @override
   void initState() {
     super.initState();
-    // Default the day to today when the current week is shown, else Monday.
-    final now = DateTime.now();
-    final diff = DateTime(now.year, now.month, now.day)
-        .difference(widget.weekStart)
-        .inDays;
-    if (diff >= 0 && diff <= 6) _weekdayIndex = diff;
+    _roomId = widget.fixedRoomId;
+    if (widget.fixedWeekdayIndex != null) {
+      _weekdayIndex = widget.fixedWeekdayIndex!;
+    } else {
+      // Default the day to today when the current week is shown, else Monday.
+      final now = DateTime.now();
+      final diff = DateTime(now.year, now.month, now.day)
+          .difference(widget.weekStart)
+          .inDays;
+      if (diff >= 0 && diff <= 6) _weekdayIndex = diff;
+    }
+    if (widget.fixedStartMin != null) {
+      _startMin = widget.fixedStartMin!.clamp(
+          BoardGrid.startMinutes, BoardGrid.endMinutes - BoardGrid.slotMinutes);
+      _endMin = (_startMin + BoardGrid.slotMinutes)
+          .clamp(BoardGrid.startMinutes, BoardGrid.endMinutes);
+    }
   }
 
   @override
@@ -137,57 +172,74 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
       children: [
         Text('Назначить кабинет',
             style: type.titleL.copyWith(color: tokens.primaryText)),
+        if (widget.fixedRoomName != null ||
+            widget.fixedWeekdayIndex != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            [
+              if (widget.fixedRoomName != null) widget.fixedRoomName!,
+              if (widget.fixedWeekdayIndex != null)
+                _weekdayShort[widget.fixedWeekdayIndex!],
+            ].join('  ·  '),
+            style: type.bodyS.copyWith(color: tokens.mutedText),
+          ),
+        ],
         const SizedBox(height: 20),
 
-        // ── Room picker ──
-        Text('КАБИНЕТ', style: type.overline.copyWith(color: tokens.mutedText)),
-        const SizedBox(height: 8),
-        roomsAsync.when(
-          loading: () => const Center(child: OrbitLoader()),
-          error: (_, __) => Text('Не удалось загрузить кабинеты',
-              style: type.bodyM.copyWith(color: tokens.error)),
-          data: (rooms) {
-            final active = rooms.where((r) => r.isActive).toList();
-            if (active.isEmpty) {
-              return Text('Сначала создайте кабинет',
-                  style: type.bodyM.copyWith(color: tokens.mutedText));
-            }
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final r in active)
-                  _Chip(
-                    label: r.name,
-                    selected: _roomId == r.id,
-                    onTap: () => setState(() => _roomId = r.id),
-                  ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 16),
+        // ── Room picker (hidden when the room is fixed by the cell) ──
+        if (widget.fixedRoomId == null) ...[
+          Text('КАБИНЕТ',
+              style: type.overline.copyWith(color: tokens.mutedText)),
+          const SizedBox(height: 8),
+          roomsAsync.when(
+            loading: () => const Center(child: OrbitLoader()),
+            error: (_, __) => Text('Не удалось загрузить кабинеты',
+                style: type.bodyM.copyWith(color: tokens.error)),
+            data: (rooms) {
+              final active = rooms.where((r) => r.isActive).toList();
+              if (active.isEmpty) {
+                return Text('Сначала создайте кабинет',
+                    style: type.bodyM.copyWith(color: tokens.mutedText));
+              }
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final r in active)
+                    _Chip(
+                      label: r.name,
+                      selected: _roomId == r.id,
+                      onTap: () => setState(() => _roomId = r.id),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
 
-        // ── Weekday picker ──
-        Text('ДЕНЬ', style: type.overline.copyWith(color: tokens.mutedText)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            for (var i = 0; i < 7; i++)
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: i == 6 ? 0 : 6),
-                  child: _Chip(
-                    label: _weekdayShort[i],
-                    selected: _weekdayIndex == i,
-                    onTap: () => setState(() => _weekdayIndex = i),
-                    center: true,
+        // ── Weekday picker (hidden when the day is fixed by the cell) ──
+        if (widget.fixedWeekdayIndex == null) ...[
+          Text('ДЕНЬ', style: type.overline.copyWith(color: tokens.mutedText)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (var i = 0; i < 7; i++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: i == 6 ? 0 : 6),
+                    child: _Chip(
+                      label: _weekdayShort[i],
+                      selected: _weekdayIndex == i,
+                      onTap: () => setState(() => _weekdayIndex = i),
+                      center: true,
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // ── Teacher picker ──
         Text('ПЕДАГОГ', style: type.overline.copyWith(color: tokens.mutedText)),

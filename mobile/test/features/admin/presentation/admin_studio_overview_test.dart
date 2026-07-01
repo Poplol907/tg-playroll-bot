@@ -1,5 +1,9 @@
 import 'package:cosmo_studio/features/admin/data/admin_repository.dart';
 import 'package:cosmo_studio/features/admin/presentation/screens/admin_screen.dart';
+import 'package:cosmo_studio/features/auth/presentation/providers/auth_provider.dart';
+import 'package:cosmo_studio/features/rooms/data/room_models.dart';
+import 'package:cosmo_studio/features/rooms/data/rooms_repository.dart';
+import 'package:cosmo_studio/shared/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +25,10 @@ void main() {
                 teachers: [],
               )),
           orgUsersProvider.overrideWith((ref) async => <OrgUser>[]),
+          roomsProvider.overrideWith((ref) async => const <Room>[]),
+          currentUserProvider.overrideWithValue(
+            const UserModel(id: 1, orgId: 1, login: 'admin', role: 'ADMIN'),
+          ),
         ],
         child: const MaterialApp(home: AdminScreen()),
       ),

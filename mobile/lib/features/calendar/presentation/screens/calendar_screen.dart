@@ -36,7 +36,7 @@ import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/nebula_segmented_control.dart';
 import '../../../rooms/presentation/providers/room_board_providers.dart';
-import '../../../rooms/presentation/screens/room_board_screen.dart';
+import '../../../rooms/presentation/widgets/rooms_strip.dart';
 import '../../../rooms/presentation/widgets/rooms_today_card.dart';
 import '../../../../shared/models/lesson.dart';
 import '../../../../shared/models/student.dart';
@@ -195,7 +195,26 @@ class CalendarScreen extends ConsumerWidget {
             ),
             Expanded(
               child: scope == CalendarScope.rooms
-                  ? const RoomBoardScreen()
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        const RoomsStrip(),
+                        Expanded(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                'Выберите кабинет, чтобы открыть расписание',
+                                textAlign: TextAlign.center,
+                                style: NebulaTypography.of(context)
+                                    .bodyM
+                                    .copyWith(color: tokens.mutedText),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
                   : AppPlatform.isDesktop
             ? Column(
                 children: [

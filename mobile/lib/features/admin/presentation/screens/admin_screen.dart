@@ -24,7 +24,7 @@ import '../../../../core/platform/app_platform.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../core/utils/error_parser.dart';
-import '../../../rooms/presentation/screens/rooms_admin_screen.dart';
+import '../../../rooms/presentation/widgets/rooms_strip.dart';
 import '../../data/admin_repository.dart';
 import '../../data/payouts_repository.dart';
 import '../../data/rates_repository.dart';
@@ -136,14 +136,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: _StudioStatsCard(statsAsync: statsAsync),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: NebulaTextButton(
-                      label: 'Управление кабинетами',
-                      icon: Icons.meeting_room_outlined,
-                      onPressed: () => RoomsAdminScreen.show(context),
-                    ),
-                  ),
+                  const _RoomsSection(),
                 ],
               )
             : AppCustomScrollView(
@@ -153,16 +146,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                   SliverToBoxAdapter(
                     child: _StudioStatsCard(statsAsync: statsAsync),
                   ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                      child: NebulaTextButton(
-                        label: 'Управление кабинетами',
-                        icon: Icons.meeting_room_outlined,
-                        onPressed: () => RoomsAdminScreen.show(context),
-                      ),
-                    ),
-                  ),
+                  const SliverToBoxAdapter(child: _RoomsSection()),
                 ],
               ),
       ),
@@ -173,6 +157,29 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 // ─────────────────────────────────────────────
 //  Studio stats card
 // ─────────────────────────────────────────────
+
+class _RoomsSection extends StatelessWidget {
+  const _RoomsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          child: Text('Кабинеты',
+              style: type.titleS.copyWith(color: tokens.primaryText)),
+        ),
+        const RoomsStrip(),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
 
 class _StudioStatsCard extends StatelessWidget {
   final AsyncValue<StudioStats> statsAsync;
