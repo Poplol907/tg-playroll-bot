@@ -71,6 +71,7 @@ class StudentsScreen extends ConsumerWidget {
     }
 
     Widget mobileBody() => studentsAsync.when(
+          skipLoadingOnRefresh: false,
           loading: () => AppCustomScrollView(
             header: header,
             slivers: const [
@@ -125,6 +126,7 @@ class StudentsScreen extends ConsumerWidget {
             ),
             Expanded(
               child: studentsAsync.when(
+          skipLoadingOnRefresh: false,
                 loading: () => const Center(child: OrbitLoader()),
                 error: (e, _) => Center(
                   child: AppErrorCard(
