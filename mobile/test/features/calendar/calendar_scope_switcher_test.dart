@@ -65,7 +65,8 @@ void main() {
     await tester.pump(); // rebuild into the board (rooms loading)
     await tester.pump(const Duration(milliseconds: 50)); // resolve rooms/blocks
 
-    // The board renders its fixed time gutter (09:00–21:00).
-    expect(find.text('09:00'), findsWidgets);
+    // The weekly agenda board renders (header + empty day sections).
+    expect(find.text('Расписание кабинетов'), findsOneWidget);
+    expect(find.text('Нет назначений'), findsWidgets);
   });
 }

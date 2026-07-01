@@ -16,39 +16,23 @@ import '../../../admin/data/admin_repository.dart';
 import '../../data/rooms_repository.dart';
 import '../providers/room_board_providers.dart';
 
-/// Admin sheet to assign a room to a teacher for a time interval — either
-/// recurring (this weekday, every week) or a one-off on [date].
-///
+const _weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+/// Admin sheet to assign a room to a teacher — pick room, weekday (within the
+/// shown week), start/end and whether it repeats weekly or is a one-off.
 /// Returns `true` from [show] when a block was created.
 class AssignBlockSheet extends ConsumerStatefulWidget {
-  final int roomId;
-  final String roomName;
-  final DateTime date;
-  final int initialStartMinutes;
+  final DateTime weekStart;
 
-  const AssignBlockSheet({
-    super.key,
-    required this.roomId,
-    required this.roomName,
-    required this.date,
-    required this.initialStartMinutes,
-  });
+  const AssignBlockSheet({super.key, required this.weekStart});
 
   static Future<bool> show(
     BuildContext context, {
-    required int roomId,
-    required String roomName,
-    required DateTime date,
-    required int initialStartMinutes,
+    required DateTime weekStart,
   }) async {
     final result = await MistModal.show<bool>(
       context: context,
-      builder: (_) => AssignBlockSheet(
-        roomId: roomId,
-        roomName: roomName,
-        date: date,
-        initialStartMinutes: initialStartMinutes,
-      ),
+      builder: (_) => AssignBlockSheet(weekStart: weekStart),
     );
     return result ?? false;
   }
@@ -69,9 +53,11 @@ List<int> _allSlots() => [
     ];
 
 class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
-  late int _startMin;
-  late int _endMin;
+  int? _roomId;
+  int _weekdayIndex = 0;
   int? _teacherId;
+  int _startMin = BoardGrid.startMinutes;
+  int _endMin = BoardGrid.startMinutes + BoardGrid.slotMinutes;
   bool _recurring = true;
   final _noteCtrl = TextEditingController();
   bool _loading = false;
@@ -80,14 +66,12 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
   @override
   void initState() {
     super.initState();
-    final slots = _allSlots();
-    _startMin = widget.initialStartMinutes;
-    if (!slots.contains(_startMin)) _startMin = BoardGrid.startMinutes;
-    if (_startMin >= BoardGrid.endMinutes) {
-      _startMin = BoardGrid.endMinutes - BoardGrid.slotMinutes;
-    }
-    _endMin = _startMin + BoardGrid.slotMinutes;
-    if (_endMin > BoardGrid.endMinutes) _endMin = BoardGrid.endMinutes;
+    // Default the day to today when the current week is shown, else Monday.
+    final now = DateTime.now();
+    final diff = DateTime(now.year, now.month, now.day)
+        .difference(widget.weekStart)
+        .inDays;
+    if (diff >= 0 && diff <= 6) _weekdayIndex = diff;
   }
 
   @override
@@ -97,6 +81,10 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
   }
 
   Future<void> _submit() async {
+    if (_roomId == null) {
+      setState(() => _error = 'Выберите кабинет');
+      return;
+    }
     if (_teacherId == null) {
       setState(() => _error = 'Выберите педагога');
       return;
@@ -110,15 +98,16 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
       _error = null;
     });
     try {
-      final ymd = DateFormat('yyyy-MM-dd').format(widget.date);
+      final date = widget.weekStart.add(Duration(days: _weekdayIndex));
       final note = _noteCtrl.text.trim();
       await ref.read(roomsRepositoryProvider).createBlock(
-            roomId: widget.roomId,
+            roomId: _roomId!,
             teacherUserId: _teacherId!,
             startTime: _fmt(_startMin),
             endTime: _fmt(_endMin),
-            weekday: _recurring ? BoardGrid.contractWeekday(widget.date) : null,
-            specificDate: _recurring ? null : ymd,
+            weekday: _recurring ? _weekdayIndex : null,
+            specificDate:
+                _recurring ? null : DateFormat('yyyy-MM-dd').format(date),
             note: note.isEmpty ? null : note,
           );
       HapticFeedback.mediumImpact();
@@ -138,90 +127,98 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
+    final roomsAsync = ref.watch(roomsProvider);
     final usersAsync = ref.watch(orgUsersProvider);
     final slots = _allSlots();
-    final dateStr = DateFormat('yyyy-MM-dd').format(widget.date);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Назначить · ${widget.roomName}',
-          style: type.titleL.copyWith(color: tokens.primaryText),
-        ),
-        const SizedBox(height: 4),
-        Text(dateStr, style: type.bodyS.copyWith(color: tokens.mutedText)),
+        Text('Назначить кабинет',
+            style: type.titleL.copyWith(color: tokens.primaryText)),
         const SizedBox(height: 20),
-        Text('ПЕДАГОГ', style: type.overline.copyWith(color: tokens.mutedText)),
+
+        // ── Room picker ──
+        Text('КАБИНЕТ', style: type.overline.copyWith(color: tokens.mutedText)),
         const SizedBox(height: 8),
-        usersAsync.when(
+        roomsAsync.when(
           loading: () => const Center(child: OrbitLoader()),
-          error: (_, __) => Text(
-            'Не удалось загрузить педагогов',
-            style: type.bodyM.copyWith(color: tokens.error),
-          ),
-          data: (users) {
-            final teachers = users.where((u) => u.role == 'TEACHER').toList();
-            if (teachers.isEmpty) {
-              return Text(
-                'Нет педагогов',
-                style: type.bodyM.copyWith(color: tokens.mutedText),
-              );
+          error: (_, __) => Text('Не удалось загрузить кабинеты',
+              style: type.bodyM.copyWith(color: tokens.error)),
+          data: (rooms) {
+            final active = rooms.where((r) => r.isActive).toList();
+            if (active.isEmpty) {
+              return Text('Сначала создайте кабинет',
+                  style: type.bodyM.copyWith(color: tokens.mutedText));
             }
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: 44.0 * teachers.length.clamp(1, 5) + 8,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                itemCount: teachers.length,
-                itemBuilder: (_, i) {
-                  final t = teachers[i];
-                  final selected = _teacherId == t.id;
-                  return GestureDetector(
-                    onTap: () => setState(() => _teacherId = t.id),
-                    child: Container(
-                      height: 44,
-                      margin: const EdgeInsets.only(bottom: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? tokens.primaryAccent
-                                .withValues(alpha: NebulaAlpha.subtle)
-                            : tokens.surface,
-                        borderRadius: NebulaRadii.controlBorder,
-                        border: Border.all(
-                          color: selected
-                              ? tokens.primaryAccent
-                                  .withValues(alpha: NebulaAlpha.strong)
-                              : tokens.surfaceBorder,
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          t.displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: type.bodyM.copyWith(
-                            color: selected
-                                ? tokens.primaryText
-                                : tokens.mutedText,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final r in active)
+                  _Chip(
+                    label: r.name,
+                    selected: _roomId == r.id,
+                    onTap: () => setState(() => _roomId = r.id),
+                  ),
+              ],
             );
           },
         ),
         const SizedBox(height: 16),
+
+        // ── Weekday picker ──
+        Text('ДЕНЬ', style: type.overline.copyWith(color: tokens.mutedText)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (var i = 0; i < 7; i++)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: i == 6 ? 0 : 6),
+                  child: _Chip(
+                    label: _weekdayShort[i],
+                    selected: _weekdayIndex == i,
+                    onTap: () => setState(() => _weekdayIndex = i),
+                    center: true,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // ── Teacher picker ──
+        Text('ПЕДАГОГ', style: type.overline.copyWith(color: tokens.mutedText)),
+        const SizedBox(height: 8),
+        usersAsync.when(
+          loading: () => const Center(child: OrbitLoader()),
+          error: (_, __) => Text('Не удалось загрузить педагогов',
+              style: type.bodyM.copyWith(color: tokens.error)),
+          data: (users) {
+            final teachers = users.where((u) => u.role == 'TEACHER').toList();
+            if (teachers.isEmpty) {
+              return Text('Нет педагогов',
+                  style: type.bodyM.copyWith(color: tokens.mutedText));
+            }
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final t in teachers)
+                  _Chip(
+                    label: t.displayName,
+                    selected: _teacherId == t.id,
+                    onTap: () => setState(() => _teacherId = t.id),
+                  ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+
+        // ── Time ──
         Row(
           children: [
             Expanded(
@@ -254,6 +251,8 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
           ],
         ),
         const SizedBox(height: 16),
+
+        // ── Recurrence ──
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
@@ -332,8 +331,7 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
                 color: tokens.mutedText, size: 20),
             style: type.bodyM.copyWith(color: tokens.primaryText),
             items: opts
-                .map((m) =>
-                    DropdownMenuItem(value: m, child: Text(_fmt(m))))
+                .map((m) => DropdownMenuItem(value: m, child: Text(_fmt(m))))
                 .toList(),
             onChanged: (v) {
               if (v != null) onChanged(v);
@@ -341,6 +339,56 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Selectable pill used by the room / weekday / teacher pickers.
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool center;
+
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.center = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        alignment: center ? Alignment.center : null,
+        decoration: BoxDecoration(
+          color: selected
+              ? tokens.primaryAccent.withValues(alpha: NebulaAlpha.subtle)
+              : tokens.surface,
+          borderRadius: NebulaRadii.controlBorder,
+          border: Border.all(
+            color: selected
+                ? tokens.primaryAccent.withValues(alpha: NebulaAlpha.strong)
+                : tokens.surfaceBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: type.bodyM.copyWith(
+            color: selected ? tokens.primaryText : tokens.mutedText,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
     );
   }
 }
