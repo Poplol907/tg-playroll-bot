@@ -96,6 +96,7 @@ class _StudentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return studentsAsync.when(
+      skipLoadingOnRefresh: false,
       loading: () => const Center(child: OrbitLoader()),
       error: (e, _) => Center(
         child: AppErrorCard(

@@ -185,6 +185,7 @@ class _StudioStatsCard extends StatelessWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     return statsAsync.when(
+      skipLoadingOnRefresh: false,
       loading: () => const NebulaSurface(
         padding: EdgeInsets.symmetric(vertical: 28),
         radiusRole: NebulaRadiusRole.panel,
@@ -483,6 +484,7 @@ class _TeacherProfileScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 8),
                                   paidAsync.when(
+                                    skipLoadingOnRefresh: false,
                                     data: (paidValue) => Column(
                                       children: [
                                         _PayoutRow(
@@ -549,6 +551,7 @@ class _TeacherProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(width: 10),
                               rateAsync.when(
+                                skipLoadingOnRefresh: false,
                                 data: (rate) => Flexible(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,

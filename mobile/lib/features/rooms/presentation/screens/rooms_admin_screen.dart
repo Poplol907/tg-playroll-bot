@@ -145,6 +145,7 @@ class _RoomsAdminScreenState extends ConsumerState<RoomsAdminScreen> {
               ),
               Expanded(
                 child: roomsAsync.when(
+                  skipLoadingOnRefresh: false,
                   loading: () => const Center(child: OrbitLoader()),
                   error: (e, _) => Center(
                     child: AppErrorCard(

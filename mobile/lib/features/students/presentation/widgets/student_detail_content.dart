@@ -26,6 +26,7 @@ class _ContentLoader extends ConsumerWidget {
         CosmoThemeTokens.darkInternals;
 
     return lessonsAsync.when(
+      skipLoadingOnRefresh: false,
       loading: () => const Center(child: OrbitLoader()),
       error: (_, __) => Center(
         child: Text(

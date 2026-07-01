@@ -63,6 +63,7 @@ class SalaryScreen extends ConsumerWidget {
               AppScreenHeader(title: 'Зарплата', subtitle: headerName),
               const SizedBox(height: 24),
               salaryAsync.when(
+                skipLoadingOnRefresh: false,
                 loading: () => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(60),
@@ -538,6 +539,7 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
 
             // ── Rates config card ───────────────────────────────────────────
             ratesAsync.when(
+              skipLoadingOnRefresh: false,
               loading: () => const SizedBox.shrink(),
               error: (e, _) => entered(
                 _InlineErrorCard(

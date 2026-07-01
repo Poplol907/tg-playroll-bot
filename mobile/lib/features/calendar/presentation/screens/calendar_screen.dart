@@ -232,6 +232,7 @@ class CalendarScreen extends ConsumerWidget {
                   ),
                   Expanded(
                     child: lessonsAsync.when(
+                      skipLoadingOnRefresh: false,
                       loading: () => const Center(child: OrbitLoader()),
                       error: (e, _) => Center(
                         child: AppErrorCard(
@@ -249,6 +250,7 @@ class CalendarScreen extends ConsumerWidget {
                 ],
               )
             : lessonsAsync.when(
+                      skipLoadingOnRefresh: false,
                 loading: () => AppCustomScrollView(
                   header: header,
                   slivers: const [
