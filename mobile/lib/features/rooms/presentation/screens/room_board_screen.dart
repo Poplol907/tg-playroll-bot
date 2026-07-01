@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/cosmo_theme_tokens.dart';
+import '../../../../core/theme/nebula_colors.dart';
+import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -14,9 +16,9 @@ import '../../data/room_models.dart';
 import '../../data/rooms_repository.dart';
 import '../providers/room_board_providers.dart';
 import '../util/block_conflicts.dart';
+import '../util/teacher_color.dart';
 import '../widgets/assign_block_sheet.dart';
 import '../widgets/block_actions_sheet.dart';
-import '../widgets/room_board_grid.dart';
 
 const _weekdaysRu = [
   'Понедельник',
@@ -28,7 +30,7 @@ const _weekdaysRu = [
   'Воскресенье',
 ];
 
-const _monthsRu = [
+const _monthsRuGen = [
   'января',
   'февраля',
   'марта',
@@ -43,20 +45,22 @@ const _monthsRu = [
   'декабря',
 ];
 
-/// Day board screen — rooms as columns, time as rows, showing the whole
-/// studio's schedule. Admins can tap an empty cell to assign a block or tap a
-/// block to cancel/delete it; teachers see the same board read-only. Swipe the
-/// header (or use the arrows) to move between days.
+DateTime _mondayOf(DateTime d) =>
+    DateTime(d.year, d.month, d.day).subtract(Duration(days: d.weekday - 1));
+
+String _ymd(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+
+/// Weekly room schedule — a readable agenda: one section per weekday
+/// (Пн–Вс), each listing the studio's room assignments as
+/// «Кабинет · Педагог · HH:MM–HH:MM». Shows the whole studio; admins can add
+/// a block (＋) or tap a row to cancel/delete it, teachers read it.
 ///
-/// [standalone] is true when the board is pushed as its own route (admin opens
-/// it from rooms management): it then hosts its own background and shows a back
-/// button. When embedded in the calendar's "Кабинеты" scope it stays false.
+/// [standalone] is true when pushed as its own route (admin opens it from
+/// rooms management): it hosts its own background and shows a back button.
 class RoomBoardScreen extends ConsumerWidget {
   final bool standalone;
   const RoomBoardScreen({super.key, this.standalone = false});
 
-  /// Pushes the board full-screen over the shell (its own background, no shell
-  /// chrome overlap).
   static void show(BuildContext context) {
     Navigator.of(context, rootNavigator: true).push(
       SlideUpPageRoute(builder: (_) => const RoomBoardScreen(standalone: true)),
@@ -69,168 +73,127 @@ class RoomBoardScreen extends ConsumerWidget {
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
 
-    final date = ref.watch(boardDateProvider);
-    final dateYmd = DateFormat('yyyy-MM-dd').format(date);
-    final user = ref.watch(currentUserProvider);
-    final isAdmin = user?.isAdmin ?? false;
+    final anchor = ref.watch(boardDateProvider);
+    final weekStart = _mondayOf(anchor);
+    final days = [for (var i = 0; i < 7; i++) weekStart.add(Duration(days: i))];
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
 
-    // The board always shows the whole studio (all rooms, all teachers).
-    // Only admins get the tap-to-edit affordances; teachers read it.
-    final roomsAsync = ref.watch(roomsProvider);
-    final blocksQuery = (date: dateYmd, teacherId: null);
-    final blocksAsync = ref.watch(roomBlocksForDateProvider(blocksQuery));
+    // The board shows the whole studio (all rooms, all teachers).
+    final queries = [for (final d in days) (date: _ymd(d), teacherId: null)];
+    final asyncs = [
+      for (final q in queries) ref.watch(roomBlocksForDateProvider(q))
+    ];
 
-    void goToPreviousDay() {
+    void shiftWeek(int delta) {
       ref.read(boardDateProvider.notifier).state =
-          date.subtract(const Duration(days: 1));
+          weekStart.add(Duration(days: delta * 7));
     }
 
-    void goToNextDay() {
-      ref.read(boardDateProvider.notifier).state =
-          date.add(const Duration(days: 1));
+    void refresh() {
+      for (final q in queries) {
+        ref.invalidate(roomBlocksForDateProvider(q));
+      }
     }
 
-    void retry() {
-      ref.invalidate(roomsProvider);
-      ref.invalidate(roomBlocksForDateProvider(blocksQuery));
+    Future<void> onAdd() async {
+      final created = await AssignBlockSheet.show(context, weekStart: weekStart);
+      if (created) refresh();
     }
 
-    final weekdayLabel = _weekdaysRu[BoardGrid.contractWeekday(date)];
-    final dateLabel = '${date.day} ${_monthsRu[date.month - 1]}';
+    Future<void> onBlockTap(ResolvedRoomBlock block, DateTime day) async {
+      if (!isAdmin) return;
+      final changed = await BlockActionsSheet.show(
+        context,
+        block: block,
+        dateYmd: _ymd(day),
+      );
+      if (changed) refresh();
+    }
 
     Widget body;
-    if (roomsAsync.isLoading || blocksAsync.isLoading) {
+    if (asyncs.any((a) => a.isLoading)) {
       body = const Center(child: OrbitLoader());
-    } else if (roomsAsync.hasError) {
+    } else if (asyncs.any((a) => a.hasError)) {
+      final errored = asyncs.firstWhere((a) => a.hasError);
       body = Center(
         child: AppErrorCard(
-          message: parseApiError(
-            roomsAsync.error!,
-            fallback: 'Не удалось загрузить расписание',
-          ),
-          onRetry: retry,
-          isConnectionError: isConnectionError(roomsAsync.error!),
-        ),
-      );
-    } else if (blocksAsync.hasError) {
-      body = Center(
-        child: AppErrorCard(
-          message: parseApiError(
-            blocksAsync.error!,
-            fallback: 'Не удалось загрузить расписание',
-          ),
-          onRetry: retry,
-          isConnectionError: isConnectionError(blocksAsync.error!),
+          message: parseApiError(errored.error!,
+              fallback: 'Не удалось загрузить расписание'),
+          onRetry: refresh,
+          isConnectionError: isConnectionError(errored.error!),
         ),
       );
     } else {
-      final rooms = roomsAsync.requireValue;
-      final blocks = blocksAsync.requireValue;
-      final conflictIds = conflictingBlockIds(blocks);
-
-      Future<void> onEmptyTap(int roomId, int startMinutes) async {
-        if (!isAdmin) return;
-        final room = rooms.firstWhere((r) => r.id == roomId);
-        final created = await AssignBlockSheet.show(
-          context,
-          roomId: roomId,
-          roomName: room.name,
-          date: date,
-          initialStartMinutes: startMinutes,
-        );
-        if (created) ref.invalidate(roomBlocksForDateProvider(blocksQuery));
-      }
-
-      Future<void> onBlockTap(ResolvedRoomBlock block) async {
-        if (!isAdmin) return;
-        final changed = await BlockActionsSheet.show(
-          context,
-          block: block,
-          dateYmd: dateYmd,
-        );
-        if (changed) ref.invalidate(roomBlocksForDateProvider(blocksQuery));
-      }
-
-      body = RoomBoardGrid(
-        rooms: rooms,
-        blocks: blocks,
-        conflictIds: conflictIds,
-        onEmptyTap: onEmptyTap,
-        onBlockTap: onBlockTap,
+      body = ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+        itemCount: days.length,
+        itemBuilder: (_, i) {
+          final day = days[i];
+          final blocks = [...asyncs[i].requireValue]..sort((a, b) =>
+              hhmmToMinutes(a.startTime).compareTo(hhmmToMinutes(b.startTime)));
+          return _DaySection(
+            day: day,
+            blocks: blocks,
+            conflictIds: conflictingBlockIds(blocks),
+            onBlockTap: isAdmin ? (b) => onBlockTap(b, day) : null,
+          );
+        },
       );
     }
 
-    // Day-swipe lives on the header only — wrapping the board would fight the
-    // room columns' horizontal scroll in the gesture arena.
-    void onHeaderDragEnd(DragEndDetails details) {
-      final velocity = details.primaryVelocity ?? 0;
-      if (velocity < 0) {
-        goToNextDay();
-      } else if (velocity > 0) {
-        goToPreviousDay();
-      }
-    }
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final rangeLabel = weekStart.month == weekEnd.month
+        ? '${weekStart.day}–${weekEnd.day} ${_monthsRuGen[weekStart.month - 1]}'
+        : '${weekStart.day} ${_monthsRuGen[weekStart.month - 1]} – '
+            '${weekEnd.day} ${_monthsRuGen[weekEnd.month - 1]}';
 
     final content = SafeArea(
-      // Standalone (root-pushed over the shell) needs the hardware top inset;
-      // embedded in the calendar the shell already applied it.
       top: standalone,
       child: Column(
         children: [
-          if (standalone)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
-                child: IconButton(
-                  tooltip: 'Назад',
-                  icon: Icon(Icons.arrow_back_rounded,
-                      color: tokens.mutedText),
-                  onPressed: () => Navigator.of(context).pop(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 4),
+            child: Row(
+              children: [
+                if (standalone)
+                  IconButton(
+                    tooltip: 'Назад',
+                    icon: Icon(Icons.arrow_back_rounded,
+                        color: tokens.mutedText),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                IconButton(
+                  tooltip: 'Прошлая неделя',
+                  icon: Icon(Icons.chevron_left_rounded,
+                      color: tokens.primaryText),
+                  onPressed: () => shiftWeek(-1),
                 ),
-              ),
-            ),
-          GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragEnd: onHeaderDragEnd,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left_rounded),
-                      color: tokens.primaryText,
-                      onPressed: goToPreviousDay,
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            weekdayLabel,
-                            style: type.titleM.copyWith(
-                              color: tokens.primaryText,
-                            ),
-                          ),
-                          Text(
-                            dateLabel,
-                            style: type.bodyS.copyWith(
-                              color: tokens.mutedText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right_rounded),
-                      color: tokens.primaryText,
-                      onPressed: goToNextDay,
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text('Расписание кабинетов',
+                          style: type.titleM.copyWith(color: tokens.primaryText)),
+                      Text(rangeLabel,
+                          style: type.bodyS.copyWith(color: tokens.mutedText)),
+                    ],
+                  ),
                 ),
-              ),
+                IconButton(
+                  tooltip: 'Следующая неделя',
+                  icon: Icon(Icons.chevron_right_rounded,
+                      color: tokens.primaryText),
+                  onPressed: () => shiftWeek(1),
+                ),
+                if (isAdmin)
+                  IconButton(
+                    tooltip: 'Назначить кабинет',
+                    icon: Icon(Icons.add_rounded, color: tokens.primaryAccent),
+                    onPressed: onAdd,
+                  ),
+              ],
             ),
-            Expanded(child: body),
+          ),
+          Expanded(child: body),
         ],
       ),
     );
@@ -243,6 +206,153 @@ class RoomBoardScreen extends ConsumerWidget {
               child: content,
             )
           : content,
+    );
+  }
+}
+
+class _DaySection extends StatelessWidget {
+  final DateTime day;
+  final List<ResolvedRoomBlock> blocks;
+  final Set<int> conflictIds;
+  final void Function(ResolvedRoomBlock block)? onBlockTap;
+
+  const _DaySection({
+    required this.day,
+    required this.blocks,
+    required this.conflictIds,
+    this.onBlockTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    final isToday = DateUtils.isSameDay(day, DateTime.now());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 14, 4, 6),
+          child: Row(
+            children: [
+              Text(
+                _weekdaysRu[day.weekday - 1],
+                style: type.titleS.copyWith(
+                  color: isToday ? tokens.primaryAccent : tokens.primaryText,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${day.day} ${_monthsRuGen[day.month - 1]}',
+                style: type.bodyS.copyWith(color: tokens.mutedText),
+              ),
+            ],
+          ),
+        ),
+        if (blocks.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+            child: Text('Нет назначений',
+                style: type.bodyS.copyWith(color: tokens.mutedText)),
+          )
+        else
+          for (final block in blocks)
+            _AgendaRow(
+              block: block,
+              isConflict: conflictIds.contains(block.id),
+              onTap: onBlockTap == null ? null : () => onBlockTap!(block),
+            ),
+      ],
+    );
+  }
+}
+
+class _AgendaRow extends StatelessWidget {
+  final ResolvedRoomBlock block;
+  final bool isConflict;
+  final VoidCallback? onTap;
+
+  const _AgendaRow({
+    required this.block,
+    required this.isConflict,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    final color = teacherColor(block.teacherUserId);
+    final borderColor = isConflict
+        ? NebulaColors.errorRose
+        : tokens.surfaceBorder;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: tokens.surface,
+          borderRadius: NebulaRadii.cardBorder,
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: NebulaRadii.compactControlBorder,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    block.roomName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: type.titleS.copyWith(color: tokens.primaryText),
+                  ),
+                  Text(
+                    block.teacherName ?? '—',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: type.bodyS.copyWith(color: tokens.secondaryText),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${block.startTime}–${block.endTime}',
+                  style: type.bodyM
+                      .copyWith(color: tokens.primaryText)
+                      .copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()]),
+                ),
+                if (isConflict)
+                  Text('конфликт',
+                      style: type.labelS.copyWith(color: NebulaColors.errorRose)),
+                if (!block.isRecurring)
+                  Text('разово',
+                      style: type.labelS.copyWith(color: tokens.mutedText)),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
