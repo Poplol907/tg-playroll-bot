@@ -294,6 +294,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             onPrev: selectPreviousMonth,
             onNext: selectNextMonth,
             onToday: selectCurrentMonth,
+            viewAsGlow: ref.watch(viewAsTeacherProvider) != null,
           );
 
     final user = ref.watch(currentUserProvider);
@@ -517,6 +518,7 @@ class _MobileMonthBar extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onToday;
+  final bool viewAsGlow;
 
   const _MobileMonthBar({
     required this.month,
@@ -524,6 +526,7 @@ class _MobileMonthBar extends StatelessWidget {
     required this.onPrev,
     required this.onNext,
     required this.onToday,
+    this.viewAsGlow = false,
   });
 
   @override
@@ -544,6 +547,7 @@ class _MobileMonthBar extends StatelessWidget {
           onToday: onToday,
           showTooltip: false,
           maxPillWidth: AppChromeMetrics.monthPillMaxWidth,
+          viewAsGlow: viewAsGlow,
         ),
       ),
     );
@@ -589,6 +593,7 @@ class _MonthControls extends StatelessWidget {
   final VoidCallback onToday;
   final bool showTooltip;
   final double? maxPillWidth;
+  final bool viewAsGlow;
 
   const _MonthControls({
     required this.month,
@@ -598,6 +603,7 @@ class _MonthControls extends StatelessWidget {
     required this.onToday,
     required this.showTooltip,
     this.maxPillWidth,
+    this.viewAsGlow = false,
   });
 
   @override
@@ -627,6 +633,16 @@ class _MonthControls extends StatelessWidget {
       height: AppChromeMetrics.monthControlHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       onTap: isCurrentMonth ? null : onToday,
+      // Ambient "view-as" cue: a soft orange edge glow on the month island.
+      glow: viewAsGlow
+          ? [
+              BoxShadow(
+                color: tokens.warning.withValues(alpha: NebulaAlpha.accent),
+                blurRadius: 16,
+                spreadRadius: -1,
+              ),
+            ]
+          : null,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,

@@ -12,19 +12,16 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../data/admin_repository.dart';
 import '../providers/view_as_teacher_provider.dart';
 
-/// Полноэкранный индикатор режима «смотрю как педагог».
-///
-/// Вместо плашки-прямоугольника: тонкая оранжевая светящаяся окантовка по
-/// периметру всего экрана (не занимает места, не перекрывает контент) +
-/// плавающая овальная стеклянная кнопка с именем педагога и выходом.
-/// Добавляется ПОВЕРХ контента — последним ребёнком Stack в шелле.
+/// View-as indicator: a floating glass pill (teacher name + exit) shown while
+/// an admin browses as a teacher. The ambient "you're in view-as" cue is the
+/// orange glow on the month island (see the shell); no full-screen frame.
 class ViewAsOverlay extends ConsumerWidget {
   const ViewAsOverlay({super.key});
 
   void _exit(BuildContext context, WidgetRef ref) {
     HapticFeedback.selectionClick();
     ref.read(viewAsTeacherProvider.notifier).state = null;
-    // Сбрасываем кэши: пользователь сменился — данные стали другими.
+    // Кэши пользователя сбросятся сами по смене личности; уводим на /admin.
     ref.invalidate(studioStatsProvider);
     context.go('/admin');
   }
@@ -44,133 +41,43 @@ class ViewAsOverlay extends ConsumerWidget {
         ? 24.0
         : MediaQuery.of(context).viewPadding.bottom + 96.0;
 
-    return Positioned.fill(
-      child: Stack(
-        children: [
-          // ── Окантовка по периметру ────────────────────────────────────
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _ViewAsFramePainter(
-                  color: tokens.warning,
-                  safeInsets: MediaQuery.of(context).viewPadding,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Плавающая овальная кнопка выхода ─────────────────────────
-          Positioned(
-            right: 16,
-            bottom: bottomOffset,
-            child: NebulaSurface(
-              radiusRole: NebulaRadiusRole.pill,
-              accent: tokens.warning,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              onTap: () => _exit(context, ref),
-              glow: [
-                BoxShadow(
-                  color: tokens.warning.withValues(alpha: NebulaAlpha.subtle),
-                  blurRadius: 20,
-                  spreadRadius: -2,
-                ),
-              ],
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.visibility_outlined,
-                    color: tokens.warning,
-                    size: 15,
-                  ),
-                  const SizedBox(width: 7),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 140),
-                    child: Text(
-                      viewAs.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.labelM.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: tokens.warning,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 7),
-                  Icon(
-                    Icons.close_rounded,
-                    color: tokens.warning,
-                    size: 15,
-                  ),
-                ],
-              ),
-            ),
+    return Positioned(
+      right: 16,
+      bottom: bottomOffset,
+      child: NebulaSurface(
+        radiusRole: NebulaRadiusRole.pill,
+        accent: tokens.warning,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        onTap: () => _exit(context, ref),
+        glow: [
+          BoxShadow(
+            color: tokens.warning.withValues(alpha: NebulaAlpha.subtle),
+            blurRadius: 20,
+            spreadRadius: -2,
           ),
         ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.visibility_outlined, color: tokens.warning, size: 15),
+            const SizedBox(width: 7),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(
+                viewAs.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: type.labelM.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: tokens.warning,
+                ),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Icon(Icons.close_rounded, color: tokens.warning, size: 15),
+          ],
+        ),
       ),
     );
   }
-}
-
-/// Rect the view-as frame traces: the full surface inset by the device safe
-/// area plus a small margin, so the outline hugs the visible screen on any
-/// phone (notch, Dynamic Island, home indicator) instead of a fixed offset.
-@visibleForTesting
-Rect viewAsFrameRect(
-  Size size,
-  EdgeInsets safeInsets, {
-  double margin = 6.0,
-}) {
-  return Rect.fromLTRB(
-    safeInsets.left + margin,
-    safeInsets.top + margin,
-    size.width - safeInsets.right - margin,
-    size.height - safeInsets.bottom - margin,
-  );
-}
-
-/// Рамка-индикатор: скруглённый контур с мягким внутренним свечением.
-/// Свет рассеивается внутрь, основная линия тонкая — режим считывается
-/// мгновенно, но контент остаётся нетронутым. Контур повторяет видимый
-/// экран устройства (safe area), а не фиксированный отступ.
-class _ViewAsFramePainter extends CustomPainter {
-  final Color color;
-  final EdgeInsets safeInsets;
-
-  const _ViewAsFramePainter({required this.color, required this.safeInsets});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-
-    final rect = viewAsFrameRect(size, safeInsets);
-    if (rect.width <= 0 || rect.height <= 0) return;
-    final rrect = RRect.fromRectAndRadius(
-      rect,
-      const Radius.circular(NebulaRadii.hero),
-    );
-
-    // Мягкое рассеянное свечение внутрь — широкая размытая обводка.
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 12
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
-        ..color = color.withValues(alpha: NebulaAlpha.mist),
-    );
-
-    // Основная тонкая линия.
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..color = color.withValues(alpha: NebulaAlpha.high),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ViewAsFramePainter old) =>
-      old.color != color || old.safeInsets != safeInsets;
 }
