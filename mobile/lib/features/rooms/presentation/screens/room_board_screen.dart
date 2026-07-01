@@ -59,7 +59,7 @@ class RoomBoardScreen extends ConsumerWidget {
   /// chrome overlap).
   static void show(BuildContext context) {
     Navigator.of(context, rootNavigator: true).push(
-      SpacePageRoute(builder: (_) => const RoomBoardScreen(standalone: true)),
+      SlideUpPageRoute(builder: (_) => const RoomBoardScreen(standalone: true)),
     );
   }
 
@@ -172,6 +172,9 @@ class RoomBoardScreen extends ConsumerWidget {
     }
 
     final content = SafeArea(
+      // Standalone (root-pushed over the shell) needs the hardware top inset;
+      // embedded in the calendar the shell already applied it.
+      top: standalone,
       child: Column(
         children: [
           if (standalone)

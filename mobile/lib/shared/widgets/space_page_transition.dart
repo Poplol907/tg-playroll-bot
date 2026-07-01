@@ -308,6 +308,36 @@ class SpacePageRoute<T> extends PageRouteBuilder<T> {
         );
 }
 
+/// Clean full-screen detail transition: the new screen rises from just below
+/// and fades in (no nebula cloud overlay). Used for admin/detail push screens
+/// where the swirling-nebula transition reads as shapeless blobs.
+class SlideUpPageRoute<T> extends PageRouteBuilder<T> {
+  SlideUpPageRoute({required WidgetBuilder builder})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              builder(context),
+          transitionDuration: const Duration(milliseconds: 360),
+          reverseTransitionDuration: const Duration(milliseconds: 280),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final curved = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
+            return FadeTransition(
+              opacity: curved,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.08),
+                  end: Offset.zero,
+                ).animate(curved),
+                child: child,
+              ),
+            );
+          },
+        );
+}
+
 CustomTransitionPage<T> spaceTransitionPage<T>({
   required LocalKey key,
   required Widget child,
