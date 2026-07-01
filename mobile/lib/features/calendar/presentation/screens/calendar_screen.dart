@@ -19,6 +19,7 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/pulse_indicator.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../shared/widgets/jiggle_delete_wrapper.dart';
+import '../../../../shared/widgets/app_chrome_metrics.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/app_screen_header.dart';
 import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
@@ -176,7 +177,14 @@ class CalendarScreen extends ConsumerWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              // Clear the floating month island (the shell already consumed the
+              // hardware top inset via SafeArea(top:true)).
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                AppChromeMetrics.routeContentTopReservation + 8,
+                16,
+                4,
+              ),
               child: NebulaSegmentedControl(
                 segments: const ['Ученики', 'Кабинеты'],
                 selectedIndex: scope.index,

@@ -35,7 +35,7 @@ class RoomsAdminScreen extends ConsumerStatefulWidget {
 
   static void show(BuildContext context) {
     Navigator.of(context, rootNavigator: true).push(
-      SpacePageRoute(builder: (_) => const RoomsAdminScreen()),
+      SlideUpPageRoute(builder: (_) => const RoomsAdminScreen()),
     );
   }
 

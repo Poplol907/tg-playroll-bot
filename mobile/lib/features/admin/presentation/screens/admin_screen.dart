@@ -278,7 +278,7 @@ abstract final class TeacherProfileEntry {
     required VoidCallback onUpdated,
   }) {
     Navigator.of(context, rootNavigator: true).push(
-      SpacePageRoute(
+      SlideUpPageRoute(
         builder: (_) => _TeacherProfileScreen(
           user: user,
           stats: stats,
