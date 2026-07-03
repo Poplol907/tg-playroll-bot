@@ -126,25 +126,34 @@ class BottomBarHideObserver extends NavigatorObserver {
   /// Called whenever the bar's visibility flips. Wire it to a provider
   /// notifier from the router's Provider scope.
   final void Function(bool visible) _setVisible;
-  int _depth = 0;
 
-  bool _isModal(Route<dynamic> route) {
-    // ModalBottomSheetRoute, DialogRoute, PopupRoute and PageRouteBuilder
-    // (the one we use for full-screen pushes) are all ModalRoute subclasses.
-    // Skip the very first route (the shell itself) — it isn't a "modal".
-    if (route is! ModalRoute) return false;
-    if (route.isFirst) return false;
-    return true;
-  }
+  /// Live modal routes, tracked by identity instead of a depth counter.
+  ///
+  /// A counter is not replay-safe: during a go_router `go()` the Navigator
+  /// diffs its pages and can push the NEW shell page while the old one is
+  /// still in history — at that instant the new page is "not first", the old
+  /// `isFirst`-based check classified it as a modal, and the matching
+  /// didRemove of the old page (which IS first) never compensated. The
+  /// leaked +1 kept the bar hidden forever after "открыть как педагог"
+  /// (view-as). A set keyed by the route object cannot double-count and
+  /// cannot leak on reordered push/remove events.
+  final Set<Route<dynamic>> _modals = <Route<dynamic>>{};
+
+  /// A "modal" for bar purposes = an imperatively pushed (pageless)
+  /// ModalRoute: sheets, dialogs, popups, full-screen detail pushes.
+  /// Anything owned by go_router carries `settings is Page` — that's
+  /// NAVIGATION, never a modal, regardless of its momentary stack position.
+  bool _isModal(Route<dynamic> route) =>
+      route is ModalRoute && route.settings is! Page;
 
   void _sync() {
-    _setVisible(_depth <= 0);
+    _setVisible(_modals.isEmpty);
   }
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     if (_isModal(route)) {
-      _depth++;
+      _modals.add(route);
       _sync();
     }
     super.didPush(route, previousRoute);
@@ -152,29 +161,24 @@ class BottomBarHideObserver extends NavigatorObserver {
 
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    if (_isModal(route) && _depth > 0) {
-      _depth--;
-      _sync();
-    }
+    if (_modals.remove(route)) _sync();
     super.didPop(route, previousRoute);
   }
 
   @override
   void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    if (_isModal(route) && _depth > 0) {
-      _depth--;
-      _sync();
-    }
+    if (_modals.remove(route)) _sync();
     super.didRemove(route, previousRoute);
   }
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    final oldModal = oldRoute != null && _isModal(oldRoute);
-    final newModal = newRoute != null && _isModal(newRoute);
-    if (oldModal && !newModal) _depth = (_depth - 1).clamp(0, 1 << 30);
-    if (!oldModal && newModal) _depth++;
-    _sync();
+    var changed = false;
+    if (oldRoute != null) changed = _modals.remove(oldRoute) || changed;
+    if (newRoute != null && _isModal(newRoute)) {
+      changed = _modals.add(newRoute) || changed;
+    }
+    if (changed) _sync();
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 }

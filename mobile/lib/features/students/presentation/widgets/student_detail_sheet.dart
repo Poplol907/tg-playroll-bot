@@ -18,6 +18,7 @@ import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
+import '../../../../shared/widgets/frosted_sheet.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../data/students_repository.dart';
@@ -35,11 +36,9 @@ class StudentDetailSheet extends ConsumerStatefulWidget {
 
   static Future<void> show(BuildContext context, StudentModel student) {
     return runWithBottomBarHidden(context, () {
-      return showModalBottomSheet(
+      return showFrostedSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
         useSafeArea: true,
         // enableDrag:false — Flutter's built-in drag conflicts with our custom
         // spring dismiss and leaves the barrier stuck mid-fade ("dark overlay
