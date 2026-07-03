@@ -161,6 +161,21 @@ void main() {
     }
   });
 
+  test('primary button keeps control geometry, not the panel profile radius',
+      () {
+    final content =
+        File('lib/shared/widgets/stellar_button.dart').readAsStringSync();
+
+    expect(
+      content,
+      contains('NebulaRadii.controlBorder'),
+      reason: 'StellarButton is a control: its corners must match the '
+          'inputs/buttons around it (control 12), not the 24px panel it '
+          'borrows its material from.',
+    );
+    expect(content, isNot(contains('BorderRadius.circular(surface.radius)')));
+  });
+
   test('canonical modal chrome resolves the modal profile', () {
     final content = File(
       'lib/shared/widgets/nebula_modal_surface.dart',
