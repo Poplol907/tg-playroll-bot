@@ -29,6 +29,8 @@ void main() {
 
     expect(directBlurFiles, [
       'lib/features/auth/presentation/screens/login_screen.dart',
+      // Canonical frosted modal barrier — the ONE justified fullscreen blur.
+      'lib/shared/widgets/frosted_sheet.dart',
       'lib/shared/widgets/jiggle_delete_wrapper.dart',
       'lib/shared/widgets/nebula_surface.dart',
     ]);
@@ -41,14 +43,14 @@ void main() {
     }.toList()
       ..sort();
 
+    // RATCHET DOWN — never up. Direct showModalBottomSheet call sites are
+    // migrating to showFrostedSheet (frosted barrier); mist/adaptive/student
+    // detail are done, the rest are next.
     expect(directSheetFiles, [
       'lib/features/calendar/presentation/screens/calendar_screen.dart',
       'lib/features/calendar/presentation/widgets/day_lessons_sheet.dart',
       'lib/features/calendar/presentation/widgets/lesson_modal.dart',
       'lib/features/students/presentation/widgets/schedule_builder_modal.dart',
-      'lib/features/students/presentation/widgets/student_detail_sheet.dart',
-      'lib/shared/widgets/adaptive_modal.dart',
-      'lib/shared/widgets/mist_modal.dart',
       'lib/shared/widgets/server_settings_modal.dart',
     ]);
   });

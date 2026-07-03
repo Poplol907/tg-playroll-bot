@@ -7,6 +7,7 @@ import '../../core/theme/nebula_tokens.dart';
 import '../providers/bottom_bar_visibility_provider.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
+import 'frosted_sheet.dart';
 import 'nebula_modal_surface.dart';
 
 /// Canonical bottom sheet surface using the modal surface profile.
@@ -44,13 +45,11 @@ class MistModal extends StatelessWidget {
       );
     }
     return runWithBottomBarHidden<T>(context, () {
-      return showModalBottomSheet<T>(
+      return showFrostedSheet<T>(
         context: context,
         isScrollControlled: isScrollControlled,
         isDismissible: isDismissible,
         enableDrag: enableDrag,
-        backgroundColor: Colors.transparent,
-        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
         useSafeArea: true,
         constraints: maxHeightFraction != null
             ? BoxConstraints(

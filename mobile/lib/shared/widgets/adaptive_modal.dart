@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/platform/app_platform.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../providers/bottom_bar_visibility_provider.dart';
+import 'frosted_sheet.dart';
 import 'nebula_modal_surface.dart';
 
 /// Показывает bottom sheet на мобайле и Dialog на десктопе.
@@ -23,13 +24,11 @@ abstract class AdaptiveModal {
           width: desktopWidth,
         );
       }
-      return showModalBottomSheet<T>(
+      return showFrostedSheet<T>(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
         useSafeArea: true,
         isDismissible: isDismissible,
-        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
         builder: (ctx) {
           final media = MediaQuery.of(ctx);
           return Padding(
