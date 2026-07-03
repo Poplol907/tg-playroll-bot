@@ -5,6 +5,7 @@ import '../../core/theme/nebula_colors.dart';
 import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/theme/nebula_typography.dart';
+import 'frosted_sheet.dart';
 import 'nebula_surface.dart';
 
 class NebulaDialog extends StatelessWidget {
@@ -38,9 +39,8 @@ class NebulaDialog extends StatelessWidget {
   }) async {
     final accent =
         destructive ? NebulaColors.errorRose : NebulaColors.stellarBlue;
-    return await showDialog<bool>(
+    return await showFrostedDialog<bool>(
           context: context,
-          barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
           builder: (ctx) => NebulaDialog(
             title: title,
             message: message,

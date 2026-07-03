@@ -51,6 +51,8 @@ abstract class AdaptiveModal {
     bool isDismissible = true,
     required double width,
   }) {
+    // Desktop deliberately keeps a flat scrim (no frosted barrier): the
+    // desktop test-suite pins "no backdrop blur" as the macOS perf policy.
     return showDialog<T>(
       context: context,
       barrierDismissible: isDismissible,

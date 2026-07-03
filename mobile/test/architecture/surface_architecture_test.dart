@@ -222,7 +222,8 @@ void main() {
     //                        admin+settings residuals)
     //              46 →  30 (ASCII painter glyph consts; app_error_card,
     //                        nebula_snackbar, login → NebulaTypography tokens)
-    const baseline = 30;
+    //              30 →  28 (calendar desktop header → AppScreenHeader)
+    const baseline = 28;
     expect(
       count,
       lessThanOrEqualTo(baseline),
