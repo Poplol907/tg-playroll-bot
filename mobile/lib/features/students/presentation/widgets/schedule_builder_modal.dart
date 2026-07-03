@@ -12,6 +12,7 @@ import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/providers/month_provider.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
+import '../../../../shared/widgets/frosted_sheet.dart';
 import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -94,10 +95,9 @@ class ScheduleBuilderModal extends ConsumerStatefulWidget {
             builder: (_) => modal,
           )
         : runWithBottomBarHidden<bool>(context, () {
-            return showModalBottomSheet<bool>(
+            return showFrostedSheet<bool>(
               context: context,
               isScrollControlled: true,
-              backgroundColor: Colors.transparent,
               useSafeArea: true,
               builder: (_) => modal,
             );

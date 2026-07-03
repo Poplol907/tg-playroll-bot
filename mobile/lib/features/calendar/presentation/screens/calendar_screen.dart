@@ -12,6 +12,7 @@ import '../../../../core/theme/nebula_radii.dart';
 import '../../../../core/theme/nebula_tokens.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
+import '../../../../shared/widgets/frosted_sheet.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
 import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
@@ -316,9 +317,8 @@ class CalendarScreen extends ConsumerWidget {
       return;
     }
     runWithBottomBarHidden<void>(context, () {
-      return showModalBottomSheet<void>(
+      return showFrostedSheet<void>(
         context: context,
-        backgroundColor: Colors.transparent,
         isScrollControlled: true,
         useSafeArea: true,
         enableDrag: false,

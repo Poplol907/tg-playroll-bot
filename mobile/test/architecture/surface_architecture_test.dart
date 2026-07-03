@@ -43,16 +43,20 @@ void main() {
     }.toList()
       ..sort();
 
-    // RATCHET DOWN — never up. Direct showModalBottomSheet call sites are
-    // migrating to showFrostedSheet (frosted barrier); mist/adaptive/student
-    // detail are done, the rest are next.
-    expect(directSheetFiles, [
-      'lib/features/calendar/presentation/screens/calendar_screen.dart',
-      'lib/features/calendar/presentation/widgets/day_lessons_sheet.dart',
-      'lib/features/calendar/presentation/widgets/lesson_modal.dart',
-      'lib/features/students/presentation/widgets/schedule_builder_modal.dart',
-      'lib/shared/widgets/server_settings_modal.dart',
-    ]);
+    // Migration complete: every sheet opens through showFrostedSheet
+    // (frosted barrier). Direct showModalBottomSheet calls are banned.
+    expect(directSheetFiles, isEmpty);
+  });
+
+  test('bottom sheet routes are constructed only by the frosted helper', () {
+    final routeFiles = filesContaining('ModalBottomSheetRoute');
+
+    expect(
+      routeFiles,
+      ['lib/shared/widgets/frosted_sheet.dart'],
+      reason: 'Sheets must open through showFrostedSheet so the frosted '
+          'barrier (and its future changes) stay a one-file decision.',
+    );
   });
 
   test('feature code does not resolve modal surface profiles directly', () {

@@ -13,6 +13,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../providers/bottom_bar_visibility_provider.dart';
 import 'adaptive_modal.dart';
 import 'app_safe_layout.dart';
+import 'frosted_sheet.dart';
 import 'nebula_modal_surface.dart';
 import 'nebula_input.dart';
 import 'nebula_surface.dart';
@@ -30,11 +31,9 @@ class ServerSettingsModal extends ConsumerStatefulWidget {
       );
     }
     return runWithBottomBarHidden(context, () {
-      return showModalBottomSheet(
+      return showFrostedSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
         useSafeArea: true,
         builder: (_) => const ServerSettingsModal(),
       );

@@ -425,10 +425,12 @@ class _DayLessonsSheetState extends ConsumerState<_DayLessonsSheet>
       return;
     }
     runWithBottomBarHidden<void>(ctx, () {
-      return showModalBottomSheet<void>(
+      // useSafeArea:false сохранён с исходного вызова — этот шит сам
+      // управляет своей высотой и не должен сместиться из-за миграции.
+      return showFrostedSheet<void>(
         context: ctx,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        useSafeArea: false,
         builder: (_) => sheet,
       );
     });

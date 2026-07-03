@@ -78,6 +78,7 @@ class FrostedSheetRoute<T> extends ModalBottomSheetRoute<T> {
         // Skip the saveLayer entirely while the blur is imperceptible.
         if (sigma < 0.5) return child!;
         return BackdropFilter(
+          key: const ValueKey('frosted-sheet-barrier'),
           filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
           child: child,
         );
