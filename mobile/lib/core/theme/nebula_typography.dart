@@ -46,6 +46,11 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
 
   /// Mobile-default scale. Used in light AND dark themes — typography is
   /// theme-independent (color is applied by the widget consuming the style).
+  ///
+  /// Every style carries `leadingDistribution: even`: SpaceGrotesk puts the
+  /// extra line-height below the baseline by default, which visually sinks
+  /// single-line labels inside fixed-height chips/buttons. Even distribution
+  /// keeps text optically centered app-wide.
   static const NebulaTypography mobile = NebulaTypography(
     displayL: TextStyle(
       fontFamily: 'SpaceGrotesk',
@@ -53,6 +58,7 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
       fontWeight: FontWeight.w700,
       height: 1.15,
       letterSpacing: -0.4,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     displayM: TextStyle(
       fontFamily: 'SpaceGrotesk',
@@ -60,6 +66,7 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
       fontWeight: FontWeight.w700,
       height: 1.18,
       letterSpacing: -0.3,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     titleL: TextStyle(
       fontFamily: 'SpaceGrotesk',
@@ -67,6 +74,7 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
       fontWeight: FontWeight.w700,
       height: 1.22,
       letterSpacing: -0.2,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     titleM: TextStyle(
       fontFamily: 'SpaceGrotesk',
@@ -74,42 +82,49 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
       fontWeight: FontWeight.w700,
       height: 1.25,
       letterSpacing: -0.15,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     titleS: TextStyle(
       fontFamily: 'SpaceGrotesk',
       fontSize: 15,
       fontWeight: FontWeight.w600,
       height: 1.3,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     bodyL: TextStyle(
       fontFamily: 'SpaceGrotesk',
       fontSize: 15,
       fontWeight: FontWeight.w400,
       height: 1.4,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     bodyM: TextStyle(
       fontFamily: 'SpaceGrotesk',
       fontSize: 14,
       fontWeight: FontWeight.w400,
       height: 1.4,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     bodyS: TextStyle(
       fontFamily: 'SpaceGrotesk',
       fontSize: 13,
       fontWeight: FontWeight.w400,
       height: 1.4,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     labelM: TextStyle(
       fontFamily: 'SpaceGrotesk',
       fontSize: 12,
       fontWeight: FontWeight.w500,
       height: 1.3,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     labelS: TextStyle(
       fontFamily: 'SpaceGrotesk',
       fontSize: 11,
       fontWeight: FontWeight.w400,
       height: 1.3,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     overline: TextStyle(
       fontFamily: 'SpaceGrotesk',
@@ -117,6 +132,7 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
       fontWeight: FontWeight.w600,
       height: 1.2,
       letterSpacing: 0.8,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
     mono: TextStyle(
       fontFamily: 'SpaceMono',
@@ -124,6 +140,7 @@ class NebulaTypography extends ThemeExtension<NebulaTypography> {
       fontWeight: FontWeight.w500,
       height: 1.25,
       letterSpacing: 0.2,
+      leadingDistribution: TextLeadingDistribution.even,
     ),
   );
 
