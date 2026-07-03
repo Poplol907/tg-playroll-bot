@@ -65,8 +65,7 @@ class AssignBlockSheet extends ConsumerStatefulWidget {
   ConsumerState<AssignBlockSheet> createState() => _AssignBlockSheetState();
 }
 
-String _fmt(int m) =>
-    '${(m ~/ 60).toString().padLeft(2, '0')}:'
+String _fmt(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:'
     '${(m % 60).toString().padLeft(2, '0')}';
 
 List<int> _allSlots() => [
@@ -180,6 +179,10 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
               if (widget.fixedRoomName != null) widget.fixedRoomName!,
               if (widget.fixedWeekdayIndex != null)
                 _weekdayShort[widget.fixedWeekdayIndex!],
+              // Время уже выбрано ячейкой — показываем его в шапке,
+              // пикеры времени внизу скрыты.
+              if (widget.fixedStartMin != null)
+                '${_fmt(_startMin)}–${_fmt(_endMin)}',
             ].join('  ·  '),
             style: type.bodyS.copyWith(color: tokens.mutedText),
           ),
@@ -270,39 +273,43 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
         ),
         const SizedBox(height: 16),
 
-        // ── Time ──
-        Row(
-          children: [
-            Expanded(
-              child: _timeDropdown(
-                context,
-                label: 'НАЧАЛО',
-                value: _startMin,
-                options: slots.where((m) => m < BoardGrid.endMinutes).toList(),
-                onChanged: (v) => setState(() {
-                  _startMin = v;
-                  if (_endMin <= _startMin) {
-                    _endMin =
-                        (_startMin + BoardGrid.slotMinutes) > BoardGrid.endMinutes
-                            ? BoardGrid.endMinutes
-                            : _startMin + BoardGrid.slotMinutes;
-                  }
-                }),
+        // ── Time (скрыто, когда слот зафиксирован ячейкой сетки — остаются
+        // только педагог, повторяемость и заметка) ──
+        if (widget.fixedStartMin == null) ...[
+          Row(
+            children: [
+              Expanded(
+                child: _timeDropdown(
+                  context,
+                  label: 'НАЧАЛО',
+                  value: _startMin,
+                  options:
+                      slots.where((m) => m < BoardGrid.endMinutes).toList(),
+                  onChanged: (v) => setState(() {
+                    _startMin = v;
+                    if (_endMin <= _startMin) {
+                      _endMin = (_startMin + BoardGrid.slotMinutes) >
+                              BoardGrid.endMinutes
+                          ? BoardGrid.endMinutes
+                          : _startMin + BoardGrid.slotMinutes;
+                    }
+                  }),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _timeDropdown(
-                context,
-                label: 'КОНЕЦ',
-                value: _endMin,
-                options: slots.where((m) => m > _startMin).toList(),
-                onChanged: (v) => setState(() => _endMin = v),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _timeDropdown(
+                  context,
+                  label: 'КОНЕЦ',
+                  value: _endMin,
+                  options: slots.where((m) => m > _startMin).toList(),
+                  onChanged: (v) => setState(() => _endMin = v),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // ── Recurrence ──
         Container(
