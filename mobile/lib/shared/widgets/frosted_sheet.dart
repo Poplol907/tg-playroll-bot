@@ -45,11 +45,50 @@ Future<T?> showFrostedSheet<T>({
   ));
 }
 
+/// Shows a dialog over the same frosted barrier as [showFrostedSheet] —
+/// confirm dialogs melt the page into mist instead of spotlighting island
+/// borders with a flat dark scrim.
+Future<T?> showFrostedDialog<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool barrierDismissible = true,
+  bool useRootNavigator = true,
+}) {
+  final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
+  return navigator.push(FrostedDialogRoute<T>(
+    context: context,
+    builder: builder,
+    barrierDismissible: barrierDismissible,
+    barrierColor: Colors.black.withValues(alpha: NebulaAlpha.accent),
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    themes: InheritedTheme.capture(from: context, to: navigator.context),
+  ));
+}
+
+/// Wraps a route's stock barrier with an animation-synced frost: sigma rides
+/// the route animation 0 → [NebulaTokens.blurDense], so open/dismiss/drag all
+/// keep the blur in step — no sudden darkening, fully interruptible.
+Widget _frostBarrier(ModalRoute<dynamic> route, Widget barrier) {
+  final anim = route.animation;
+  if (anim == null) return barrier;
+  return AnimatedBuilder(
+    animation: anim,
+    builder: (context, child) {
+      final sigma =
+          NebulaTokens.blurDense * Curves.easeOut.transform(anim.value);
+      // Skip the saveLayer entirely while the blur is imperceptible.
+      if (sigma < 0.5) return child!;
+      return BackdropFilter(
+        key: const ValueKey('frosted-sheet-barrier'),
+        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: child,
+      );
+    },
+    child: barrier,
+  );
+}
+
 /// [ModalBottomSheetRoute] whose barrier frosts the content beneath it.
-///
-/// The blur sigma follows the route animation (0 → [NebulaTokens.blurDense]),
-/// so opening, dismissing and interactive drag-to-close all keep the barrier
-/// in step with the sheet — no sudden darkening, fully interruptible.
 class FrostedSheetRoute<T> extends ModalBottomSheetRoute<T> {
   FrostedSheetRoute({
     required super.builder,
@@ -66,24 +105,21 @@ class FrostedSheetRoute<T> extends ModalBottomSheetRoute<T> {
   });
 
   @override
-  Widget buildModalBarrier() {
-    final barrier = super.buildModalBarrier();
-    final anim = animation;
-    if (anim == null) return barrier;
-    return AnimatedBuilder(
-      animation: anim,
-      builder: (context, child) {
-        final sigma =
-            NebulaTokens.blurDense * Curves.easeOut.transform(anim.value);
-        // Skip the saveLayer entirely while the blur is imperceptible.
-        if (sigma < 0.5) return child!;
-        return BackdropFilter(
-          key: const ValueKey('frosted-sheet-barrier'),
-          filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-          child: child,
-        );
-      },
-      child: barrier,
-    );
-  }
+  Widget buildModalBarrier() => _frostBarrier(this, super.buildModalBarrier());
+}
+
+/// [DialogRoute] with the same frosted barrier as [FrostedSheetRoute].
+class FrostedDialogRoute<T> extends DialogRoute<T> {
+  FrostedDialogRoute({
+    required super.context,
+    required super.builder,
+    super.barrierDismissible,
+    super.barrierColor,
+    super.barrierLabel,
+    super.themes,
+    super.settings,
+  });
+
+  @override
+  Widget buildModalBarrier() => _frostBarrier(this, super.buildModalBarrier());
 }

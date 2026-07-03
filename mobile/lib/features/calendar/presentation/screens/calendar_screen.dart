@@ -219,36 +219,14 @@ class CalendarScreen extends ConsumerWidget {
                   : AppPlatform.isDesktop
             ? Column(
                 children: [
+                  // Тот же AppScreenHeader, что и на мобиле — desktop-ветка
+                  // больше не дублирует шапку сырыми размерами шрифта.
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 16,
                     ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user?.displayName ?? 'Педагог',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: tokens.primaryText,
-                            ),
-                          ),
-                          Text(
-                            'Расписание уроков',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: tokens.mutedText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: header,
                   ),
                   Expanded(
                     child: lessonsAsync.when(
