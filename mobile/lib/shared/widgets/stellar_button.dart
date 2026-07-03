@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_colors.dart';
+import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_surface_profile.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -119,7 +120,10 @@ class _StellarButtonState extends State<StellarButton>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(surface.radius),
+                // Control geometry, NOT the panel profile's 24: a button is a
+                // control and must rhyme with the inputs sitting next to it
+                // in every form (NebulaInput/NebulaTextButton = control 12).
+                borderRadius: NebulaRadii.controlBorder,
                 border: Border.all(
                   color: accent.withValues(alpha: borderAlpha),
                   width: surface.borderWidth,
