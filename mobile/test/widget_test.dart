@@ -272,7 +272,13 @@ void main() {
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
     expect(find.text('Пн'), findsOneWidget);
     expect(find.text('Вс'), findsOneWidget);
-    expect(find.byType(BackdropFilter), findsNothing);
+    // The ONLY blur belongs to the frosted route barrier; the sheet surface
+    // itself stays blur-free (cheap matte material).
+    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('frosted-sheet-barrier')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('nebula confirm dialog returns selected action', (tester) async {

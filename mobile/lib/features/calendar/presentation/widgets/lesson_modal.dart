@@ -15,6 +15,7 @@ import '../../../../shared/models/lesson.dart';
 import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
+import '../../../../shared/widgets/frosted_sheet.dart';
 import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -36,13 +37,11 @@ class LessonModal extends ConsumerStatefulWidget {
       );
     }
     return runWithBottomBarHidden(context, () {
-      return showModalBottomSheet(
+      return showFrostedSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
         useSafeArea: true,
         enableDrag: false,
-        barrierColor: Colors.black.withValues(alpha: NebulaAlpha.strong),
         builder: (_) => LessonModal(lesson: lesson),
       );
     });
