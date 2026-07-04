@@ -156,6 +156,12 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
     });
   }
 
+  /// Режим текущего pan-жеста: null вне жеста; true — жест-ластик.
+  /// Определяется ПЕРВОЙ ячейкой свайпа (стартовал на закрашенной —
+  /// стираем всю линию), чтобы проход туда-обратно не «мигал».
+  bool? _panErasing;
+  final Set<({int wd, int slot})> _panVisited = {};
+
   void _paintSlot(int wd, int slot) {
     final brush = _brushTeacherId;
     if (brush == null) return;
@@ -170,6 +176,36 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
     if (removed != null) {
       HapticFeedback.selectionClick();
       setState(() {});
+    }
+  }
+
+  void _handleCellPan(int wd, int slot, {required bool start}) {
+    if (_brushTeacherId == null) return;
+    final pos = (wd: wd, slot: slot);
+    if (start) {
+      _panErasing = _pending.containsKey(pos);
+      _panVisited.clear();
+    }
+    // Каждую ячейку жест трогает один раз — без мигания при проходе назад.
+    if (!_panVisited.add(pos)) return;
+    if (_panErasing ?? false) {
+      _eraseSlot(wd, slot);
+    } else {
+      _paintSlot(wd, slot);
+    }
+  }
+
+  void _handleCellPanEnd() {
+    _panErasing = null;
+    _panVisited.clear();
+  }
+
+  void _handleCellTap(int wd, int slot) {
+    if (_brushTeacherId == null) return;
+    if (_pending.containsKey((wd: wd, slot: slot))) {
+      _eraseSlot(wd, slot);
+    } else {
+      _paintSlot(wd, slot);
     }
   }
 
@@ -332,8 +368,9 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
         brushTeacherId: _brushTeacherId,
         pending: _pending,
         scrollController: _gridScroll,
-        onPaintSlot: _paintSlot,
-        onEraseSlot: _eraseSlot,
+        onCellPan: _handleCellPan,
+        onCellPanEnd: _handleCellPanEnd,
+        onCellTap: _handleCellTap,
         onEmptyTap: isAdmin && !_editMode ? onEmptyTap : null,
         onBlockTap: isAdmin && !_editMode ? onBlockTap : null,
       );
@@ -666,8 +703,9 @@ class _ScheduleGrid extends StatelessWidget {
   final int? brushTeacherId;
   final Map<({int wd, int slot}), int> pending;
   final ScrollController scrollController;
-  final void Function(int wd, int slot) onPaintSlot;
-  final void Function(int wd, int slot) onEraseSlot;
+  final void Function(int wd, int slot, {required bool start}) onCellPan;
+  final VoidCallback onCellPanEnd;
+  final void Function(int wd, int slot) onCellTap;
   final void Function(int weekday, int startMin)? onEmptyTap;
   final void Function(ResolvedRoomBlock block, DateTime day)? onBlockTap;
 
@@ -679,8 +717,9 @@ class _ScheduleGrid extends StatelessWidget {
     required this.brushTeacherId,
     required this.pending,
     required this.scrollController,
-    required this.onPaintSlot,
-    required this.onEraseSlot,
+    required this.onCellPan,
+    required this.onCellPanEnd,
+    required this.onCellTap,
     this.onEmptyTap,
     this.onBlockTap,
   });
@@ -770,11 +809,11 @@ class _ScheduleGrid extends StatelessWidget {
                 return (wd: wd, slot: slot);
               }
 
-              void paintAt(Offset local) {
+              void panAt(Offset local, {required bool start}) {
                 final pos = slotAt(local);
                 if (pos == null) return;
                 if (coverBySlot[pos.wd][pos.slot] != null) return;
-                onPaintSlot(pos.wd, pos.slot);
+                onCellPan(pos.wd, pos.slot, start: start);
               }
 
               final canPaint = editMode && brushTeacherId != null;
@@ -811,14 +850,17 @@ class _ScheduleGrid extends StatelessWidget {
                   // КОСНУЛСЯ, а не с точки, где жест прошёл touch-slop —
                   // иначе первый слот свайпа оставался незакрашенным.
                   dragStartBehavior: DragStartBehavior.down,
-                  onPanStart:
-                      canPaint ? (d) => paintAt(d.localPosition) : null,
+                  onPanStart: canPaint
+                      ? (d) => panAt(d.localPosition, start: true)
+                      : null,
                   onPanUpdate: canPaint
                       ? (d) {
-                          paintAt(d.localPosition);
+                          panAt(d.localPosition, start: false);
                           autoScroll(d.localPosition.dy);
                         }
                       : null,
+                  onPanEnd: canPaint ? (_) => onCellPanEnd() : null,
+                  onPanCancel: canPaint ? onCellPanEnd : null,
                   child: SizedBox(
                     height: slots * _cellH,
                     width: constraints.maxWidth,
@@ -854,17 +896,7 @@ class _ScheduleGrid extends StatelessWidget {
                                               return;
                                             }
                                             if (editMode) {
-                                              if (brushTeacherId != null) {
-                                                if (pending[(
-                                                      wd: wd,
-                                                      slot: ti
-                                                    )] !=
-                                                    null) {
-                                                  onEraseSlot(wd, ti);
-                                                } else {
-                                                  onPaintSlot(wd, ti);
-                                                }
-                                              }
+                                              onCellTap(wd, ti);
                                               return;
                                             }
                                             onEmptyTap?.call(
@@ -994,7 +1026,7 @@ class _ScheduleGrid extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         // Tap erases the single tapped slot, not the whole run.
-        onTapDown: (d) => onEraseSlot(
+        onTapDown: (d) => onCellTap(
           r.weekday,
           startSlot + (d.localPosition.dy / _cellH).floor().clamp(0, span - 1),
         ),

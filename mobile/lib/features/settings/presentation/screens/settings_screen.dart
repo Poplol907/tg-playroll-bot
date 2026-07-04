@@ -12,6 +12,7 @@ import '../../../../core/theme/nebula_semantic.dart';
 import '../../../../core/theme/nebula_typography.dart';
 import '../../../../features/admin/presentation/providers/view_as_teacher_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/providers/data_refresh_provider.dart';
 import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
@@ -90,6 +91,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Сбрасываем view-as, чтобы следующий пользователь не наследовал контекст.
     ref.read(viewAsTeacherProvider.notifier).state = null;
     await ref.read(authProvider.notifier).logout();
+    // Граница смены личности: без полного сброса user-кэшей следующий
+    // аккаунт пару секунд видел данные предыдущего.
+    if (mounted) invalidateAllUserData(ref);
   }
 
   @override

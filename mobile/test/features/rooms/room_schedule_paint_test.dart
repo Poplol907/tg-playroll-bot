@@ -137,22 +137,29 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Сохранить (3)'), findsOneWidget);
 
-    // Тап-покраска тоже работает: стираем третий слот тапом по нему.
-    await tester.tapAt(
-        tester.getTopLeft(find.byKey(const ValueKey('pending-0-0'))) +
-            const Offset(10, 2 * 40 + 10));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Сохранить (2)'), findsOneWidget);
-
-    // Тап по закрашенному диапазону стирает один слот.
-    final pending = find.byKey(const ValueKey('pending-0-0'));
-    expect(pending, findsOneWidget);
-    await tester.tapAt(tester.getTopLeft(pending) + const Offset(10, 10));
+    // Свайп, НАЧАТЫЙ на закрашенной ячейке, — ластик: стирает всю линию.
+    final pendingRun = find.byKey(const ValueKey('pending-0-0'));
+    expect(pendingRun, findsOneWidget);
+    final erase = await tester
+        .startGesture(tester.getTopLeft(pendingRun) + const Offset(10, 10));
+    await tester.pump(const Duration(milliseconds: 50));
+    await erase.moveBy(const Offset(0, 40));
+    await tester.pump(const Duration(milliseconds: 50));
+    await erase.up();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Сохранить (1)'), findsOneWidget);
 
-    // Возвращаем второй слот и сохраняем.
+    // Тап по оставшейся закрашенной (слот 2) тоже стирает её.
+    await tester.tapAt(
+        tester.getTopLeft(find.byKey(const ValueKey('pending-0-2'))) +
+            const Offset(10, 10));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Сохранить'), findsOneWidget);
+
+    // Красим два слота заново и сохраняем.
     await tester.tap(find.byKey(const ValueKey('cell-0-0')));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.tap(find.byKey(const ValueKey('cell-0-1')));
     await tester.pump(const Duration(milliseconds: 100));
     await tester.tap(find.byKey(const ValueKey('paint-save')));
     await tester.pump();
