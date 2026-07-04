@@ -174,7 +174,8 @@ void main() {
     //              42 →  22 (nebula_surface specular, login planet/error,
     //                        drum_picker glow, adaptive/mist barriers,
     //                        calendar_month_stats, mist handle)
-    const baseline = 22;
+    //              22 →  20 (student status toggle → NebulaAlpha tokens)
+    const baseline = 20;
     expect(
       count,
       lessThanOrEqualTo(baseline),
@@ -223,7 +224,10 @@ void main() {
     //              46 →  30 (ASCII painter glyph consts; app_error_card,
     //                        nebula_snackbar, login → NebulaTypography tokens)
     //              30 →  28 (calendar desktop header → AppScreenHeader)
-    const baseline = 28;
+    //              28 →  27 (status toggle label → labelS −2; +1 — это
+    //                        параметр NebulaDrumPicker(fontSize:) в
+    //                        add-lesson, не текстовый стиль)
+    const baseline = 27;
     expect(
       count,
       lessThanOrEqualTo(baseline),

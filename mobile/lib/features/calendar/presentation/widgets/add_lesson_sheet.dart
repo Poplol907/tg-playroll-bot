@@ -176,30 +176,25 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
           style: type.overline.copyWith(color: tokens.mutedText),
         ),
         const SizedBox(height: 8),
+        // Барабан вместо системного прямоугольного дропдауна — тот же
+        // выбор, что у статуса урока; «Без времени» — первый пункт.
         Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(vertical: NebulaTokens.sp4),
           decoration: BoxDecoration(
             color: tokens.surface,
             borderRadius: NebulaRadii.controlBorder,
             border: Border.all(color: tokens.surfaceBorder),
           ),
-          child: DropdownButton<String>(
-            value: _selectedTime,
-            hint: Text(
-              'Выбрать время (необязательно)',
-              style: type.bodyM.copyWith(color: tokens.mutedText),
-            ),
-            isExpanded: true,
-            underline: const SizedBox(),
-            dropdownColor: tokens.denseSurface,
-            icon: Icon(Icons.expand_more_rounded,
-                color: tokens.mutedText, size: 20),
-            style: type.bodyM.copyWith(color: tokens.primaryText),
-            items: _timeSlots
-                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                .toList(),
-            onChanged: (v) => setState(() => _selectedTime = v),
+          child: NebulaDrumPicker(
+            items: ['Без времени', ..._timeSlots],
+            initialIndex: _selectedTime == null
+                ? 0
+                : _timeSlots.indexOf(_selectedTime!) + 1,
+            glowColor: tokens.focusAccent,
+            itemExtent: 38,
+            fontSize: 16,
+            onChanged: (i) => setState(
+                () => _selectedTime = i == 0 ? null : _timeSlots[i - 1]),
           ),
         ),
         const SizedBox(height: 24),

@@ -49,6 +49,23 @@ class _StatusToggleState extends State<_StatusToggle>
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    // Выключенный трек должен читаться в ОБЕИХ темах: на светлой
+    // surfaceBorder почти невидим и белая ручка тонула в белом.
+    final offTrack = isLight
+        ? tokens.mutedText.withValues(alpha: NebulaAlpha.accent)
+        : tokens.surfaceBorder;
+    final offBorder = isLight
+        ? tokens.mutedText.withValues(alpha: NebulaAlpha.medium)
+        : tokens.surfaceBorder;
+    // Геометрия: контент лежит ВНУТРИ рамки 1.5 → внутренняя высота 27.
+    // Ручка 24 центрируется отступом (27−24)/2 = 1.5 с обеих сторон —
+    // раньше top:3 прижимал её к низу.
+    const knob = 24.0;
+    const inset = 1.5;
+    const travel = 54.0 - 2 * 1.5 - 2 * inset - knob; // = 24
+
     return GestureDetector(
       onTap: widget.loading ? null : widget.onToggle,
       child: Column(
@@ -65,39 +82,43 @@ class _StatusToggleState extends State<_StatusToggle>
                   width: 54,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: Color.lerp(tokens.surfaceBorder, tokens.success, t),
+                    color: Color.lerp(offTrack, tokens.success, t),
                     borderRadius: NebulaRadii.pillBorder,
                     border: Border.all(
-                      color: Color.lerp(tokens.surfaceBorder,
-                              tokens.success.withValues(alpha: 0.6), t) ??
+                      color: Color.lerp(
+                              offBorder,
+                              tokens.success
+                                  .withValues(alpha: NebulaAlpha.strong),
+                              t) ??
                           Colors.transparent,
                       width: 1.5,
                     ),
                     boxShadow: t > 0.05
                         ? [
                             BoxShadow(
-                              color: tokens.success.withValues(
-                                  alpha: (t * 0.45).clamp(0.0, 0.45)),
+                              color: tokens.success
+                                  .withValues(alpha: NebulaAlpha.medium * t),
                               blurRadius: 12,
                             )
                           ]
                         : null,
                   ),
-                  child: Stack(clipBehavior: Clip.none, children: [
+                  child: Stack(children: [
                     Positioned(
-                      left: 3 + _ctrl.value.clamp(0.0, 1.0) * 24,
-                      top: 3,
+                      left: inset + _ctrl.value.clamp(0.0, 1.0) * travel,
+                      top: inset,
+                      bottom: inset,
                       child: Container(
-                        width: 24,
-                        height: 24,
+                        width: knob,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.25),
+                              color: Colors.black
+                                  .withValues(alpha: NebulaAlpha.border),
                               blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              offset: const Offset(0, 1),
                             )
                           ],
                         ),
@@ -113,8 +134,7 @@ class _StatusToggleState extends State<_StatusToggle>
             animation: _ctrl,
             builder: (_, __) => Text(
               _ctrl.value > 0.5 ? 'Активен' : 'Неактивен',
-              style: TextStyle(
-                fontSize: 10,
+              style: type.labelS.copyWith(
                 color: _ctrl.value > 0.5 ? tokens.success : tokens.mutedText,
               ),
             ),

@@ -106,12 +106,12 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     buildDefaultDragHandles: true,
-                    // Transparent lift — no default white Material card/shadow
-                    // around the dragged tile.
+                    // Transparent lift + iOS-style jiggle while the tile is
+                    // being carried — тактильный сигнал «режим переноса».
                     proxyDecorator: (child, index, animation) => Material(
                       color: Colors.transparent,
                       elevation: 0,
-                      child: child,
+                      child: _DragJiggle(child: child),
                     ),
                     onReorder: _onReorder,
                     footer: _AddTile(onTap: _add),
@@ -148,6 +148,52 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
           );
         },
       ),
+    );
+  }
+}
+
+/// iOS-джиггл поднятой плитки: непрерывное лёгкое качание ±1.7° + небольшой
+/// масштаб, пока палец несёт кабинет. Чисто флаттеровский AnimationController.
+class _DragJiggle extends StatefulWidget {
+  final Widget child;
+  const _DragJiggle({required this.child});
+
+  @override
+  State<_DragJiggle> createState() => _DragJiggleState();
+}
+
+class _DragJiggleState extends State<_DragJiggle>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 130),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) return widget.child;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        final angle = (_ctrl.value * 2 - 1) * 0.03; // ±1.7°
+        return Transform.rotate(
+          angle: angle,
+          child: Transform.scale(scale: 1.05, child: child),
+        );
+      },
+      child: widget.child,
     );
   }
 }

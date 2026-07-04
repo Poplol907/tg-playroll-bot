@@ -39,7 +39,7 @@ class RoomsTodayCard extends ConsumerWidget {
       data: (blocks) {
         if (blocks.isEmpty) {
           return Text(
-            'Сегодня кабинеты не назначены',
+            'Вам пока не назначили кабинеты',
             style: type.bodyS.copyWith(color: tokens.mutedText),
           );
         }
