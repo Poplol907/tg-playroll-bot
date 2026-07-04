@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../core/services/repaint_pulse.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_tokens.dart';
 
@@ -28,7 +29,7 @@ Future<T?> showFrostedSheet<T>({
   BoxConstraints? constraints,
 }) {
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
-  return navigator.push(FrostedSheetRoute<T>(
+  final future = navigator.push(FrostedSheetRoute<T>(
     builder: builder,
     capturedThemes:
         InheritedTheme.capture(from: context, to: navigator.context),
@@ -43,6 +44,12 @@ Future<T?> showFrostedSheet<T>({
     modalBarrierColor: Colors.black.withValues(alpha: NebulaAlpha.accent),
     barrierLabel: MaterialLocalizations.of(context).scrimLabel,
   ));
+  // Шиты часто открываются на ВЛОЖЕННОМ навигаторе шелла, мимо
+  // RepaintPulseObserver (он висит только на корневом). Без пульса спящий
+  // ascii-фон не рисует ни одного кадра после ухода барьера, и последний
+  // затемнённый кадр висит «до тапа». Пульсуем по завершении роута сами.
+  future.whenComplete(RepaintPulse.pulse);
+  return future;
 }
 
 /// Shows a dialog over the same frosted barrier as [showFrostedSheet] —
@@ -55,7 +62,7 @@ Future<T?> showFrostedDialog<T>({
   bool useRootNavigator = true,
 }) {
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
-  return navigator.push(FrostedDialogRoute<T>(
+  final future = navigator.push(FrostedDialogRoute<T>(
     context: context,
     builder: builder,
     barrierDismissible: barrierDismissible,
@@ -63,6 +70,9 @@ Future<T?> showFrostedDialog<T>({
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     themes: InheritedTheme.capture(from: context, to: navigator.context),
   ));
+  // См. showFrostedSheet: будим спящие фоны после закрытия.
+  future.whenComplete(RepaintPulse.pulse);
+  return future;
 }
 
 /// Wraps a route's stock barrier with an animation-synced frost: sigma rides

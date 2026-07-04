@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,8 +135,15 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
   bool _recurring = true;
   bool _saving = false;
   final Map<({int wd, int slot}), int> _pending = {};
+  final ScrollController _gridScroll = ScrollController();
 
   Room get room => widget.room;
+
+  @override
+  void dispose() {
+    _gridScroll.dispose();
+    super.dispose();
+  }
 
   void _toggleEdit() {
     HapticFeedback.lightImpact();
@@ -323,6 +331,7 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
         editMode: _editMode,
         brushTeacherId: _brushTeacherId,
         pending: _pending,
+        scrollController: _gridScroll,
         onPaintSlot: _paintSlot,
         onEraseSlot: _eraseSlot,
         onEmptyTap: isAdmin && !_editMode ? onEmptyTap : null,
@@ -656,6 +665,7 @@ class _ScheduleGrid extends StatelessWidget {
   final bool editMode;
   final int? brushTeacherId;
   final Map<({int wd, int slot}), int> pending;
+  final ScrollController scrollController;
   final void Function(int wd, int slot) onPaintSlot;
   final void Function(int wd, int slot) onEraseSlot;
   final void Function(int weekday, int startMin)? onEmptyTap;
@@ -668,6 +678,7 @@ class _ScheduleGrid extends StatelessWidget {
     required this.editMode,
     required this.brushTeacherId,
     required this.pending,
+    required this.scrollController,
     required this.onPaintSlot,
     required this.onEraseSlot,
     this.onEmptyTap,
@@ -768,15 +779,46 @@ class _ScheduleGrid extends StatelessWidget {
 
               final canPaint = editMode && brushTeacherId != null;
 
+              // Держит рисование одним свайпом: когда палец подходит к краю
+              // вьюпорта, подкручиваем сетку, чтобы линия докрашивалась без
+              // отрыва пальца (скролл-жест в режиме кисти отдан рисованию).
+              void autoScroll(double contentDy) {
+                if (!scrollController.hasClients) return;
+                final offset = scrollController.offset;
+                final viewportDy = contentDy - offset;
+                const edge = 56.0;
+                const step = 10.0;
+                final max = scrollController.position.maxScrollExtent;
+                if (viewportDy < edge && offset > 0) {
+                  scrollController.jumpTo((offset - step).clamp(0.0, max));
+                } else if (viewportDy > constraints.maxHeight - edge &&
+                    offset < max) {
+                  scrollController.jumpTo((offset + step).clamp(0.0, max));
+                }
+              }
+
               return SingleChildScrollView(
-                physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics()),
+                controller: scrollController,
+                // В режиме кисти вертикальный жест — это рисование, не скролл:
+                // прокрутку делает autoScroll у краёв.
+                physics: canPaint
+                    ? const NeverScrollableScrollPhysics()
+                    : const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics()),
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onLongPressStart:
+                  // .down: рисование начинается со слота, которого палец
+                  // КОСНУЛСЯ, а не с точки, где жест прошёл touch-slop —
+                  // иначе первый слот свайпа оставался незакрашенным.
+                  dragStartBehavior: DragStartBehavior.down,
+                  onPanStart:
                       canPaint ? (d) => paintAt(d.localPosition) : null,
-                  onLongPressMoveUpdate:
-                      canPaint ? (d) => paintAt(d.localPosition) : null,
+                  onPanUpdate: canPaint
+                      ? (d) {
+                          paintAt(d.localPosition);
+                          autoScroll(d.localPosition.dy);
+                        }
+                      : null,
                   child: SizedBox(
                     height: slots * _cellH,
                     width: constraints.maxWidth,

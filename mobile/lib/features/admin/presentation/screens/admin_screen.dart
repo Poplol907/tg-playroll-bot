@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +21,6 @@ import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/space_page_transition.dart';
-import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/app_screen_header.dart';
 import '../../../../core/platform/app_platform.dart';
@@ -333,7 +334,6 @@ class _TeacherProfileScreen extends ConsumerWidget {
     final s = stats;
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final type = NebulaTypography.of(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -367,112 +367,79 @@ class _TeacherProfileScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Identity card ──
-                        NebulaSurface(
-                          dense: true,
-                          radiusRole: NebulaRadiusRole.card,
-                          padding: const EdgeInsets.all(14),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: NebulaColors.stellarBlue
-                                      .withValues(alpha: NebulaAlpha.surface),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: NebulaColors.stellarBlue
-                                          .withValues(
-                                              alpha: NebulaAlpha.accent)),
-                                ),
-                                child: const Icon(Icons.school_outlined,
-                                    color: NebulaColors.stellarBlue, size: 24),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(user.displayName,
-                                        style: type.titleL.copyWith(
-                                            color: tokens.primaryText)),
-                                    Text('педагог · @${user.login}',
-                                        style: type.labelM.copyWith(
-                                            color: tokens.secondaryText)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
+                        // Имя уже в шапке экрана — дублирующей identity-
+                        // карточки больше нет, профиль начинается со статы.
 
                         // ── Combined stats tile: месяц · выплаты · ставка ──
                         _TeacherStatsPager(user: user, stats: s),
                         const SizedBox(height: NebulaTokens.sp20),
 
-                        // ── Primary action: view as teacher ──
-                        StellarButton(
-                          label: 'Открыть как педагог',
-                          icon: Icons.visibility_outlined,
-                          onPressed: () {
-                            final router = GoRouter.of(context);
-                            ref.read(viewAsTeacherProvider.notifier).state =
-                                ViewAsTeacher(
-                              id: user.id,
-                              displayName: user.displayName,
-                            );
-                            ref.invalidate(studioStatsProvider);
-                            invalidateMonthData(
-                                ref, ref.read(globalMonthYearProvider));
-                            Navigator.pop(context);
-                            router.go('/calendar');
-                          },
-                        ),
-                        const SizedBox(height: NebulaTokens.sp12),
-
-                        // ── Secondary actions ──
-                        Row(
-                          children: [
-                            Expanded(
-                              child: StellarButton(
-                                label: 'Сменить пароль',
+                        // ── Actions: одна лаконичная карточка-список ──
+                        NebulaSurface(
+                          dense: true,
+                          radiusRole: NebulaRadiusRole.card,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: NebulaTokens.sp8,
+                              vertical: NebulaTokens.sp4),
+                          child: Column(
+                            children: [
+                              ActionRow(
+                                icon: Icons.visibility_outlined,
+                                label: 'Открыть как педагог',
+                                intent: SemanticIntent.primary,
+                                onTap: () {
+                                  final router = GoRouter.of(context);
+                                  ref
+                                      .read(viewAsTeacherProvider.notifier)
+                                      .state = ViewAsTeacher(
+                                    id: user.id,
+                                    displayName: user.displayName,
+                                  );
+                                  ref.invalidate(studioStatsProvider);
+                                  invalidateMonthData(
+                                      ref, ref.read(globalMonthYearProvider));
+                                  Navigator.pop(context);
+                                  router.go('/calendar');
+                                },
+                              ),
+                              Divider(
+                                  height: 1,
+                                  indent: 56,
+                                  color: tokens.surfaceBorder),
+                              ActionRow(
                                 icon: Icons.lock_outline_rounded,
-                                color: tokens.mutedText,
-                                onPressed: () async {
+                                label: 'Сменить пароль',
+                                intent: SemanticIntent.info,
+                                onTap: () async {
                                   final ok = await SetPasswordSheet.show(
                                       context, user);
                                   if (ok) onUpdated();
                                 },
                               ),
-                            ),
-                            const SizedBox(width: NebulaTokens.sp12),
-                            Expanded(
-                              child: StellarButton(
-                                label: 'Отключить',
+                              Divider(
+                                  height: 1,
+                                  indent: 56,
+                                  color: tokens.surfaceBorder),
+                              ActionRow(
                                 icon: Icons.archive_outlined,
-                                color: tokens.mutedText,
-                                onPressed: () =>
-                                    _confirmAndDisable(context, ref),
+                                label: 'Отключить',
+                                intent: SemanticIntent.warning,
+                                onTap: () => _confirmAndDisable(context, ref),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: NebulaTokens.sp16),
+                        const SizedBox(height: NebulaTokens.sp32),
 
-                        Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: tokens.surfaceBorder),
-                        const SizedBox(height: NebulaTokens.sp16),
-
-                        // ── Destructive: permanent delete ──
-                        StellarButton(
-                          label: 'Удалить навсегда',
-                          icon: Icons.delete_forever_outlined,
-                          color: tokens.error,
-                          onPressed: () => _confirmAndDelete(context, ref),
+                        // ── Destructive: тихая текстовая кнопка в самом низу ──
+                        Center(
+                          child: NebulaTextButton(
+                            label: 'Удалить навсегда',
+                            icon: Icons.delete_forever_outlined,
+                            color: tokens.error,
+                            compact: true,
+                            onPressed: () => _confirmAndDelete(context, ref),
+                          ),
                         ),
                       ],
                     ),
@@ -579,8 +546,8 @@ class _TeacherStatsPagerState extends ConsumerState<_TeacherStatsPager> {
   static const int _pageCount = 3;
 
   /// Fixed page height keeps the tile stable while pages swap; sized to the
-  /// tallest page (payouts: three rows + inline action).
-  static const double _pageHeight = 160;
+  /// tallest page (payouts: ring + rows + inline action).
+  static const double _pageHeight = 200;
 
   final PageController _controller = PageController();
   int _page = 0;
@@ -679,30 +646,24 @@ class _MonthStatsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final type = NebulaTypography.of(context);
     final s = stats;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('СТАТИСТИКА МЕСЯЦА',
-            style: type.overline.copyWith(color: tokens.mutedText)),
-        const SizedBox(height: NebulaTokens.sp8),
+        const Center(child: _CategoryTag('СТАТИСТИКА МЕСЯЦА')),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Row(children: [
                 Expanded(
-                    child: _DialogStatRow(
-                  icon: Icons.check_circle_outline_rounded,
+                    child: _BigStat(
                   label: 'Проведено',
                   value: '${s?.lessonsDone ?? 0}',
                   color: tokens.success,
                 )),
-                const SizedBox(width: NebulaTokens.sp12),
                 Expanded(
-                    child: _DialogStatRow(
-                  icon: Icons.warning_amber_rounded,
+                    child: _BigStat(
                   label: 'Пропусков',
                   value: '${s?.lessonsMissed ?? 0}',
                   color: tokens.error,
@@ -710,16 +671,13 @@ class _MonthStatsPage extends StatelessWidget {
               ]),
               Row(children: [
                 Expanded(
-                    child: _DialogStatRow(
-                  icon: Icons.repeat_rounded,
+                    child: _BigStat(
                   label: 'Отработок',
                   value: '${s?.lessonsCancelledMakeup ?? 0}',
                   color: tokens.focusAccent,
                 )),
-                const SizedBox(width: NebulaTokens.sp12),
                 Expanded(
-                    child: _DialogStatRow(
-                  icon: Icons.cancel_outlined,
+                    child: _BigStat(
                   label: 'Долгов',
                   value: '${s?.lessonsDebt ?? 0}',
                   color: tokens.warning,
@@ -748,9 +706,11 @@ class _PayoutPage extends ConsumerWidget {
     final paidAsync =
         ref.watch(teacherPaidProvider((teacherId: user.id, monthYear: month)));
     final owed = stats?.totalAmount ?? 0;
+    final paid = paidAsync.valueOrNull;
+    final frac =
+        owed <= 0 ? 0.0 : ((paid ?? 0) / owed).clamp(0.0, 1.0).toDouble();
 
     Future<void> markPayout() async {
-      final paid = paidAsync.valueOrNull;
       final suggested =
           paid == null ? owed : (owed - paid).clamp(0, owed).toInt();
       final ok = await AddPayoutSheet.show(context, user.id, month, suggested);
@@ -761,49 +721,80 @@ class _PayoutPage extends ConsumerWidget {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('ВЫПЛАТЫ ЗА МЕСЯЦ',
-            style: type.overline.copyWith(color: tokens.mutedText)),
-        const SizedBox(height: NebulaTokens.sp8),
-        _PayoutRow(
-          icon: Icons.payments_outlined,
-          label: 'К выплате',
-          value: Money.format(owed),
-          color: tokens.success,
-        ),
-        const SizedBox(height: NebulaTokens.sp8),
-        paidAsync.when(
-          skipLoadingOnRefresh: false,
-          data: (paidValue) => Column(
+        const Center(child: _CategoryTag('ВЫПЛАТЫ ЗА МЕСЯЦ')),
+        const SizedBox(height: NebulaTokens.sp12),
+        Expanded(
+          child: Row(
             children: [
-              _PayoutRow(
-                icon: Icons.check_circle_outline_rounded,
-                label: 'Выплачено',
-                value: Money.format(paidValue),
-                color: tokens.primaryText,
+              // Кольцо прогресса — сколько от «к выплате» уже закрыто.
+              SizedBox(
+                width: 96,
+                height: 96,
+                child: CustomPaint(
+                  painter: _PayoutRingPainter(
+                    fraction: frac,
+                    track: tokens.surfaceBorder,
+                    fill: tokens.success,
+                  ),
+                  child: Center(
+                    child: Text(
+                      paid == null ? '…' : '${(frac * 100).round()}%',
+                      style: type.titleM.copyWith(
+                        color: tokens.primaryText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: NebulaTokens.sp8),
-              _PayoutRow(
-                icon: Icons.hourglass_bottom_rounded,
-                label: 'Осталось',
-                value: Money.format((owed - paidValue).clamp(0, owed)),
-                color: tokens.warning,
+              const SizedBox(width: NebulaTokens.sp16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _MiniPayoutRow(
+                      label: 'К выплате',
+                      value: Money.format(owed),
+                      color: tokens.success,
+                    ),
+                    const SizedBox(height: NebulaTokens.sp8),
+                    paidAsync.when(
+                      skipLoadingOnRefresh: false,
+                      data: (paidValue) => Column(
+                        children: [
+                          _MiniPayoutRow(
+                            label: 'Выплачено',
+                            value: Money.format(paidValue),
+                            color: tokens.primaryText,
+                          ),
+                          const SizedBox(height: NebulaTokens.sp8),
+                          _MiniPayoutRow(
+                            label: 'Осталось',
+                            value:
+                                Money.format((owed - paidValue).clamp(0, owed)),
+                            color: tokens.warning,
+                          ),
+                        ],
+                      ),
+                      loading: () => const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: NebulaTokens.sp8),
+                        child: OrbitLoader(size: 18),
+                      ),
+                      error: (_, __) => _MiniPayoutRow(
+                        label: 'Выплачено',
+                        value: '—',
+                        color: tokens.mutedText,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: NebulaTokens.sp8),
-            child: OrbitLoader(size: 18),
-          ),
-          error: (_, __) => _PayoutRow(
-            icon: Icons.error_outline_rounded,
-            label: 'Выплачено',
-            value: '—',
-            color: tokens.mutedText,
-          ),
         ),
-        const Spacer(),
         Align(
           alignment: Alignment.centerRight,
           child: NebulaTextButton(
@@ -831,30 +822,37 @@ class _RatePage extends ConsumerWidget {
     final rateAsync = ref.watch(teacherDefaultRateProvider(user.id));
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('СТАВКА ЗА УРОК',
-            style: type.overline.copyWith(color: tokens.mutedText)),
-        const SizedBox(height: NebulaTokens.sp8),
-        rateAsync.when(
-          skipLoadingOnRefresh: false,
-          data: (rate) => Text(
-            Money.format(rate),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: type.displayM.copyWith(color: tokens.primaryText),
+        const Center(child: _CategoryTag('СТАВКА ЗА УРОК')),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                rateAsync.when(
+                  skipLoadingOnRefresh: false,
+                  data: (rate) => Text(
+                    Money.format(rate),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: type.displayM.copyWith(color: tokens.primaryText),
+                  ),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: NebulaTokens.sp8),
+                    child: OrbitLoader(size: 18),
+                  ),
+                  error: (_, __) => Text('—',
+                      style: type.displayM.copyWith(color: tokens.mutedText)),
+                ),
+                const SizedBox(height: NebulaTokens.sp4),
+                Text('начисляется за каждый проведённый урок',
+                    textAlign: TextAlign.center,
+                    style: type.bodyS.copyWith(color: tokens.secondaryText)),
+              ],
+            ),
           ),
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: NebulaTokens.sp8),
-            child: OrbitLoader(size: 18),
-          ),
-          error: (_, __) =>
-              Text('—', style: type.displayM.copyWith(color: tokens.mutedText)),
         ),
-        const SizedBox(height: NebulaTokens.sp4),
-        Text('начисляется за каждый проведённый урок',
-            style: type.bodyS.copyWith(color: tokens.secondaryText)),
-        const Spacer(),
         Align(
           alignment: Alignment.centerRight,
           child: NebulaTextButton(
@@ -874,14 +872,74 @@ class _RatePage extends ConsumerWidget {
   }
 }
 
-class _PayoutRow extends StatelessWidget {
-  final IconData icon;
+/// Подпись категории страницы — «пилюля» с тонкой границей, по центру тайла.
+class _CategoryTag extends StatelessWidget {
+  final String text;
+
+  const _CategoryTag(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NebulaTokens.sp12,
+        vertical: NebulaTokens.sp4,
+      ),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        borderRadius: NebulaRadii.pillBorder,
+        border: Border.all(color: tokens.surfaceBorder),
+      ),
+      child: Text(text, style: type.overline.copyWith(color: tokens.mutedText)),
+    );
+  }
+}
+
+/// Крупная центрированная метрика месяца: значение сверху, подпись снизу.
+class _BigStat extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
 
-  const _PayoutRow({
-    required this.icon,
+  const _BigStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: type.titleL.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: NebulaTokens.sp2),
+          Text(label, style: type.labelM.copyWith(color: tokens.secondaryText)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniPayoutRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MiniPayoutRow({
     required this.label,
     required this.value,
     required this.color,
@@ -894,13 +952,11 @@ class _PayoutRow extends StatelessWidget {
     final type = NebulaTypography.of(context);
     return Row(
       children: [
-        Icon(icon, color: color, size: 18),
-        const SizedBox(width: 10),
         Expanded(
           child: Text(label,
-              style: type.bodyM.copyWith(color: tokens.secondaryText)),
+              style: type.bodyS.copyWith(color: tokens.secondaryText)),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: NebulaTokens.sp8),
         Flexible(
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -908,7 +964,7 @@ class _PayoutRow extends StatelessWidget {
             child: Text(
               value,
               maxLines: 1,
-              style: type.titleM.copyWith(
+              style: type.titleS.copyWith(
                 color: color,
                 fontWeight: FontWeight.w700,
               ),
@@ -920,55 +976,51 @@ class _PayoutRow extends StatelessWidget {
   }
 }
 
-class _DialogStatRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
+/// Кольцо прогресса выплат: тонкий трек + скруглённая дуга с мягким гало.
+class _PayoutRingPainter extends CustomPainter {
+  final double fraction;
+  final Color track;
+  final Color fill;
 
-  const _DialogStatRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
+  const _PayoutRingPainter({
+    required this.fraction,
+    required this.track,
+    required this.fill,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-    final type = NebulaTypography.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 16),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: type.bodyS.copyWith(color: tokens.secondaryText),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Text(
-                value,
-                maxLines: 1,
-                style: type.bodyM.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.shortestSide / 2 - 6;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    const stroke = 9.0;
+
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..color = track;
+    canvas.drawArc(rect, 0, math.pi * 2, false, trackPaint);
+
+    if (fraction <= 0) return;
+    final sweep = math.pi * 2 * fraction;
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke + 6
+      ..strokeCap = StrokeCap.round
+      ..color = fill.withValues(alpha: NebulaAlpha.subtle)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    final fillPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round
+      ..color = fill;
+    canvas.drawArc(rect, -math.pi / 2, sweep, false, glowPaint);
+    canvas.drawArc(rect, -math.pi / 2, sweep, false, fillPaint);
   }
+
+  @override
+  bool shouldRepaint(_PayoutRingPainter oldDelegate) =>
+      oldDelegate.fraction != fraction ||
+      oldDelegate.track != track ||
+      oldDelegate.fill != fill;
 }

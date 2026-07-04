@@ -3,7 +3,7 @@ import 'package:cosmo_studio/features/admin/data/payouts_repository.dart';
 import 'package:cosmo_studio/features/admin/data/rates_repository.dart';
 import 'package:cosmo_studio/features/admin/presentation/screens/admin_screen.dart';
 import 'package:cosmo_studio/shared/widgets/app_safe_layout.dart';
-import 'package:cosmo_studio/shared/widgets/stellar_button.dart';
+import 'package:cosmo_studio/shared/widgets/primitives/primitives.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -105,15 +105,15 @@ void main() {
     expect(find.text('Проведено'), findsOneWidget);
     expect(find.text('12'), findsWidgets);
 
-    // Bottom actions are StellarButtons with the preserved wiring.
+    // Actions live in one lean list card (ActionRow), delete sits at the
+    // very bottom as a quiet text button. The header owns the teacher name —
+    // no duplicated identity card.
     expect(
-        find.widgetWithText(StellarButton, 'Открыть как педагог'),
-        findsOneWidget);
-    expect(
-        find.widgetWithText(StellarButton, 'Сменить пароль'), findsOneWidget);
-    expect(find.widgetWithText(StellarButton, 'Отключить'), findsOneWidget);
-    expect(find.widgetWithText(StellarButton, 'Удалить навсегда'),
-        findsOneWidget);
+        find.widgetWithText(ActionRow, 'Открыть как педагог'), findsOneWidget);
+    expect(find.widgetWithText(ActionRow, 'Сменить пароль'), findsOneWidget);
+    expect(find.widgetWithText(ActionRow, 'Отключить'), findsOneWidget);
+    expect(find.text('Удалить навсегда'), findsOneWidget);
+    expect(find.text('педагог · @anya'), findsNothing);
   });
 
   testWidgets(

@@ -6,22 +6,26 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/cosmo_theme_tokens.dart';
 import '../../../../core/theme/nebula_alpha.dart';
-import '../../../../core/theme/nebula_radii.dart';
-import '../../../../core/theme/nebula_typography.dart';
+import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
 import '../../../../shared/widgets/app_chrome_metrics.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../data/admin_repository.dart';
 import '../providers/view_as_teacher_provider.dart';
 
-/// View-as indicator: a floating glass pill (teacher name + exit) shown while
-/// an admin browses as a teacher. The ambient "you're in view-as" cue is the
-/// orange glow on the month island (see the shell); no full-screen frame.
+/// View-as exit: a small round amber logout button under the month island.
+/// The ambient "you're in view-as" cue is the island's orange glow (see the
+/// shell); the button only needs to say "выход".
 class ViewAsOverlay extends ConsumerWidget {
   const ViewAsOverlay({super.key});
 
   void _exit(BuildContext context, WidgetRef ref) {
     HapticFeedback.selectionClick();
     ref.read(viewAsTeacherProvider.notifier).state = null;
+    // Смена роли — граница нормализации хрома: если бар/остров остались
+    // спрятанными протухшим состоянием (прерванный runWithBottomBarHidden,
+    // недобитый модальный цикл), админ вернулся бы к шеллу без навигации.
+    ref.read(bottomBarVisibleProvider.notifier).state = true;
+    ref.read(topIslandVisibleProvider.notifier).state = true;
     // Кэши пользователя сбросятся сами по смене личности; уводим на /admin.
     ref.invalidate(studioStatsProvider);
     context.go('/admin');
@@ -34,7 +38,6 @@ class ViewAsOverlay extends ConsumerWidget {
 
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final type = NebulaTypography.of(context);
 
     // Just below the month island, top-right — reads together with the island's
     // orange view-as glow instead of floating over the bottom nav.
@@ -48,9 +51,12 @@ class ViewAsOverlay extends ConsumerWidget {
       right: 16,
       top: topOffset,
       child: NebulaSurface(
-        radiusRole: NebulaRadiusRole.pill,
+        key: const ValueKey('view-as-exit'),
+        shape: BoxShape.circle,
         accent: tokens.warning,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        width: 40,
+        height: 40,
+        padding: EdgeInsets.zero,
         onTap: () => _exit(context, ref),
         glow: [
           BoxShadow(
@@ -59,26 +65,8 @@ class ViewAsOverlay extends ConsumerWidget {
             spreadRadius: -2,
           ),
         ],
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.visibility_outlined, color: tokens.warning, size: 15),
-            const SizedBox(width: 7),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 140),
-              child: Text(
-                viewAs.displayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: type.labelM.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: tokens.warning,
-                ),
-              ),
-            ),
-            const SizedBox(width: 7),
-            Icon(Icons.close_rounded, color: tokens.warning, size: 15),
-          ],
+        child: Center(
+          child: Icon(Icons.logout_rounded, color: tokens.warning, size: 18),
         ),
       ),
     );

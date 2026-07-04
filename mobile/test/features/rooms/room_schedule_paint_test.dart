@@ -123,10 +123,24 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('brush-teacher-7')));
     await tester.pump(const Duration(milliseconds: 300));
 
-    // Красим два соседних слота понедельника.
-    await tester.tap(find.byKey(const ValueKey('cell-0-0')));
+    // Один свайп сверху вниз красит сразу линию: слоты 0..2 понедельника.
+    final start = tester.getCenter(find.byKey(const ValueKey('cell-0-0')));
+    final gesture = await tester.startGesture(start);
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.moveTo(
+        tester.getCenter(find.byKey(const ValueKey('cell-0-1'))));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.moveTo(
+        tester.getCenter(find.byKey(const ValueKey('cell-0-2'))));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.up();
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.byKey(const ValueKey('cell-0-1')));
+    expect(find.text('Сохранить (3)'), findsOneWidget);
+
+    // Тап-покраска тоже работает: стираем третий слот тапом по нему.
+    await tester.tapAt(
+        tester.getTopLeft(find.byKey(const ValueKey('pending-0-0'))) +
+            const Offset(10, 2 * 40 + 10));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Сохранить (2)'), findsOneWidget);
 
