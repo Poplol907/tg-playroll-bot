@@ -184,6 +184,10 @@ class _TeacherSearchList extends ConsumerWidget {
         top: 4,
         bottom: 24,
         includeKeyboard: true,
+        // Экран уже отступил под month-остров своим верхним паддингом —
+        // без этого флага список резервировал высоту острова ВТОРОЙ раз
+        // и между полем поиска и первым педагогом зияла пустая полоса.
+        includeFloatingTopBar: false,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, i) => _TeacherSearchTile(
@@ -371,6 +375,10 @@ class _StudentSearchList extends ConsumerWidget {
         top: 4,
         bottom: 24,
         includeKeyboard: true,
+        // Экран уже отступил под month-остров своим верхним паддингом —
+        // без этого флага список резервировал высоту острова ВТОРОЙ раз
+        // и между полем поиска и первым педагогом зияла пустая полоса.
+        includeFloatingTopBar: false,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, i) => _StudentSearchTile(student: filtered[i]),
