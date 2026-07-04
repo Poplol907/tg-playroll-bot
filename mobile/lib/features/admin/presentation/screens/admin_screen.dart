@@ -655,6 +655,13 @@ class _MonthStatsPage extends StatelessWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     final s = stats;
+    // Тонкий «крест» между квадрантами структурирует сетку 2×2 — читается
+    // как четыре ячейки, а не четыре парящих числа.
+    Widget vDivider() => Container(
+          width: 1,
+          height: 40,
+          color: tokens.surfaceBorder,
+        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -670,6 +677,7 @@ class _MonthStatsPage extends StatelessWidget {
                   value: '${s?.lessonsDone ?? 0}',
                   color: tokens.success,
                 )),
+                vDivider(),
                 Expanded(
                     child: _BigStat(
                   label: 'Пропусков',
@@ -677,6 +685,12 @@ class _MonthStatsPage extends StatelessWidget {
                   color: tokens.error,
                 )),
               ]),
+              Divider(
+                height: 1,
+                indent: NebulaTokens.sp24,
+                endIndent: NebulaTokens.sp24,
+                color: tokens.surfaceBorder,
+              ),
               Row(children: [
                 Expanded(
                     child: _BigStat(
@@ -684,6 +698,7 @@ class _MonthStatsPage extends StatelessWidget {
                   value: '${s?.lessonsCancelledMakeup ?? 0}',
                   color: tokens.focusAccent,
                 )),
+                vDivider(),
                 Expanded(
                     child: _BigStat(
                   label: 'Долгов',
@@ -929,13 +944,28 @@ class _BigStat extends StatelessWidget {
         children: [
           Text(
             value,
-            style: type.titleL.copyWith(
+            style: type.displayM.copyWith(
               color: color,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: NebulaTokens.sp2),
-          Text(label, style: type.labelM.copyWith(color: tokens.secondaryText)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: NebulaTokens.sp4),
+              Text(label,
+                  style: type.labelM.copyWith(color: tokens.secondaryText)),
+            ],
+          ),
         ],
       ),
     );

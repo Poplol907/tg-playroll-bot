@@ -57,14 +57,20 @@ class _PathFieldBackgroundState extends State<PathFieldBackground>
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
+        // Заметный вертикальный градиент «тёплое утро → холодный день»:
+        // прежний background→mid→background был почти неразличим и светлая
+        // тема читалась плоской рядом с тёмной.
         gradient: LinearGradient(
           colors: [
+            Color.lerp(widget.tokens.background, widget.tokens.warning, 0.06)!,
             widget.tokens.background,
             widget.tokens.backgroundMid,
-            widget.tokens.background,
+            Color.lerp(
+                widget.tokens.background, widget.tokens.focusAccent, 0.08)!,
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          stops: const [0.0, 0.30, 0.62, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
       ),
       child: Stack(
@@ -118,11 +124,14 @@ class _CornerGlowsPainter extends CustomPainter {
     // and they can sit slightly off-canvas so only the soft edge bleeds in.
     final blobs = <(double, double, double, Color, double)>[
       // Top-right: warm orange "evening light"
-      (1.05, -0.05, size.shortestSide * 0.55, tokens.warning, 0.10),
+      (1.05, -0.05, size.shortestSide * 0.60, tokens.warning, 0.16),
       // Top-right inner: focus accent — small, slightly to the left
-      (0.78, -0.08, size.shortestSide * 0.35, tokens.primaryAccent, 0.08),
+      (0.78, -0.08, size.shortestSide * 0.38, tokens.primaryAccent, 0.12),
       // Bottom-left: cool blue "morning light"
-      (-0.10, 1.05, size.shortestSide * 0.55, tokens.focusAccent, 0.10),
+      (-0.10, 1.05, size.shortestSide * 0.60, tokens.focusAccent, 0.16),
+      // Mid-left: очень мягкое широкое пятно primary — объём в середине,
+      // где раньше был сплошной плоский белый.
+      (-0.15, 0.45, size.shortestSide * 0.50, tokens.primaryAccent, 0.07),
     ];
 
     for (final (fx, fy, radius, color, alpha) in blobs) {

@@ -25,7 +25,12 @@ Future<T?> showFrostedSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   bool useSafeArea = true,
-  bool useRootNavigator = false,
+  // ROOT по умолчанию: вложенный навигатор шелла живёт ВНУТРИ SafeArea,
+  // поэтому его барьер физически не покрывал полосу статус-бара — над
+  // Dynamic Island оставался незаблюренный «кусок» шелла. Root-оверлей
+  // накрывает весь экран, и root-обсерверы (repaint pulse, bottom bar)
+  // видят эти роуты.
+  bool useRootNavigator = true,
   BoxConstraints? constraints,
 }) {
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
@@ -116,6 +121,15 @@ class FrostedSheetRoute<T> extends ModalBottomSheetRoute<T> {
 
   @override
   Widget buildModalBarrier() => _frostBarrier(this, super.buildModalBarrier());
+
+  @override
+  void dispose() {
+    super.dispose();
+    // dispose происходит ПОСЛЕ завершения exit-анимации (future от push
+    // резолвится ещё в начале reverse) — этот пульс гарантирует чистый
+    // кадр, когда барьер уже физически снят, даже если фон успел уснуть.
+    RepaintPulse.pulse();
+  }
 }
 
 /// [DialogRoute] with the same frosted barrier as [FrostedSheetRoute].
@@ -132,4 +146,10 @@ class FrostedDialogRoute<T> extends DialogRoute<T> {
 
   @override
   Widget buildModalBarrier() => _frostBarrier(this, super.buildModalBarrier());
+
+  @override
+  void dispose() {
+    super.dispose();
+    RepaintPulse.pulse();
+  }
 }
