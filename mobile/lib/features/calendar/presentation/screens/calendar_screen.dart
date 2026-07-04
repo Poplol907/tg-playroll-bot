@@ -14,6 +14,7 @@ import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/adaptive_modal.dart';
 import '../../../../shared/widgets/frosted_sheet.dart';
 import '../../../../shared/widgets/nebula_dialog.dart';
+import '../../../../shared/widgets/nebula_drum_picker.dart';
 import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
@@ -116,7 +117,6 @@ class CalendarScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Column(
             children: [
-              const RoomsTodayCard(),
               Expanded(
                 child: NebulaSurface(
                   padding: const EdgeInsets.all(16),
@@ -148,7 +148,6 @@ class CalendarScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                const RoomsTodayCard(),
                 NebulaSurface(
                   padding: const EdgeInsets.all(16),
                   radiusRole: NebulaRadiusRole.panel,
@@ -200,6 +199,13 @@ class CalendarScreen extends ConsumerWidget {
                       children: [
                         const SizedBox(height: 8),
                         const RoomsStrip(),
+                        // «Мои кабинеты сегодня» живёт во вкладке «Кабинеты»
+                        // (перенесена с календаря — здесь она уместнее; при
+                        // пустоте показывает «Вам пока не назначили кабинеты»).
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: RoomsTodayCard(),
+                        ),
                         Expanded(
                           child: Center(
                             child: Padding(

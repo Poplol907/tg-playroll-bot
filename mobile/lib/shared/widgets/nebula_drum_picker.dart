@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/theme/cosmo_theme_tokens.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_colors.dart';
@@ -70,6 +71,16 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
   @override
   Widget build(BuildContext context) {
     final totalHeight = widget.itemExtent * 5;
+    final theme = Theme.of(context);
+    final tokens =
+        theme.extension<CosmoThemeTokens>() ?? CosmoThemeTokens.darkInternals;
+    final isLight = theme.brightness == Brightness.light;
+    // Светлая тема: softWhite-элементы и неоновое свечение тонули в белом.
+    // Невыбранные — цвет текста темы; выбранный — акцент, притемнённый до
+    // читаемого контраста; glow-тени только в тёмной.
+    final selectedColor = isLight
+        ? Color.lerp(widget.glowColor, tokens.primaryText, 0.45)!
+        : widget.glowColor;
 
     return SizedBox(
       height: totalHeight,
@@ -152,10 +163,10 @@ class _NebulaDrumPickerState extends State<NebulaDrumPicker> {
                           fontWeight:
                               selected ? FontWeight.w600 : FontWeight.w300,
                           color: selected
-                              ? widget.glowColor
-                              : NebulaColors.softWhite
+                              ? selectedColor
+                              : tokens.primaryText
                                   .withValues(alpha: _opacity(index)),
-                          shadows: selected
+                          shadows: selected && !isLight
                               ? [
                                   Shadow(
                                     color: widget.glowColor

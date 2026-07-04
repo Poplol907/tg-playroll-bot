@@ -477,6 +477,8 @@ class _DayCell extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'SpaceMono',
                           fontSize: 12,
+                          height: 1.0,
+                          leadingDistribution: TextLeadingDistribution.even,
                           fontWeight: FontWeight.w700,
                           color: tokens.warning
                               .withValues(alpha: 0.6 + 0.4 * warnOpacity),
@@ -496,6 +498,12 @@ class _DayCell extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'SpaceMono',
                           fontSize: 11,
+                          // SpaceMono кладёт leading под baseline — без этого
+                          // числа (особенно двузначные) проседали ниже центра
+                          // ячейки. tabularFigures выравнивает ширину цифр.
+                          height: 1.0,
+                          leadingDistribution: TextLeadingDistribution.even,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                           fontWeight:
                               isToday ? FontWeight.w700 : FontWeight.w400,
                           color: isToday

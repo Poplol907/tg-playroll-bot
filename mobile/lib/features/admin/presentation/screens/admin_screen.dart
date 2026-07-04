@@ -173,11 +173,19 @@ class _RoomsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
           child: Text('Кабинеты',
-              style: type.titleS.copyWith(color: tokens.primaryText)),
+              style: type.titleL.copyWith(color: tokens.primaryText)),
         ),
-        const RoomsStrip(),
+        // Full-bleed: лента шире sliver-паддинга родителя, чтобы краевой
+        // фейд доходил до физического края экрана, а не до отступа.
+        SizedBox(
+          height: 112,
+          child: OverflowBox(
+            maxWidth: MediaQuery.sizeOf(context).width,
+            child: const RoomsStrip(),
+          ),
+        ),
         const SizedBox(height: 12),
       ],
     );
