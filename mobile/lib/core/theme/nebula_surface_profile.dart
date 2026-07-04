@@ -182,24 +182,26 @@ extension NebulaSurfaceProfileResolver on NebulaSurfaceProfile {
   }
 
   LinearGradient _sheen(bool isLight) {
+    // Заметнее прежнего (mist/whisper): верхний блик и нижнее притемнение
+    // подняты на один тир, чтобы карточки, модалки и календарь читались
+    // объёмными «линзами», а не плоскими заливками. Один источник для всех
+    // поверхностей — глубина растёт во всём приложении сразу.
     return LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: isLight
           // Matte glass: a gentle top-light instead of a glossy hot streak.
-          // The highlight is dimmer and falls off smoothly, so light surfaces
-          // read as frosted/satin rather than polished.
           ? [
               Colors.white.withValues(alpha: NebulaAlpha.medium),
-              Colors.white.withValues(alpha: NebulaAlpha.whisper),
-              Colors.transparent,
-              Colors.black.withValues(alpha: NebulaAlpha.whisper),
-            ]
-          : [
               Colors.white.withValues(alpha: NebulaAlpha.mist),
-              Colors.white.withValues(alpha: NebulaAlpha.whisper),
               Colors.transparent,
               Colors.black.withValues(alpha: NebulaAlpha.mist),
+            ]
+          : [
+              Colors.white.withValues(alpha: NebulaAlpha.surface),
+              Colors.white.withValues(alpha: NebulaAlpha.whisper),
+              Colors.transparent,
+              Colors.black.withValues(alpha: NebulaAlpha.surface),
             ],
       stops: const [0.0, 0.22, 0.55, 1.0],
     );
