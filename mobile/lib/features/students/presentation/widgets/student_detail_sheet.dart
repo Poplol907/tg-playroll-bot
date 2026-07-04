@@ -39,7 +39,11 @@ class StudentDetailSheet extends ConsumerStatefulWidget {
       return showFrostedSheet(
         context: context,
         isScrollControlled: true,
-        useSafeArea: true,
+        // БЕЗ useSafeArea: обёртка SafeArea оставляла над шитом «отрезанный»
+        // прямоугольник высотой статус-бара поверх month island. Высоту
+        // ограничивает сам DraggableScrollableSheet, а барьер-блюр теперь
+        // доходит до физического края экрана.
+        useSafeArea: false,
         // enableDrag:false — Flutter's built-in drag conflicts with our custom
         // spring dismiss and leaves the barrier stuck mid-fade ("dark overlay
         // until tap"). We drive the drag ourselves and pop in _onDragEnd.

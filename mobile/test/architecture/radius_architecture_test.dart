@@ -89,7 +89,6 @@ void main() {
         'card',
         'panel',
       },
-      'lib/features/admin/presentation/widgets/view_as_banner.dart': {'pill'},
       'lib/features/auth/presentation/screens/login_screen.dart': {'panel'},
       'lib/features/calendar/presentation/screens/calendar_screen.dart': {
         'panel',
