@@ -32,6 +32,95 @@ import '../../core/services/update_service.dart';
 import '../../core/services/repaint_pulse.dart';
 
 // ─────────────────────────────────────────────
+//  Вкладки — единый источник правды
+// ─────────────────────────────────────────────
+
+/// Одна вкладка шелла: роут + иконка + подпись + glow-цвет.
+///
+/// Порядок страниц PageView, активный индекс, элементы нижнего нав-бара и
+/// десктопного сайдбара выводятся ИЗ ЭТИХ таблиц. Раньше те же данные жили
+/// в четырёх местах (списки роутов, index-switch, GlowMenuItem'ы,
+/// DesktopSidebarItem'ы) и добавление вкладки требовало четырёх синхронных
+/// правок. Теперь — одна строка в таблице роли.
+class AppTab {
+  final String route;
+  final IconData icon;
+  final String label;
+  final Color Function(CosmoThemeTokens tokens) glow;
+
+  const AppTab({
+    required this.route,
+    required this.icon,
+    required this.label,
+    required this.glow,
+  });
+}
+
+final List<AppTab> _adminTabs = [
+  AppTab(
+    route: '/admin',
+    icon: Icons.shield_outlined,
+    label: 'Студия',
+    glow: (t) => t.primaryAccent,
+  ),
+  AppTab(
+    route: '/search',
+    icon: Icons.search_rounded,
+    label: 'Поиск',
+    glow: (t) => t.secondaryAccent,
+  ),
+  AppTab(
+    route: '/settings',
+    icon: Icons.settings_outlined,
+    label: 'Настройки',
+    glow: (t) => t.warning,
+  ),
+];
+
+final List<AppTab> _teacherTabs = [
+  AppTab(
+    route: '/calendar',
+    icon: Icons.calendar_month_rounded,
+    label: 'Календарь',
+    glow: (t) => t.primaryAccent,
+  ),
+  AppTab(
+    route: '/students',
+    icon: Icons.people_outline_rounded,
+    label: 'Ученики',
+    glow: (t) => t.secondaryAccent,
+  ),
+  AppTab(
+    route: '/salary',
+    icon: Icons.payments_outlined,
+    label: 'Зарплата',
+    glow: (t) => t.success,
+  ),
+  AppTab(
+    route: '/settings',
+    icon: Icons.settings_outlined,
+    label: 'Настройки',
+    glow: (t) => t.warning,
+  ),
+];
+
+/// Педагог: Календарь + Ученики + Зарплата + Настройки.
+/// Админ: Студия + Поиск + Настройки; в view-as — вкладки педагога.
+List<AppTab> tabsForRole({required bool isAdmin, required bool viewingAs}) =>
+    isAdmin && !viewingAs ? _adminTabs : _teacherTabs;
+
+/// Активный индекс вкладки для текущей локации (первый префикс-матч).
+int tabIndexForLocation(
+  String location, {
+  required bool isAdmin,
+  required bool viewingAs,
+}) {
+  final tabs = tabsForRole(isAdmin: isAdmin, viewingAs: viewingAs);
+  final index = tabs.indexWhere((t) => location.startsWith(t.route));
+  return index < 0 ? 0 : index;
+}
+
+// ─────────────────────────────────────────────
 //  App Shell — адаптируется под мобайл/десктоп
 // ─────────────────────────────────────────────
 
@@ -183,79 +272,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
   }
 
-  // Маршруты в порядке вкладок:
-  // - Педагог: Календарь + Ученики + Зарплата + Настройки.
-  // - Админ в обычном режиме: Студия + Настройки.
-  // - Админ в view-as: те же вкладки что у педагога (он смотрит данные педагога).
   List<String> _routesForRole(
-      {required bool isAdmin, required bool viewingAs}) {
-    if (isAdmin && !viewingAs) return ['/admin', '/search', '/settings'];
-    return ['/calendar', '/students', '/salary', '/settings'];
-  }
+          {required bool isAdmin, required bool viewingAs}) =>
+      [
+        for (final t in tabsForRole(isAdmin: isAdmin, viewingAs: viewingAs))
+          t.route
+      ];
 
   void _onTabTap(int index, {required bool isAdmin, required bool viewingAs}) {
     final routes = _routesForRole(isAdmin: isAdmin, viewingAs: viewingAs);
     if (index < routes.length) context.go(routes[index]);
   }
-
-  // Nav glow colours come from theme tokens so both themes get the SAME
-  // semantic hue at the right saturation. The old static consts mixed a
-  // legacy dim off-orange border token with dark pastels that washed out
-  // on white.
-  GlowMenuItem _settingsMenuItem(CosmoThemeTokens t) => GlowMenuItem(
-        icon: Icons.settings_outlined,
-        label: 'Настройки',
-        glowColor: t.warning,
-      );
-
-  GlowMenuItem _adminMenuItem(CosmoThemeTokens t) => GlowMenuItem(
-        icon: Icons.shield_outlined,
-        label: 'Студия',
-        glowColor: t.primaryAccent,
-      );
-
-  GlowMenuItem _searchMenuItem(CosmoThemeTokens t) => GlowMenuItem(
-        icon: Icons.search_rounded,
-        label: 'Поиск',
-        glowColor: t.secondaryAccent,
-      );
-
-  List<GlowMenuItem> _teacherMenuItems(CosmoThemeTokens t) => [
-        GlowMenuItem(
-          icon: Icons.calendar_month_rounded,
-          label: 'Календарь',
-          glowColor: t.primaryAccent,
-        ),
-        GlowMenuItem(
-          icon: Icons.people_outline_rounded,
-          label: 'Ученики',
-          glowColor: t.secondaryAccent,
-        ),
-        GlowMenuItem(
-          icon: Icons.payments_outlined,
-          label: 'Зарплата',
-          glowColor: t.success,
-        ),
-      ];
-
-  static const _settingsSidebarItem =
-      DesktopSidebarItem(icon: Icons.settings_outlined, label: 'Настройки');
-
-  static const _adminSidebarItem = DesktopSidebarItem(
-    icon: Icons.shield_outlined,
-    label: 'Студия',
-  );
-
-  static const _searchSidebarItem = DesktopSidebarItem(
-    icon: Icons.search_rounded,
-    label: 'Поиск',
-  );
-
-  static const _teacherSidebarItems = [
-    DesktopSidebarItem(icon: Icons.calendar_month_rounded, label: 'Календарь'),
-    DesktopSidebarItem(icon: Icons.people_outline_rounded, label: 'Ученики'),
-    DesktopSidebarItem(icon: Icons.payments_outlined, label: 'Зарплата'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -300,16 +327,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
     final viewingAs = ref.watch(viewAsTeacherProvider) != null;
-    // В режиме view-as админ видит вкладки педагога.
-    final showAdminTabs = isAdmin && !viewingAs;
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    final navItems = showAdminTabs
-        ? [_adminMenuItem(tokens), _searchMenuItem(tokens), _settingsMenuItem(tokens)]
-        : [..._teacherMenuItems(tokens), _settingsMenuItem(tokens)];
-    final sidebarItems = showAdminTabs
-        ? [_adminSidebarItem, _searchSidebarItem, _settingsSidebarItem]
-        : [..._teacherSidebarItems, _settingsSidebarItem];
+    // В режиме view-as админ видит вкладки педагога (см. tabsForRole).
+    final tabs = tabsForRole(isAdmin: isAdmin, viewingAs: viewingAs);
+    final navItems = [
+      for (final t in tabs)
+        GlowMenuItem(icon: t.icon, label: t.label, glowColor: t.glow(tokens)),
+    ];
+    final sidebarItems = [
+      for (final t in tabs) DesktopSidebarItem(icon: t.icon, label: t.label),
+    ];
 
     return UpdateChecker(
       child: AppBackgroundHost(
@@ -843,25 +871,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           final loc = state.matchedLocation;
           final isAdmin = authState.user?.isAdmin ?? false;
           final viewingAs = ref.watch(viewAsTeacherProvider) != null;
-          // Когда админ в обычном режиме — у него только {Студия, Настройки}.
-          // В view-as — те же вкладки что у педагога.
-          final showAdminTabs = isAdmin && !viewingAs;
-          final int index;
-          if (showAdminTabs) {
-            index = loc.startsWith('/settings')
-                ? 2
-                : loc.startsWith('/search')
-                    ? 1
-                    : 0;
-          } else {
-            index = loc.startsWith('/students')
-                ? 1
-                : loc.startsWith('/salary')
-                    ? 2
-                    : loc.startsWith('/settings')
-                        ? 3
-                        : 0;
-          }
+          // Индекс — из той же таблицы вкладок, что и нав-бар/сайдбар.
+          final index = tabIndexForLocation(
+            loc,
+            isAdmin: isAdmin,
+            viewingAs: viewingAs,
+          );
           return AppShell(currentIndex: index, child: child);
         },
         routes: [
