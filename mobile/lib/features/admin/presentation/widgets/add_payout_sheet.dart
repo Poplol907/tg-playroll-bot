@@ -8,6 +8,7 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/payouts_repository.dart';
+import '../../../../shared/widgets/sheet_error_banner.dart';
 
 class AddPayoutSheet extends ConsumerStatefulWidget {
   final int teacherId;
@@ -97,14 +98,8 @@ class _AddPayoutSheetState extends ConsumerState<AddPayoutSheet> {
           prefixIcon: const Icon(Icons.payments_outlined, size: 20),
           textInputAction: TextInputAction.done,
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            _error!,
-            style: type.bodyS.copyWith(color: tokens.error),
-          ),
-        ],
         const SizedBox(height: 20),
+        SheetErrorBanner(error: _error),
         StellarButton(
           label: 'Сохранить выплату',
           loading: _loading,

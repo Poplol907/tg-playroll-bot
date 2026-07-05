@@ -89,9 +89,9 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
         const SizedBox(height: 8),
         studentsAsync.when(
           loading: () => const Center(child: OrbitLoader()),
-          error: (_, __) => Text(
-            'Ошибка загрузки',
-            style: type.bodyM.copyWith(color: tokens.error),
+          error: (_, __) => AppInlineErrorCard(
+            message: 'Не удалось загрузить учеников',
+            onRetry: () => ref.invalidate(studentsProvider),
           ),
           data: (students) {
             final eligible = students

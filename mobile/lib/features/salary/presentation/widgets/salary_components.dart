@@ -457,53 +457,6 @@ class _RatesCard extends StatelessWidget {
 //  Empty / error states
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ErrorCard extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorCard({
-    required this.message,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-    return NebulaSurface(
-      padding: const EdgeInsets.all(24),
-      radiusRole: NebulaRadiusRole.panel,
-      child: Column(
-        children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            color: tokens.mutedText,
-            size: 48,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Ошибка загрузки',
-            style: TextStyle(color: tokens.error),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: NebulaTypography.of(context)
-                .bodyS
-                .copyWith(color: tokens.secondaryText),
-          ),
-          const SizedBox(height: 12),
-          NebulaTextButton(
-            label: 'Повторить',
-            icon: Icons.refresh_rounded,
-            onPressed: onRetry,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _InlineErrorCard extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

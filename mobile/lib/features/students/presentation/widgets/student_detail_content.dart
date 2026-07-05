@@ -22,18 +22,14 @@ class _ContentLoader extends ConsumerWidget {
     final lessonsAsync = ref.watch(studentLessonsProvider(student.id));
     final subsAsync = ref.watch(studentSubscriptionsProvider(student.id));
     final activeMonth = ref.watch(globalMonthYearProvider);
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
 
     return lessonsAsync.when(
       skipLoadingOnRefresh: false,
       loading: () => const Center(child: OrbitLoader()),
       error: (_, __) => Center(
-        child: Text(
-          'Не удалось загрузить',
-          style: TextStyle(
-            color: tokens.mutedText,
-          ),
+        child: AppInlineErrorCard(
+          message: 'Не удалось загрузить уроки',
+          onRetry: () => ref.invalidate(studentLessonsProvider),
         ),
       ),
       data: (lessons) {

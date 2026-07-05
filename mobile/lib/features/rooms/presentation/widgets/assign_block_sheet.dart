@@ -15,6 +15,8 @@ import '../../../../shared/widgets/stellar_button.dart';
 import '../../../admin/data/admin_repository.dart';
 import '../../data/rooms_repository.dart';
 import '../providers/room_board_providers.dart';
+import '../../../../shared/widgets/sheet_error_banner.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 
 const _weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -196,8 +198,10 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
           const SizedBox(height: 8),
           roomsAsync.when(
             loading: () => const Center(child: OrbitLoader()),
-            error: (_, __) => Text('Не удалось загрузить кабинеты',
-                style: type.bodyM.copyWith(color: tokens.error)),
+            error: (_, __) => AppInlineErrorCard(
+              message: 'Не удалось загрузить кабинеты',
+              onRetry: () => ref.invalidate(roomsProvider),
+            ),
             data: (rooms) {
               final active = rooms.where((r) => r.isActive).toList();
               if (active.isEmpty) {
@@ -249,8 +253,10 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
         const SizedBox(height: 8),
         usersAsync.when(
           loading: () => const Center(child: OrbitLoader()),
-          error: (_, __) => Text('Не удалось загрузить педагогов',
-              style: type.bodyM.copyWith(color: tokens.error)),
+          error: (_, __) => AppInlineErrorCard(
+            message: 'Не удалось загрузить педагогов',
+            onRetry: () => ref.invalidate(orgUsersProvider),
+          ),
           data: (users) {
             final teachers = users.where((u) => u.role == 'TEACHER').toList();
             if (teachers.isEmpty) {
@@ -341,11 +347,8 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
           hintText: 'Заметка (необязательно)',
           textInputAction: TextInputAction.done,
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 10),
-          Text(_error!, style: type.bodyS.copyWith(color: tokens.error)),
-        ],
         const SizedBox(height: 20),
+        SheetErrorBanner(error: _error),
         StellarButton(
           label: 'Назначить',
           loading: _loading,

@@ -7,6 +7,7 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
+import '../../../../shared/widgets/sheet_error_banner.dart';
 
 class SetPasswordSheet extends ConsumerStatefulWidget {
   final OrgUser user;
@@ -97,14 +98,8 @@ class _SetPasswordSheetState extends ConsumerState<SetPasswordSheet> {
           ),
           textInputAction: TextInputAction.done,
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            _error!,
-            style: TextStyle(fontSize: 13, color: tokens.error),
-          ),
-        ],
         const SizedBox(height: 20),
+        SheetErrorBanner(error: _error),
         StellarButton(
           label: 'Сохранить пароль',
           loading: _loading,

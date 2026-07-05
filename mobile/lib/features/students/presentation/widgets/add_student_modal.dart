@@ -13,6 +13,8 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/students_repository.dart';
+import '../../../../shared/widgets/sheet_error_banner.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 
 // ─────────────────────────────────────────────
 //  AddStudentModal
@@ -221,17 +223,11 @@ class _AddStudentModalState extends ConsumerState<AddStudentModal> {
         ),
 
         // Error
-        if (_error != null) ...[
-          const SizedBox(height: 12),
-          Text(
-            _error!,
-            style: type.bodyS.copyWith(color: tokens.error),
-          ),
-        ],
 
         const SizedBox(height: 20),
 
         // Submit button
+        SheetErrorBanner(error: _error),
         StellarButton(
           label: 'Добавить ученика',
           loading: _loading,
@@ -265,9 +261,9 @@ class _TeacherPicker extends ConsumerWidget {
         height: 52,
         child: Center(child: OrbitLoader()),
       ),
-      error: (_, __) => Text(
-        'Не удалось загрузить педагогов',
-        style: TextStyle(color: tokens.mutedText),
+      error: (_, __) => AppInlineErrorCard(
+        message: 'Не удалось загрузить педагогов',
+        onRetry: () => ref.invalidate(teachersPickerProvider),
       ),
       data: (teachers) {
         final type = NebulaTypography.of(context);

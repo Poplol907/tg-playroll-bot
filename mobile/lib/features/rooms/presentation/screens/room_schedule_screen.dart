@@ -553,8 +553,10 @@ class _BrushStrip extends ConsumerWidget {
       child: usersAsync.when(
         loading: () => const Center(child: OrbitLoader(size: 18)),
         error: (_, __) => Center(
-          child: Text('Не удалось загрузить педагогов',
-              style: type.bodyS.copyWith(color: tokens.error)),
+          child: AppInlineErrorCard(
+            message: 'Не удалось загрузить педагогов',
+            onRetry: () => ref.invalidate(orgUsersProvider),
+          ),
         ),
         data: (users) {
           final teachers =
