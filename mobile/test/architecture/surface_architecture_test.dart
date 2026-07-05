@@ -184,6 +184,59 @@ void main() {
     );
   });
 
+  // ── Error rendering governance ──────────────────────────────────────────
+  // One canonical look for failures: AppErrorCard / AppInlineErrorCard /
+  // AppAsyncView for loads, SheetErrorBanner for form errors. No local
+  // clones, no bare Text() inside error: closures.
+  test('no private clones of the canonical error card', () {
+    final offenders = filesContaining('class _ErrorCard');
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'Use AppErrorCard/AppInlineErrorCard from '
+          'shared/widgets/app_error_card.dart instead of local copies.',
+    );
+  });
+
+  test('bare Text() inside error closures stays within budget', () {
+    final pattern = RegExp(
+      r'error:\s*\([^)]*\)\s*=>\s*(?:Center\(\s*child:\s*)?Text\(',
+    );
+    int count = 0;
+    for (final file in dartFiles()) {
+      if (!file.path.startsWith('lib/features/') &&
+          !file.path.startsWith('lib/shared/widgets/')) {
+        continue;
+      }
+      count += pattern.allMatches(file.readAsStringSync()).length;
+    }
+    // Единственное допустимое — «—»-плейсхолдер ЗНАЧЕНИЯ (ставка в пейджере
+    // профиля педагога), не сообщение об ошибке. Новые ошибки — через
+    // AppAsyncView / AppInlineErrorCard.
+    const baseline = 1;
+    expect(count, lessThanOrEqualTo(baseline));
+  });
+
+  test('sheet forms use the shared error banner slot', () {
+    for (final path in [
+      'lib/features/admin/presentation/widgets/add_payout_sheet.dart',
+      'lib/features/admin/presentation/widgets/set_password_sheet.dart',
+      'lib/features/admin/presentation/widgets/create_user_sheet.dart',
+      'lib/features/admin/presentation/widgets/set_rate_sheet.dart',
+      'lib/features/students/presentation/widgets/add_student_modal.dart',
+      'lib/features/rooms/presentation/widgets/assign_block_sheet.dart',
+      'lib/features/rooms/presentation/widgets/room_edit_sheet.dart',
+    ]) {
+      final content = File(path).readAsStringSync();
+      expect(
+        content,
+        contains('SheetErrorBanner(error: _error)'),
+        reason: '$path must render its form error through SheetErrorBanner '
+            '(always directly above the submit button).',
+      );
+    }
+  });
+
   // Core single-source-of-truth files must remain registered.
   // Removing one would silently break the architecture, so we assert they
   // exist and forbid widgets from reaching past them.
@@ -227,7 +280,8 @@ void main() {
     //              28 →  27 (status toggle label → labelS −2; +1 — это
     //                        параметр NebulaDrumPicker(fontSize:) в
     //                        add-lesson, не текстовый стиль)
-    const baseline = 27;
+    //              27 →  25 (sheet error texts → SheetErrorBanner)
+    const baseline = 25;
     expect(
       count,
       lessThanOrEqualTo(baseline),

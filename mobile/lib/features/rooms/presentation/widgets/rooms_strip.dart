@@ -13,6 +13,7 @@ import '../../data/room_models.dart';
 import '../../data/rooms_repository.dart';
 import '../screens/room_schedule_screen.dart';
 import 'room_edit_sheet.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 
 /// Horizontal strip of glass "digital room" tiles — tap a room to open its
 /// weekly schedule. Admins can long-press to drag-reorder (persisted as
@@ -89,8 +90,10 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
         // interrupted by a loader (order is tracked locally anyway).
         loading: () => const Center(child: OrbitLoader()),
         error: (_, __) => Center(
-          child: Text('Не удалось загрузить кабинеты',
-              style: type.bodyS.copyWith(color: tokens.mutedText)),
+          child: AppInlineErrorCard(
+            message: 'Не удалось загрузить кабинеты',
+            onRetry: () => ref.invalidate(roomsProvider),
+          ),
         ),
         data: (rooms) {
           _order = _sync(rooms);
@@ -123,8 +126,7 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
                         padding: const EdgeInsets.only(right: 10),
                         child: _RoomTile(
                           room: room,
-                          onTap: () =>
-                              RoomScheduleScreen.show(context, room),
+                          onTap: () => RoomScheduleScreen.show(context, room),
                         ),
                       );
                     },
@@ -139,8 +141,7 @@ class _RoomsStripState extends ConsumerState<RoomsStrip> {
                         padding: const EdgeInsets.only(right: 10),
                         child: _RoomTile(
                           room: room,
-                          onTap: () =>
-                              RoomScheduleScreen.show(context, room),
+                          onTap: () => RoomScheduleScreen.show(context, room),
                         ),
                       );
                     },
@@ -250,7 +251,8 @@ class _RoomTile extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: tokens.primaryAccent.withValues(alpha: NebulaAlpha.surface),
+              color:
+                  tokens.primaryAccent.withValues(alpha: NebulaAlpha.surface),
               borderRadius: NebulaRadii.controlBorder,
             ),
             child: Icon(Icons.meeting_room_rounded,

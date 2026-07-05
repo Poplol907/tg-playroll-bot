@@ -8,6 +8,7 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../../../core/utils/error_parser.dart';
 import '../../data/admin_repository.dart';
+import '../../../../shared/widgets/sheet_error_banner.dart';
 
 class CreateUserSheet extends ConsumerStatefulWidget {
   const CreateUserSheet({super.key});
@@ -149,16 +150,10 @@ class _CreateUserSheetState extends ConsumerState<CreateUserSheet> {
           ],
         ),
 
-        if (_error != null) ...[
-          const SizedBox(height: 12),
-          Text(
-            _error!,
-            style: TextStyle(fontSize: 13, color: tokens.error),
-          ),
-        ],
         const SizedBox(height: 20),
 
         // Submit
+        SheetErrorBanner(error: _error),
         StellarButton(
           label: 'Создать',
           loading: _loading,

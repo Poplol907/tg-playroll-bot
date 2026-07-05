@@ -161,8 +161,8 @@ class _RingPainter extends CustomPainter {
         sweep,
         false,
         Paint()
-          ..color = warning
-              .withValues(alpha: SalaryRingVisualProfile.pendingBloomAlpha)
+          ..color = warning.withValues(
+              alpha: SalaryRingVisualProfile.pendingBloomAlpha)
           ..style = PaintingStyle.stroke
           ..strokeWidth = sw + 8
           ..strokeCap = StrokeCap.round
@@ -364,7 +364,8 @@ class _LiquidBubblePainter extends CustomPainter {
   }
 
   double _waveY(double base, double f, double amp, double phase, int dir) =>
-      base + amp * math.sin(f * math.pi * 2 * 1.6 + wave * math.pi * 2 * dir + phase);
+      base +
+      amp * math.sin(f * math.pi * 2 * 1.6 + wave * math.pi * 2 * dir + phase);
 
   @override
   bool shouldRepaint(_LiquidBubblePainter old) =>

@@ -18,6 +18,7 @@ import '../../../../shared/widgets/nebula_modal_surface.dart';
 import '../../../../shared/widgets/nebula_snackbar.dart';
 import '../../../../shared/widgets/nebula_surface.dart';
 import '../../../../shared/providers/bottom_bar_visibility_provider.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 import '../../../../shared/widgets/frosted_sheet.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
@@ -179,106 +180,106 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
 
     return HideTopIslandOnFullSheetExpand(
       child: DraggableScrollableSheet(
-      controller: _sheetCtrl,
-      initialChildSize: 0.65,
-      minChildSize: 0.0,
-      maxChildSize: 1.0,
-      snap: true,
-      snapSizes: const [1.0],
-      expand: false,
-      builder: (ctx, scrollCtrl) {
-        return NebulaModalSurface(
-          containerKey: const ValueKey('student-detail-modal-surface'),
-          borderRadius: NebulaRadii.sheetTopBorder,
-          child: Column(
-            children: [
-              // ── Handle + header ──
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragUpdate: _onDragUpdate,
-                onVerticalDragEnd: _onDragEnd,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 14, bottom: 10),
-                        child: Center(
-                          child: Container(
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: tokens.mutedText.withValues(alpha: 0.5),
-                              borderRadius: NebulaRadii.compactControlBorder,
+        controller: _sheetCtrl,
+        initialChildSize: 0.65,
+        minChildSize: 0.0,
+        maxChildSize: 1.0,
+        snap: true,
+        snapSizes: const [1.0],
+        expand: false,
+        builder: (ctx, scrollCtrl) {
+          return NebulaModalSurface(
+            containerKey: const ValueKey('student-detail-modal-surface'),
+            borderRadius: NebulaRadii.sheetTopBorder,
+            child: Column(
+              children: [
+                // ── Handle + header ──
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragUpdate: _onDragUpdate,
+                  onVerticalDragEnd: _onDragEnd,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 14, bottom: 10),
+                          child: Center(
+                            child: Container(
+                              width: 36,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: tokens.mutedText.withValues(alpha: 0.5),
+                                borderRadius: NebulaRadii.compactControlBorder,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _Avatar(student: student, size: 54),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  student.fullName,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    color: tokens.primaryText,
-                                  ),
-                                ),
-                                if (student.phone != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _Avatar(student: student, size: 54),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    student.phone!,
+                                    student.fullName,
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: tokens.secondaryText,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: tokens.primaryText,
                                     ),
                                   ),
-                              ],
+                                  if (student.phone != null)
+                                    Text(
+                                      student.phone!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: tokens.secondaryText,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onVerticalDragUpdate: (_) {},
-                            onVerticalDragEnd: (_) {},
-                            child: _StatusToggle(
-                              isActive: _isActive,
-                              loading: _updatingStatus,
-                              onToggle: _toggleStatus,
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onVerticalDragUpdate: (_) {},
+                              onVerticalDragEnd: (_) {},
+                              child: _StatusToggle(
+                                isActive: _isActive,
+                                loading: _updatingStatus,
+                                onToggle: _toggleStatus,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              const Divider(height: 1, color: NebulaColors.surfaceBorder),
+                const Divider(height: 1, color: NebulaColors.surfaceBorder),
 
-              Expanded(
-                child: _ContentLoader(
-                  student: student,
-                  scrollCtrl: scrollCtrl,
-                  showAllLessons: _showAllLessons,
-                  onToggleAll: () =>
-                      setState(() => _showAllLessons = !_showAllLessons),
-                  bottomPad: bottomPad,
+                Expanded(
+                  child: _ContentLoader(
+                    student: student,
+                    scrollCtrl: scrollCtrl,
+                    showAllLessons: _showAllLessons,
+                    onToggleAll: () =>
+                        setState(() => _showAllLessons = !_showAllLessons),
+                    bottomPad: bottomPad,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

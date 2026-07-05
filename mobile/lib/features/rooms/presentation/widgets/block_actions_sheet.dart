@@ -124,7 +124,8 @@ class _BlockActionsSheetState extends ConsumerState<BlockActionsSheet> {
         ),
         if (b.note != null && b.note!.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text(b.note!, style: type.bodyS.copyWith(color: tokens.secondaryText)),
+          Text(b.note!,
+              style: type.bodyS.copyWith(color: tokens.secondaryText)),
         ],
         const SizedBox(height: 24),
         if (b.isRecurring) ...[

@@ -8,6 +8,7 @@ import '../../../../core/theme/nebula_typography.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/rooms_repository.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 
 /// Compact "Мои кабинеты сегодня" card for teachers — today's room blocks for
 /// the signed-in teacher. Renders nothing for non-teachers, so it can be placed
@@ -32,9 +33,10 @@ class RoomsTodayCard extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Center(child: OrbitLoader(size: 18)),
       ),
-      error: (_, __) => Text(
-        'Не удалось загрузить',
-        style: type.bodyS.copyWith(color: tokens.mutedText),
+      error: (_, __) => AppInlineErrorCard(
+        message: 'Не удалось загрузить кабинеты',
+        onRetry: () => ref.invalidate(
+            roomBlocksForDateProvider((date: ymd, teacherId: user.id))),
       ),
       data: (blocks) {
         if (blocks.isEmpty) {
@@ -66,7 +68,9 @@ class RoomsTodayCard extends ConsumerWidget {
                     ),
                     Text(
                       '${b.startTime}–${b.endTime}',
-                      style: type.bodyS.copyWith(color: tokens.secondaryText).copyWith(
+                      style: type.bodyS
+                          .copyWith(color: tokens.secondaryText)
+                          .copyWith(
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),

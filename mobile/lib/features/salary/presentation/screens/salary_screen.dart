@@ -25,6 +25,7 @@ import '../../../../shared/widgets/nebula_text_button.dart';
 import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/app_safe_layout.dart';
 import '../../../../shared/widgets/app_screen_header.dart';
+import '../../../../shared/widgets/app_error_card.dart';
 
 part '../widgets/salary_components.dart';
 part '../widgets/salary_ring.dart';
@@ -70,12 +71,13 @@ class SalaryScreen extends ConsumerWidget {
                     child: OrbitLoader(size: 36),
                   ),
                 ),
-                error: (e, _) => _ErrorCard(
+                error: (e, _) => AppErrorCard(
                   message: parseApiError(
                     e,
                     fallback: 'Не удалось загрузить зарплату',
                   ),
                   onRetry: () => ref.invalidate(salaryProvider),
+                  isConnectionError: isConnectionError(e),
                 ),
                 data: (data) =>
                     _SalaryContent(data: data, monthLabel: monthLabel),
@@ -477,7 +479,8 @@ class _SalaryContentState extends ConsumerState<_SalaryContent>
             ],
 
             if (d.lessonsMissed > 0) ...[
-              entered(_PendingBanner(amount: Money.format(d.pendingAmount)), 0.35, 0.9),
+              entered(_PendingBanner(amount: Money.format(d.pendingAmount)),
+                  0.35, 0.9),
               const SizedBox(height: 16),
             ],
 

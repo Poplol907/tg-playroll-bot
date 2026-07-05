@@ -10,6 +10,7 @@ import '../../../../shared/widgets/nebula_input.dart';
 import '../../../../shared/widgets/stellar_button.dart';
 import '../../data/room_models.dart';
 import '../../data/rooms_repository.dart';
+import '../../../../shared/widgets/sheet_error_banner.dart';
 
 /// Create a new room or rename an existing one. Returns `true` from [show]
 /// when the room was saved.
@@ -92,11 +93,8 @@ class _RoomEditSheetState extends ConsumerState<RoomEditSheet> {
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 10),
-          Text(_error!, style: type.bodyS.copyWith(color: tokens.error)),
-        ],
         const SizedBox(height: 20),
+        SheetErrorBanner(error: _error),
         StellarButton(
           label: _isEdit ? 'Сохранить' : 'Создать',
           loading: _loading,
