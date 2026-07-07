@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/repaint_pulse.dart';
 import 'package:flutter/scheduler.dart';
@@ -23,9 +23,17 @@ const String _kChars = ' .,:;|!ilIwWMB#@'; // 16 density levels
 const int _kCellW = 8; // logical px per column
 const int _kCellH = 13; // logical px per row
 
+// Android lite mode: mid-range GPUs can't afford the full-density sim during
+// scroll gestures. Coarser cells (~2.4x fewer per frame) and no drag-driven
+// ripples; the tap "blip" + rings stay, so the signature effect still reads.
+const int _kCellWLite = 12;
+const int _kCellHLite = 18;
+final bool _kLiteMode = defaultTargetPlatform == TargetPlatform.android;
+
 // ── Mutable wave state (shared between sim and painter via reference) ─────────
 class _WaveData {
   int cols = 0, rows = 0;
+  int cellW = _kCellW, cellH = _kCellH; // logical px per cell (coarser in lite mode)
   Float32List wave = Float32List(0); // current frame buffer
   Float32List next = Float32List(0); // pre-allocated swap buffer (no alloc per frame)
   Float32List vel = Float32List(0); // velocity, mutated in-place
@@ -163,8 +171,13 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
   void _initGrid(Size size) {
     if (size == _size) return;
     _size = size;
-    _data.cols = (size.width / _kCellW).floor().clamp(1, 2000);
-    _data.rows = (size.height / _kCellH).floor().clamp(1, 2000);
+    _data.cellW = _kLiteMode ? _kCellWLite : _kCellW;
+    _data.cellH = _kLiteMode ? _kCellHLite : _kCellH;
+    // Lite: hard ceiling so a tablet can't explode the per-frame cell count.
+    final maxCols = _kLiteMode ? 96 : 2000;
+    final maxRows = _kLiteMode ? 150 : 2000;
+    _data.cols = (size.width / _data.cellW).floor().clamp(1, maxCols);
+    _data.rows = (size.height / _data.cellH).floor().clamp(1, maxRows);
     final n = _data.cols * _data.rows;
     _data.wave = Float32List(n);
     _data.next = Float32List(n);
@@ -304,14 +317,18 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
 
     // Pointer-driven ripples
     if (_px >= 0 && _py >= 0) {
-      final col = (_px / _kCellW).floor();
-      final row = (_py / _kCellH).floor();
+      final col = (_px / _data.cellW).floor();
+      final row = (_py / _data.cellH).floor();
       if (col >= 0 && col < _data.cols && row >= 0 && row < _data.rows) {
         final dx = _px - _prevPx, dy = _py - _prevPy;
         final spd = math.sqrt(dx * dx + dy * dy);
         if (_down) {
-          final s = math.min(spd * _hoverStr * 3, 15.0);
-          if (s > 0.2) _addRipple(col, row, s, _clickRad);
+          // Lite skips drag ripples: a scroll gesture must not feed the wave
+          // sim — that is the freeze-on-scroll path on Android.
+          if (!_kLiteMode) {
+            final s = math.min(spd * _hoverStr * 3, 15.0);
+            if (s > 0.2) _addRipple(col, row, s, _clickRad);
+          }
         } else {
           final s = math.min(spd * _hoverStr, 6.0);
           if (s > 0.3) _addRipple(col, row, s, _hoverRad);
@@ -351,8 +368,8 @@ class _AsciiWaterBackgroundState extends State<AsciiWaterBackground>
     _py = e.localPosition.dy;
     _prevPx = _px;
     _prevPy = _py;
-    final col = (_px / _kCellW).floor();
-    final row = (_py / _kCellH).floor();
+    final col = (_px / _data.cellW).floor();
+    final row = (_py / _data.cellH).floor();
     _addRipple(col, row, _clickStr, _clickRad);
     // Staggered ring expansion — realistic raindrop
     _rippleTimers.add(Timer(const Duration(milliseconds: 70), () {
@@ -520,7 +537,7 @@ class _WaterPainter extends CustomPainter {
 
         canvas.drawParagraph(
           para,
-          Offset(col * _kCellW + gx * 0.5, row * _kCellH + gy * 0.35),
+          Offset(col * d.cellW + gx * 0.5, row * d.cellH + gy * 0.35),
         );
       }
     }

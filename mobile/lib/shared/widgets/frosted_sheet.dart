@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/services/repaint_pulse.dart';
@@ -86,13 +87,25 @@ Future<T?> showFrostedDialog<T>({
 Widget _frostBarrier(ModalRoute<dynamic> route, Widget barrier) {
   final anim = route.animation;
   if (anim == null) return barrier;
+  // Android: a full-screen BackdropFilter whose sigma changes every frame of
+  // the transition defeats blur caching and janks mid-range GPUs. There the
+  // barrier rides on the tint alone while in flight, and the settled blur
+  // switches on once, when the route is nearly open; dragging a sheet pulls
+  // anim.value back under the threshold, so the interactive phase pays no
+  // blur at all. iOS/desktop keep the animation-synced frost.
+  final lite = defaultTargetPlatform == TargetPlatform.android;
   return AnimatedBuilder(
     animation: anim,
     builder: (context, child) {
-      final sigma =
-          NebulaTokens.blurDense * Curves.easeOut.transform(anim.value);
-      // Skip the saveLayer entirely while the blur is imperceptible.
-      if (sigma < 0.5) return child!;
+      final double sigma;
+      if (lite) {
+        if (anim.value < 0.85) return child!;
+        sigma = NebulaTokens.blurDense;
+      } else {
+        sigma = NebulaTokens.blurDense * Curves.easeOut.transform(anim.value);
+        // Skip the saveLayer entirely while the blur is imperceptible.
+        if (sigma < 0.5) return child!;
+      }
       return BackdropFilter(
         key: const ValueKey('frosted-sheet-barrier'),
         filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),

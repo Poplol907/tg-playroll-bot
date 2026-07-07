@@ -155,7 +155,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       controller: _ctrl,
                       keyboardType: TextInputType.url,
                       autocorrect: false,
-                      hintText: 'http://5.223.55.57',
+                      hintText: 'https://api.cosmo-studio.com',
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _save(),
                     ),
