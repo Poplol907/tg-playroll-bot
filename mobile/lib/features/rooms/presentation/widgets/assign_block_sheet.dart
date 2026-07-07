@@ -317,31 +317,34 @@ class _AssignBlockSheetState extends ConsumerState<AssignBlockSheet> {
           const SizedBox(height: 16),
         ],
 
-        // ── Recurrence ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          decoration: BoxDecoration(
-            color: tokens.surface,
-            borderRadius: NebulaRadii.controlBorder,
-            border: Border.all(color: tokens.surfaceBorder),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _recurring ? 'Каждую неделю' : 'Только в этот день',
-                  style: type.bodyM.copyWith(color: tokens.primaryText),
+        // ── Recurrence (скрыто при вызове из ячейки недельника: сетка
+        // кабинета — шаблон недели, всё в ней еженедельное) ──
+        if (widget.fixedStartMin == null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: tokens.surface,
+              borderRadius: NebulaRadii.controlBorder,
+              border: Border.all(color: tokens.surfaceBorder),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _recurring ? 'Каждую неделю' : 'Только в этот день',
+                    style: type.bodyM.copyWith(color: tokens.primaryText),
+                  ),
                 ),
-              ),
-              Switch(
-                value: _recurring,
-                onChanged: (v) => setState(() => _recurring = v),
-                activeThumbColor: tokens.primaryAccent,
-              ),
-            ],
+                Switch(
+                  value: _recurring,
+                  onChanged: (v) => setState(() => _recurring = v),
+                  activeThumbColor: tokens.primaryAccent,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
+        ],
         NebulaInput(
           controller: _noteCtrl,
           hintText: 'Заметка (необязательно)',
