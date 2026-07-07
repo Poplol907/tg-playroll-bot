@@ -31,11 +31,6 @@ import '../widgets/block_actions_sheet.dart';
 import '../widgets/room_edit_sheet.dart';
 
 const _dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-const _monthsShort = [
-  'янв', 'фев', 'мар', 'апр', 'мая', 'июн', //
-  'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
-];
-
 // Grid geometry (single source for layout AND gesture math).
 const double _timeColW = 44;
 const double _cellH = 40;
@@ -132,7 +127,6 @@ class RoomScheduleScreen extends ConsumerStatefulWidget {
 class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
   bool _editMode = false;
   int? _brushTeacherId;
-  bool _recurring = true;
   bool _saving = false;
   final Map<({int wd, int slot}), int> _pending = {};
   final ScrollController _gridScroll = ScrollController();
@@ -209,22 +203,21 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
     }
   }
 
-  Future<void> _savePending(DateTime weekStart, VoidCallback refresh) async {
+  Future<void> _savePending(VoidCallback refresh) async {
     if (_pending.isEmpty || _saving) return;
     setState(() => _saving = true);
     final ranges = mergePaintedSlots(_pending);
     final repo = ref.read(roomsRepositoryProvider);
     try {
       for (final r in ranges) {
+        // Недельник-шаблон: расписание кабинета живёт по дням недели,
+        // всё создаваемое здесь — еженедельные блоки.
         await repo.createBlock(
           roomId: room.id,
           teacherUserId: r.teacherId,
           startTime: _fmtMin(r.startMin),
           endTime: _fmtMin(r.endMin),
-          weekday: _recurring ? r.weekday : null,
-          specificDate: _recurring
-              ? null
-              : _ymd(weekStart.add(Duration(days: r.weekday))),
+          weekday: r.weekday,
         );
       }
       HapticFeedback.mediumImpact();
@@ -270,11 +263,6 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
     final asyncs = [
       for (final q in queries) ref.watch(roomBlocksForDateProvider(q))
     ];
-
-    void shiftWeek(int delta) {
-      ref.read(boardDateProvider.notifier).state =
-          weekStart.add(Duration(days: delta * 7));
-    }
 
     void refresh() {
       for (final q in queries) {
@@ -376,12 +364,6 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
       );
     }
 
-    final weekEnd = weekStart.add(const Duration(days: 6));
-    final rangeLabel = weekStart.month == weekEnd.month
-        ? '${weekStart.day}–${weekEnd.day} ${_monthsShort[weekStart.month - 1]}'
-        : '${weekStart.day} ${_monthsShort[weekStart.month - 1]} – '
-            '${weekEnd.day} ${_monthsShort[weekEnd.month - 1]}';
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AppBackgroundHost(
@@ -455,36 +437,6 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
                     setState(() => _brushTeacherId = id);
                   },
                 ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
-                child: Row(
-                  children: [
-                    IconButton(
-                      tooltip: 'Прошлая неделя',
-                      icon: Icon(Icons.chevron_left_rounded,
-                          color: _editMode
-                              ? tokens.mutedText
-                              : tokens.primaryText),
-                      onPressed: _editMode ? null : () => shiftWeek(-1),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Text(rangeLabel,
-                            style: type.bodyM
-                                .copyWith(color: tokens.secondaryText)),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Следующая неделя',
-                      icon: Icon(Icons.chevron_right_rounded,
-                          color: _editMode
-                              ? tokens.mutedText
-                              : tokens.primaryText),
-                      onPressed: _editMode ? null : () => shiftWeek(1),
-                    ),
-                  ],
-                ),
-              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -506,16 +458,8 @@ class _RoomScheduleScreenState extends ConsumerState<RoomScheduleScreen> {
                           loading: _saving,
                           onPressed: _pending.isEmpty || _saving
                               ? null
-                              : () => _savePending(weekStart, refresh),
+                              : () => _savePending(refresh),
                         ),
-                      ),
-                      const SizedBox(width: NebulaTokens.sp8),
-                      _RecurringToggle(
-                        recurring: _recurring,
-                        onChanged: (v) {
-                          HapticFeedback.selectionClick();
-                          setState(() => _recurring = v);
-                        },
                       ),
                     ],
                   ),
@@ -640,59 +584,6 @@ class _BrushStrip extends ConsumerWidget {
   }
 }
 
-class _RecurringToggle extends StatelessWidget {
-  final bool recurring;
-  final ValueChanged<bool> onChanged;
-
-  const _RecurringToggle({required this.recurring, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-    final type = NebulaTypography.of(context);
-    return GestureDetector(
-      key: const ValueKey('paint-recurring-toggle'),
-      onTap: () => onChanged(!recurring),
-      child: AnimatedContainer(
-        duration: NebulaTokens.feedback,
-        curve: Curves.easeOut,
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: NebulaTokens.sp12),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: recurring
-              ? tokens.focusAccent.withValues(alpha: NebulaAlpha.surface)
-              : tokens.surface,
-          borderRadius: NebulaRadii.controlBorder,
-          border: Border.all(
-            color: recurring
-                ? tokens.focusAccent.withValues(alpha: NebulaAlpha.medium)
-                : tokens.surfaceBorder,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              recurring ? Icons.repeat_rounded : Icons.looks_one_outlined,
-              size: 18,
-              color: recurring ? tokens.focusAccent : tokens.secondaryText,
-            ),
-            const SizedBox(height: NebulaTokens.sp2),
-            Text(
-              recurring ? 'Каждую нед.' : 'Эта неделя',
-              style: type.labelS.copyWith(
-                color: recurring ? tokens.focusAccent : tokens.secondaryText,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─────────────────────────────────────────────
 //  Grid: background rows + merged block tiles + paint layer
 // ─────────────────────────────────────────────
@@ -781,12 +672,6 @@ class _ScheduleGrid extends StatelessWidget {
                                         ? tokens.secondaryAccent
                                         : tokens.mutedText,
                                 fontWeight: FontWeight.w700,
-                              )),
-                          Text('${days[wd].day}',
-                              style: type.labelS.copyWith(
-                                color: _isSameDay(days[wd], today)
-                                    ? tokens.focusAccent
-                                    : tokens.mutedText,
                               )),
                         ],
                       ),

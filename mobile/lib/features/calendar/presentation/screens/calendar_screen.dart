@@ -194,119 +194,101 @@ class CalendarScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: scope == CalendarScope.rooms
-                        ? Column(
-                            children: [
-                              const SizedBox(height: 8),
-                              const RoomsStrip(),
-                              // «Мои кабинеты сегодня» живёт во вкладке «Кабинеты»
-                              // (перенесена с календаря — здесь она уместнее; при
-                              // пустоте показывает «Вам пока не назначили кабинеты»).
-                              const Padding(
-                                padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-                                child: RoomsTodayCard(),
+              child: scope == CalendarScope.rooms
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        const RoomsStrip(),
+                        // «Мои кабинеты сегодня» живёт во вкладке «Кабинеты»
+                        // (перенесена с календаря — здесь она уместнее; при
+                        // пустоте показывает «Вам пока не назначили кабинеты»).
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: RoomsTodayCard(),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                'Выберите кабинет, чтобы открыть расписание',
+                                textAlign: TextAlign.center,
+                                style: NebulaTypography.of(context)
+                                    .bodyM
+                                    .copyWith(color: tokens.mutedText),
                               ),
-                              Expanded(
-                                child: Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Text(
-                                      'Выберите кабинет, чтобы открыть расписание',
-                                      textAlign: TextAlign.center,
-                                      style: NebulaTypography.of(context)
-                                          .bodyM
-                                          .copyWith(color: tokens.mutedText),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : AppPlatform.isDesktop
+                      ? Column(
+                          children: [
+                            // Тот же AppScreenHeader, что и на мобиле — desktop-ветка
+                            // больше не дублирует шапку сырыми размерами шрифта.
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              child: header,
+                            ),
+                            Expanded(
+                              child: lessonsAsync.when(
+                                skipLoadingOnRefresh: false,
+                                loading: () =>
+                                    const Center(child: OrbitLoader()),
+                                error: (e, _) => Center(
+                                  child: AppErrorCard(
+                                    message: parseApiError(
+                                      e,
+                                      fallback: 'Нет подключения',
                                     ),
+                                    onRetry: () =>
+                                        invalidateMonthData(ref, monthYear),
+                                    isConnectionError: isConnectionError(e),
+                                  ),
+                                ),
+                                data: (lessons) =>
+                                    contentFor(lessons, desktop: true),
+                              ),
+                            ),
+                          ],
+                        )
+                      : lessonsAsync.when(
+                          skipLoadingOnRefresh: false,
+                          loading: () => AppCustomScrollView(
+                            header: header,
+                            slivers: const [
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(child: OrbitLoader()),
+                              ),
+                            ],
+                          ),
+                          error: (e, _) => AppCustomScrollView(
+                            header: header,
+                            slivers: [
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: AppErrorCard(
+                                    message: parseApiError(
+                                      e,
+                                      fallback: 'Нет подключения',
+                                    ),
+                                    onRetry: () =>
+                                        invalidateMonthData(ref, monthYear),
+                                    isConnectionError: isConnectionError(e),
                                   ),
                                 ),
                               ),
                             ],
-                          )
-                        : AppPlatform.isDesktop
-                            ? Column(
-                                children: [
-                                  // Тот же AppScreenHeader, что и на мобиле — desktop-ветка
-                                  // больше не дублирует шапку сырыми размерами шрифта.
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 16,
-                                    ),
-                                    child: header,
-                                  ),
-                                  Expanded(
-                                    child: lessonsAsync.when(
-                                      skipLoadingOnRefresh: false,
-                                      loading: () =>
-                                          const Center(child: OrbitLoader()),
-                                      error: (e, _) => Center(
-                                        child: AppErrorCard(
-                                          message: parseApiError(
-                                            e,
-                                            fallback: 'Нет подключения',
-                                          ),
-                                          onRetry: () => invalidateMonthData(
-                                              ref, monthYear),
-                                          isConnectionError:
-                                              isConnectionError(e),
-                                        ),
-                                      ),
-                                      data: (lessons) =>
-                                          contentFor(lessons, desktop: true),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : lessonsAsync.when(
-                                skipLoadingOnRefresh: false,
-                                loading: () => AppCustomScrollView(
-                                  header: header,
-                                  slivers: const [
-                                    SliverFillRemaining(
-                                      hasScrollBody: false,
-                                      child: Center(child: OrbitLoader()),
-                                    ),
-                                  ],
-                                ),
-                                error: (e, _) => AppCustomScrollView(
-                                  header: header,
-                                  slivers: [
-                                    SliverFillRemaining(
-                                      hasScrollBody: false,
-                                      child: Center(
-                                        child: AppErrorCard(
-                                          message: parseApiError(
-                                            e,
-                                            fallback: 'Нет подключения',
-                                          ),
-                                          onRetry: () => invalidateMonthData(
-                                              ref, monthYear),
-                                          isConnectionError:
-                                              isConnectionError(e),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                data: (lessons) =>
-                                    contentFor(lessons, desktop: false),
-                              ),
-                  ),
-                  // P0 из critique: добавить урок можно с уровня календаря,
-                  // не зная день заранее — «+» над нав-баром (зона большого
-                  // пальца), шит открывается с барабаном даты.
-                  if (scope == CalendarScope.students && !AppPlatform.isDesktop)
-                    Positioned(
-                      right: 16,
-                      bottom:
-                          AppChromeMetrics.floatingBottomNavReservation + 12,
-                      child: _AddLessonFab(month: month),
-                    ),
-                ],
-              ),
+                          ),
+                          data: (lessons) =>
+                              contentFor(lessons, desktop: false),
+                        ),
             ),
           ],
         ),
@@ -332,66 +314,5 @@ class CalendarScreen extends ConsumerWidget {
         builder: (_) => _DayLessonsSheet(date: date, lessons: lessons),
       );
     });
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Floating «+» — добавить урок с уровня календаря (P0 из critique)
-// ─────────────────────────────────────────────
-
-class _AddLessonFab extends ConsumerWidget {
-  final DateTime month;
-
-  const _AddLessonFab({required this.month});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
-
-    void open() {
-      HapticFeedback.lightImpact();
-      final now = DateTime.now();
-      final initial = (now.year == month.year && now.month == month.month)
-          ? DateTime(now.year, now.month, now.day)
-          : DateTime(month.year, month.month, 1);
-      final sheet = _AddLessonSheet(
-        date: initial,
-        allowDateChange: true,
-        onCreated: () {},
-      );
-      if (AppPlatform.isDesktop) {
-        AdaptiveModal.show<void>(context, builder: (_) => sheet);
-        return;
-      }
-      runWithBottomBarHidden<void>(context, () {
-        return showFrostedSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: false,
-          builder: (_) => sheet,
-        );
-      });
-    }
-
-    return NebulaSurface(
-      key: const ValueKey('calendar-add-lesson-fab'),
-      shape: BoxShape.circle,
-      width: 56,
-      height: 56,
-      padding: EdgeInsets.zero,
-      accent: tokens.primaryAccent,
-      onTap: open,
-      glow: [
-        BoxShadow(
-          color: tokens.primaryAccent.withValues(alpha: NebulaAlpha.accent),
-          blurRadius: 22,
-          spreadRadius: -2,
-        ),
-      ],
-      child: Center(
-        child: Icon(Icons.add_rounded, color: tokens.primaryAccent, size: 26),
-      ),
-    );
   }
 }
