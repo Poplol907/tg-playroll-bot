@@ -32,6 +32,16 @@ void invalidateMonthData(
   ref.invalidate(studentSubscriptionsProvider);
 }
 
+/// Container-вариант [invalidateMonthData] — для колбэков, переживающих
+/// dispose виджета (undo-действие в тостах): у них больше нет WidgetRef.
+void invalidateMonthDataContainer(ProviderContainer container) {
+  container.invalidate(lessonsProvider);
+  container.invalidate(salaryProvider);
+  container.invalidate(studentsProvider);
+  container.invalidate(studentLessonsProvider);
+  container.invalidate(studentSubscriptionsProvider);
+}
+
 /// Полный сброс всех user-scoped кэшей — граница смены личности.
 ///
 /// Вызывается при logout: без этого повторный вход под ДРУГИМ аккаунтом

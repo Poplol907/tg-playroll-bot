@@ -281,7 +281,9 @@ void main() {
     //                        параметр NebulaDrumPicker(fontSize:) в
     //                        add-lesson, не текстовый стиль)
     //              27 →  25 (sheet error texts → SheetErrorBanner)
-    const baseline = 25;
+    //              25 →  23 (month stats + legend → NebulaTypography; +1 —
+    //                        параметр NebulaDrumPicker(fontSize:) в дате)
+    const baseline = 23;
     expect(
       count,
       lessThanOrEqualTo(baseline),
