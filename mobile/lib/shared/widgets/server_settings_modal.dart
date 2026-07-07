@@ -157,7 +157,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
               controller: _ctrl,
               keyboardType: TextInputType.url,
               autocorrect: false,
-              hintText: 'http://192.168.x.x:8000',
+              hintText: 'https://api.cosmo-studio.com',
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear_rounded, size: 18),
                 onPressed: () => _ctrl.clear(),
