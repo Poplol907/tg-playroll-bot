@@ -157,7 +157,33 @@ class _LessonModalState extends ConsumerState<LessonModal>
       }
       invalidateMonthData(ref, monthYear, extraMonthYears: extraMonthYears);
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        // Undo-тост показываем ДО pop: он живёт в root-overlay и переживает
+        // закрытие модалки. Ревёрт идёт через ProviderContainer — WidgetRef
+        // этого стейта к моменту тапа по «Отменить» уже мёртв. Для возврата
+        // в «запланирован» undo не предлагаем — это и есть undo.
+        if (status != 'scheduled') {
+          final container = ProviderScope.containerOf(context, listen: false);
+          final lessonId = _lesson.id;
+          showNebulaSnackBar(
+            context,
+            title: 'Урок отмечен',
+            tone: NebulaSnackTone.success,
+            actionLabel: 'Отменить',
+            onAction: () async {
+              try {
+                await container.read(dioProvider).patch(
+                  '/lessons/$lessonId/status',
+                  data: {'status': 'scheduled'},
+                );
+              } finally {
+                invalidateMonthDataContainer(container);
+              }
+            },
+          );
+        }
+        Navigator.pop(context);
+      }
     } on Exception catch (e) {
       if (mounted) _showError(e);
     } finally {
@@ -268,155 +294,160 @@ class _LessonModalState extends ConsumerState<LessonModal>
 
     return HideTopIslandOnFullSheetExpand(
       child: DraggableScrollableSheet(
-      controller: _sheetCtrl,
-      initialChildSize: 0.65,
-      minChildSize: 0.0,
-      maxChildSize: 1.0,
-      snap: true,
-      snapSizes: const [1.0],
-      expand: false,
-      builder: (context, scrollCtrl) {
-        return NebulaModalSurface(
-          containerKey: const ValueKey('lesson-modal-surface'),
-          child: Column(
-            children: [
-              // ── Handle ────────────────────────────────────────────────
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragUpdate: _onDragUpdate,
-                onVerticalDragEnd: _onDragEnd,
-                child: const _SheetHandle(),
-              ),
+        controller: _sheetCtrl,
+        initialChildSize: 0.65,
+        minChildSize: 0.0,
+        maxChildSize: 1.0,
+        snap: true,
+        snapSizes: const [1.0],
+        expand: false,
+        builder: (context, scrollCtrl) {
+          return NebulaModalSurface(
+            containerKey: const ValueKey('lesson-modal-surface'),
+            child: Column(
+              children: [
+                // ── Handle ────────────────────────────────────────────────
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragUpdate: _onDragUpdate,
+                  onVerticalDragEnd: _onDragEnd,
+                  child: const _SheetHandle(),
+                ),
 
-              // ── Content ───────────────────────────────────────────────
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollCtrl,
-                  physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.fromLTRB(24, 16, 24, bottomPad + 48),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header row
-                      Row(children: [
-                        _StatusBadge(
-                            status: lesson.status,
-                            cancelledBy: lesson.cancelledBy),
-                        if (lesson.isMakeup) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: NebulaColors.nebulaPurple
-                                  .withValues(alpha: NebulaAlpha.subtle),
-                              borderRadius: NebulaRadii.pillBorder,
-                              border: Border.all(
-                                  color: NebulaColors.nebulaPurple
-                                      .withValues(alpha: NebulaAlpha.medium)),
+                // ── Content ───────────────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollCtrl,
+                    physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics()),
+                    padding: EdgeInsets.fromLTRB(24, 16, 24, bottomPad + 48),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header row
+                        Row(children: [
+                          _StatusBadge(
+                              status: lesson.status,
+                              cancelledBy: lesson.cancelledBy),
+                          if (lesson.isMakeup) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: NebulaColors.nebulaPurple
+                                    .withValues(alpha: NebulaAlpha.subtle),
+                                borderRadius: NebulaRadii.pillBorder,
+                                border: Border.all(
+                                    color: NebulaColors.nebulaPurple
+                                        .withValues(alpha: NebulaAlpha.medium)),
+                              ),
+                              child: Text(
+                                'ОТРАБОТКА',
+                                style: NebulaTypography.of(context)
+                                    .overline
+                                    .copyWith(color: NebulaColors.nebulaPurple),
+                              ),
                             ),
+                          ],
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: Text(
-                              'ОТРАБОТКА',
+                              lesson.studentName ?? 'Ученик',
                               style: NebulaTypography.of(context)
-                                  .overline
-                                  .copyWith(color: NebulaColors.nebulaPurple),
+                                  .titleL
+                                  .copyWith(
+                                      color: tokens.primaryText,
+                                      letterSpacing: -0.5),
                             ),
                           ),
-                        ],
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            lesson.studentName ?? 'Ученик',
-                            style: NebulaTypography.of(context).titleL.copyWith(
-                                color: tokens.primaryText, letterSpacing: -0.5),
-                          ),
-                        ),
-                      ]),
-                      const SizedBox(height: 8),
-                      Text(
-                        '$dateStr${lesson.scheduledTime != null ? ' · ${lesson.scheduledTime}' : ''}',
-                        style: NebulaTypography.of(context)
-                            .bodyS
-                            .copyWith(color: tokens.mutedText),
-                      ),
-                      if (lesson.instrumentName != null) ...[
-                        const SizedBox(height: 4),
+                        ]),
+                        const SizedBox(height: 8),
                         Text(
-                          lesson.instrumentName!,
+                          '$dateStr${lesson.scheduledTime != null ? ' · ${lesson.scheduledTime}' : ''}',
                           style: NebulaTypography.of(context)
-                              .bodyM
-                              .copyWith(color: NebulaColors.nebulaPurple),
+                              .bodyS
+                              .copyWith(color: tokens.mutedText),
                         ),
-                      ],
-
-                      // ── Makeup block ────────────────────────────────
-                      if (needsMakeup) ...[
-                        const SizedBox(height: 16),
-                        _MakeupBlock(
-                          makeupStatus: lesson.makeupStatus,
-                          makeupDate: lesson.makeupDate,
-                          isTeacherFault: isTeacherCancelled,
-                        ),
-                      ],
-
-                      if (lesson.notes != null && lesson.notes!.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        NebulaSurface(
-                          dense: true,
-                          radiusRole: NebulaRadiusRole.control,
-                          padding: const EdgeInsets.all(14),
-                          child: Text(
-                            lesson.notes!,
+                        if (lesson.instrumentName != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            lesson.instrumentName!,
                             style: NebulaTypography.of(context)
                                 .bodyM
-                                .copyWith(color: tokens.secondaryText),
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 32),
-
-                      // ── Action area ──────────────────────────────────
-                      if (!_loading) ...[
-                        if (lesson.status == 'scheduled') ...[
-                          _StatusDrumPicker(
-                            onConfirm: (status, {cancelledBy}) =>
-                                _updateStatus(status, cancelledBy: cancelledBy),
-                          ),
-                        ] else ...[
-                          if (canMarkMakeup) ...[
-                            StellarButton(
-                              label: 'Отработать урок',
-                              color: NebulaColors.auroraCyan,
-                              icon: Icons.event_repeat_rounded,
-                              onPressed: _markMakeup,
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          StellarButton(
-                            label: 'Вернуть как запланированный',
-                            color: tokens.mutedText,
-                            icon: Icons.restore_rounded,
-                            onPressed: () => _updateStatus('scheduled'),
+                                .copyWith(color: NebulaColors.nebulaPurple),
                           ),
                         ],
-                      ] else
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 32),
-                            child: OrbitLoader(),
+
+                        // ── Makeup block ────────────────────────────────
+                        if (needsMakeup) ...[
+                          const SizedBox(height: 16),
+                          _MakeupBlock(
+                            makeupStatus: lesson.makeupStatus,
+                            makeupDate: lesson.makeupDate,
+                            isTeacherFault: isTeacherCancelled,
                           ),
-                        ),
-                    ],
+                        ],
+
+                        if (lesson.notes != null &&
+                            lesson.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          NebulaSurface(
+                            dense: true,
+                            radiusRole: NebulaRadiusRole.control,
+                            padding: const EdgeInsets.all(14),
+                            child: Text(
+                              lesson.notes!,
+                              style: NebulaTypography.of(context)
+                                  .bodyM
+                                  .copyWith(color: tokens.secondaryText),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 32),
+
+                        // ── Action area ──────────────────────────────────
+                        if (!_loading) ...[
+                          if (lesson.status == 'scheduled') ...[
+                            _StatusDrumPicker(
+                              onConfirm: (status, {cancelledBy}) =>
+                                  _updateStatus(status,
+                                      cancelledBy: cancelledBy),
+                            ),
+                          ] else ...[
+                            if (canMarkMakeup) ...[
+                              StellarButton(
+                                label: 'Отработать урок',
+                                color: NebulaColors.auroraCyan,
+                                icon: Icons.event_repeat_rounded,
+                                onPressed: _markMakeup,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            StellarButton(
+                              label: 'Вернуть как запланированный',
+                              color: tokens.mutedText,
+                              icon: Icons.restore_rounded,
+                              onPressed: () => _updateStatus('scheduled'),
+                            ),
+                          ],
+                        ] else
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 32),
+                              child: OrbitLoader(),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -26,8 +26,7 @@ class CalendarRepository {
       {String? cancelledBy}) async {
     final body = <String, dynamic>{'status': status};
     if (cancelledBy != null) body['cancelled_by'] = cancelledBy;
-    final response =
-        await _dio.patch('/lessons/$lessonId/status', data: body);
+    final response = await _dio.patch('/lessons/$lessonId/status', data: body);
     return LessonModel.fromJson(response.data as Map<String, dynamic>);
   }
 

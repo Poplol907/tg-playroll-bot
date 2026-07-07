@@ -183,8 +183,6 @@ class _CalendarBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
-        CosmoThemeTokens.darkInternals;
     final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
     final firstWeekday = DateTime(month.year, month.month, 1).weekday;
     final leadingEmpty = firstWeekday - 1;
@@ -217,30 +215,14 @@ class _CalendarBody extends StatelessWidget {
               // childAspectRatio = cellWidth / cellHeight
               final cellAspect = byWidth / cellSize;
 
-              final Map<int, Offset> dayCentres = {};
-              for (int d = 1; d <= daysInMonth; d++) {
-                final idx = leadingEmpty + d - 1;
-                dayCentres[d] = Offset(
-                  (idx % 7) * byWidth + byWidth / 2,
-                  (idx ~/ 7) * cellSize + cellSize / 2,
-                );
-              }
-
               return SizedBox(
                 height: gridH,
                 child: Stack(
                   children: [
-                    CustomPaint(
-                      size: Size(constraints.maxWidth, gridH),
-                      painter: _ConstellationLinesPainter(
-                        lessonDays: lessonsByDay.keys.toList()..sort(),
-                        dayCentres: dayCentres,
-                        glow: glow,
-                        isLight: isLight,
-                        lineA: tokens.primaryAccent,
-                        lineB: tokens.secondaryAccent,
-                      ),
-                    ),
+                    // Линии-«созвездия» между днями удалены (решение ревью
+                    // 2026-07-06): они соединяли дни по порядку массива и
+                    // читались как данные, которыми не являлись. Звёзды-дни
+                    // остались — атмосферу несут они и фон.
                     GridView.builder(
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
@@ -596,58 +578,3 @@ class _DayCell extends StatelessWidget {
 // ─────────────────────────────────────────────
 //  Constellation lines painter
 // ─────────────────────────────────────────────
-
-class _ConstellationLinesPainter extends CustomPainter {
-  final List<int> lessonDays;
-  final Map<int, Offset> dayCentres;
-  final double glow;
-  final bool isLight;
-  final Color lineA;
-  final Color lineB;
-
-  _ConstellationLinesPainter({
-    required this.lessonDays,
-    required this.dayCentres,
-    required this.glow,
-    required this.isLight,
-    this.lineA = NebulaColors.stellarBlue,
-    this.lineB = NebulaColors.nebulaPurple,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (lessonDays.length < 2) return;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..strokeCap = StrokeCap.round;
-
-    for (int i = 0; i < lessonDays.length - 1; i++) {
-      final from = dayCentres[lessonDays[i]];
-      final to = dayCentres[lessonDays[i + 1]];
-      if (from == null || to == null) continue;
-
-      final dist = (to - from).distance;
-      final opacity =
-          (1.0 - dist / 400).clamp(0.05, isLight ? 0.55 : 0.4) * glow;
-
-      paint.shader = LinearGradient(
-        colors: [
-          lineA.withValues(alpha: opacity),
-          lineB.withValues(alpha: opacity * 0.6),
-        ],
-      ).createShader(Rect.fromPoints(from, to));
-
-      canvas.drawLine(from, to, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ConstellationLinesPainter old) =>
-      old.glow != glow ||
-      old.lessonDays != lessonDays ||
-      old.isLight != isLight ||
-      old.lineA != lineA ||
-      old.lineB != lineB;
-}

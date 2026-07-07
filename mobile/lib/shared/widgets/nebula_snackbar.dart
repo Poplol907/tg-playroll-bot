@@ -8,6 +8,7 @@ import '../../core/theme/nebula_radii.dart';
 import '../../core/theme/nebula_tokens.dart';
 import '../../core/theme/nebula_typography.dart';
 import 'nebula_surface.dart';
+import 'nebula_text_button.dart';
 
 enum NebulaSnackTone { success, warning, error, info }
 
@@ -26,6 +27,10 @@ void showNebulaSnackBar(
   String? message,
   NebulaSnackTone tone = NebulaSnackTone.info,
   Duration duration = const Duration(seconds: 3),
+  // Опциональное действие («Отменить» и т.п.) — единственный undo-слот
+  // приложения: тап по кнопке закрывает тост и вызывает [onAction].
+  String? actionLabel,
+  VoidCallback? onAction,
 }) {
   final overlay = Overlay.maybeOf(context, rootOverlay: true);
   if (overlay == null) return;
@@ -41,6 +46,8 @@ void showNebulaSnackBar(
       message: message,
       tone: tone,
       duration: duration,
+      actionLabel: actionLabel,
+      onAction: onAction,
       onDismissed: () {
         if (_activeToast == entry) _activeToast = null;
         entry.remove();
@@ -56,6 +63,8 @@ class _NebulaToast extends StatefulWidget {
   final String? message;
   final NebulaSnackTone tone;
   final Duration duration;
+  final String? actionLabel;
+  final VoidCallback? onAction;
   final VoidCallback onDismissed;
 
   const _NebulaToast({
@@ -63,6 +72,8 @@ class _NebulaToast extends StatefulWidget {
     required this.message,
     required this.tone,
     required this.duration,
+    required this.actionLabel,
+    required this.onAction,
     required this.onDismissed,
   });
 
@@ -194,6 +205,19 @@ class _NebulaToastState extends State<_NebulaToast>
                       ],
                     ),
                   ),
+                  if (widget.actionLabel != null &&
+                      widget.onAction != null) ...[
+                    const SizedBox(width: NebulaTokens.sp8),
+                    NebulaTextButton(
+                      label: widget.actionLabel!,
+                      color: accent,
+                      compact: true,
+                      onPressed: () {
+                        _close();
+                        widget.onAction!.call();
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),

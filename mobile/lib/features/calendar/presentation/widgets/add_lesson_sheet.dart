@@ -8,7 +8,15 @@ class _AddLessonSheet extends ConsumerStatefulWidget {
   final DateTime date;
   final VoidCallback onCreated;
 
-  const _AddLessonSheet({required this.date, required this.onCreated});
+  /// true — шит открыт с уровня календаря: день выбирается барабаном
+  /// внутри, а инвалидацию месяца шит делает сам по фактической дате.
+  final bool allowDateChange;
+
+  const _AddLessonSheet({
+    required this.date,
+    required this.onCreated,
+    this.allowDateChange = false,
+  });
 
   @override
   ConsumerState<_AddLessonSheet> createState() => _AddLessonSheetState();
@@ -18,6 +26,13 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
   StudentModel? _selectedStudent;
   String? _selectedTime;
   bool _loading = false;
+  late DateTime _date;
+
+  @override
+  void initState() {
+    super.initState();
+    _date = widget.date;
+  }
 
   static final _timeSlots = _buildSlots();
 
@@ -42,10 +57,25 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
       final repo = ref.read(calendarRepositoryProvider);
       await repo.createLesson(
         studentTeacherId: student.studentTeacherId!,
-        scheduledDate: DateFormat('yyyy-MM-dd').format(widget.date),
+        scheduledDate: DateFormat('yyyy-MM-dd').format(_date),
         scheduledTime: _selectedTime,
       );
       HapticFeedback.mediumImpact();
+      if (widget.allowDateChange && mounted) {
+        // Вызван с уровня календаря: месяц зависит от выбранной в барабане
+        // даты — инвалидируем сами (колбэк снаружи её не знает).
+        invalidateMonthData(ref, DateFormat('yyyy-MM').format(_date));
+      }
+      if (mounted) {
+        // Подтверждение happy-path (P1 из critique): тост живёт в
+        // root-overlay и переживает закрытие шита.
+        showNebulaSnackBar(
+          context,
+          title: 'Урок добавлен',
+          message: DateFormat('d MMMM', 'ru').format(_date),
+          tone: NebulaSnackTone.success,
+        );
+      }
       widget.onCreated();
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -64,7 +94,7 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
   @override
   Widget build(BuildContext context) {
     final studentsAsync = ref.watch(studentsProvider);
-    final dateStr = DateFormat('d MMMM', 'ru').format(widget.date);
+    final dateStr = DateFormat('d MMMM', 'ru').format(_date);
     final isDesktop = AppPlatform.isDesktop;
 
     // Build form content (no modal chrome — chrome added per-platform below)
@@ -80,6 +110,36 @@ class _AddLessonSheetState extends ConsumerState<_AddLessonSheet> {
           style: type.titleM.copyWith(color: tokens.primaryText),
         ),
         const SizedBox(height: 20),
+
+        // ── Day picker (только при вызове с уровня календаря) ──
+        if (widget.allowDateChange) ...[
+          Text('ДЕНЬ', style: type.overline.copyWith(color: tokens.mutedText)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: NebulaTokens.sp4),
+            decoration: BoxDecoration(
+              color: tokens.surface,
+              borderRadius: NebulaRadii.controlBorder,
+              border: Border.all(color: tokens.surfaceBorder),
+            ),
+            child: NebulaDrumPicker(
+              items: [
+                for (var d = 1;
+                    d <= DateUtils.getDaysInMonth(_date.year, _date.month);
+                    d++)
+                  DateFormat('d MMMM', 'ru')
+                      .format(DateTime(_date.year, _date.month, d)),
+              ],
+              initialIndex: _date.day - 1,
+              glowColor: tokens.primaryAccent,
+              itemExtent: 38,
+              fontSize: 16,
+              onChanged: (i) => setState(
+                  () => _date = DateTime(_date.year, _date.month, i + 1)),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // ── Student picker ──────────────────────────────────────────────────
         Text(

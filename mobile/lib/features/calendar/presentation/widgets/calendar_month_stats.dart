@@ -17,6 +17,7 @@ class _MonthStats extends StatelessWidget {
     final cancelled = regular.where((l) => l.status == 'cancelled').length;
     final total = regular.length;
 
+    final type = NebulaTypography.of(context);
     return NebulaSurface(
       padding: const EdgeInsets.all(NebulaTokens.sp20),
       child: Column(
@@ -24,11 +25,7 @@ class _MonthStats extends StatelessWidget {
         children: [
           Text(
             'Статистика месяца',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: tokens.primaryText,
-            ),
+            style: type.titleS.copyWith(color: tokens.primaryText),
           ),
           const SizedBox(height: 16),
           Row(
@@ -54,6 +51,21 @@ class _MonthStats extends StatelessWidget {
                   color: NebulaColors.warningAmber),
             ],
           ),
+          const SizedBox(height: NebulaTokens.sp12),
+          // Легенда кодов сетки, которых нет в чипах выше (P2 из critique):
+          // цвет ↔ смысл больше не нужно вспоминать.
+          const Wrap(
+            spacing: NebulaTokens.sp16,
+            runSpacing: NebulaTokens.sp4,
+            children: [
+              _LegendDot(label: 'Отработка', color: NebulaColors.nebulaPurple),
+              _LegendDot(
+                  label: 'Не заполнен',
+                  color: NebulaColors.warningAmber,
+                  glyph: '?'),
+              _LegendDot(label: 'Сегодня', color: NebulaColors.auroraCyan),
+            ],
+          ),
         ],
       ),
     );
@@ -75,6 +87,7 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -88,8 +101,7 @@ class _StatChip extends StatelessWidget {
           children: [
             Text(
               value,
-              style: TextStyle(
-                fontSize: 18,
+              style: type.titleM.copyWith(
                 fontWeight: FontWeight.w700,
                 color: color,
               ),
@@ -97,15 +109,47 @@ class _StatChip extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 10,
-                color: tokens.mutedText,
-              ),
+              style: type.labelS.copyWith(color: tokens.mutedText),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final String label;
+  final Color color;
+  final String? glyph;
+
+  const _LegendDot({required this.label, required this.color, this.glyph});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
+        CosmoThemeTokens.darkInternals;
+    final type = NebulaTypography.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        glyph != null
+            ? Text(
+                glyph!,
+                style: type.labelS.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              )
+            : Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+        const SizedBox(width: NebulaTokens.sp4),
+        Text(label, style: type.labelS.copyWith(color: tokens.mutedText)),
+      ],
     );
   }
 }
