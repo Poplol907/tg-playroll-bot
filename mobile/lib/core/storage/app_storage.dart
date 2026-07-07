@@ -34,7 +34,13 @@ class AppStorage {
     } else {
       // Encrypted Keychain (iOS) / EncryptedSharedPreferences (Android).
       const secure = FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        aOptions: AndroidOptions(
+          encryptedSharedPreferences: true,
+          // Keystore/encrypted-prefs corruption on Android throws on read;
+          // main() reads storage before runApp(), so without self-reset the
+          // app crash-loops at startup. Reset = forced re-login, not a brick.
+          resetOnError: true,
+        ),
         iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
       );
       _instance = AppStorage._(secure: secure);
