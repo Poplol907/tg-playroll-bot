@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import '../../core/platform/app_platform.dart';
 import '../../core/theme/nebula_colors.dart';
 
 // ─────────────────────────────────────────────
@@ -157,7 +158,10 @@ class _NebulaBackgroundState extends State<NebulaBackground>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _ticker = createTicker(_onTick);
-    if (!widget.transparent) _ticker.start();
+    // Lite (Android): the idle drift repaints the whole screen at 20fps and
+    // caps the app's effective frame rate on weak GPUs — there the background
+    // stays a static frame (stars/clouds keep their glow, nothing drifts).
+    if (!widget.transparent && !AppPlatform.liteGraphics) _ticker.start();
   }
 
   @override
@@ -167,7 +171,9 @@ class _NebulaBackgroundState extends State<NebulaBackground>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _ticker.stop();
-    } else if (state == AppLifecycleState.resumed && !_ticker.isActive) {
+    } else if (state == AppLifecycleState.resumed &&
+        !_ticker.isActive &&
+        !AppPlatform.liteGraphics) {
       _ticker.start();
     }
   }
@@ -176,7 +182,7 @@ class _NebulaBackgroundState extends State<NebulaBackground>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.transparent) return;
-    if (MediaQuery.of(context).disableAnimations) {
+    if (MediaQuery.of(context).disableAnimations || AppPlatform.liteGraphics) {
       _ticker.stop();
     } else if (!_ticker.isActive) {
       _ticker.start();

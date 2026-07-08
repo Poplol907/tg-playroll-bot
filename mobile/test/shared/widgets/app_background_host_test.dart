@@ -3,6 +3,7 @@ import 'package:cosmo_studio/shared/widgets/ascii_water_background.dart';
 import 'package:cosmo_studio/shared/widgets/app_background_host.dart';
 import 'package:cosmo_studio/shared/widgets/nebula_background.dart';
 import 'package:cosmo_studio/shared/widgets/path_field_background.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +28,9 @@ void main() {
   testWidgets(
       'AppBackgroundHost uses an ambient animated path field for light lite mode',
       (tester) async {
+    // Rich platforms keep the ambient drift; the test binding defaults to
+    // TargetPlatform.android, which is the lite-graphics path.
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -46,6 +50,34 @@ void main() {
 
     expect(background.animated, isTrue);
     expect(find.text('content'), findsOneWidget);
+    // Foundation debug vars must be reset inside the test body — the
+    // binding's invariant check runs before addTearDown callbacks.
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets(
+      'AppBackgroundHost freezes the light path field on lite-graphics Android',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appVisualModeProvider.overrideWith((ref) => AppVisualMode.lightLite),
+        ],
+        child: const MaterialApp(
+          home: AppBackgroundHost(
+            child: Text('content'),
+          ),
+        ),
+      ),
+    );
+
+    final background = tester.widget<PathFieldBackground>(
+      find.byType(PathFieldBackground),
+    );
+
+    expect(background.animated, isFalse);
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('AppBackgroundHost can host the existing ASCII dark background',

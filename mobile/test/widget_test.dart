@@ -12,6 +12,7 @@ import 'package:cosmo_studio/shared/widgets/mist_modal.dart';
 import 'package:cosmo_studio/shared/widgets/nebula_dialog.dart';
 import 'package:cosmo_studio/shared/widgets/server_settings_modal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -319,6 +320,9 @@ void main() {
 
   testWidgets('login screen uses the shared Cosmo login sphere',
       (tester) async {
+    // Rich platforms keep the sphere's ambient motion; the test binding
+    // defaults to TargetPlatform.android, which is the lite-graphics path.
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -334,5 +338,28 @@ void main() {
           .enableAmbientMotion,
       isTrue,
     );
+    // Foundation debug vars must be reset inside the test body — the
+    // binding's invariant check runs before addTearDown callbacks.
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('login sphere ambient motion is frozen on lite-graphics Android',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: LoginScreen(),
+        ),
+      ),
+    );
+
+    expect(
+      tester
+          .widget<CosmoLoginSphere>(find.byType(CosmoLoginSphere))
+          .enableAmbientMotion,
+      isFalse,
+    );
+    debugDefaultTargetPlatformOverride = null;
   });
 }

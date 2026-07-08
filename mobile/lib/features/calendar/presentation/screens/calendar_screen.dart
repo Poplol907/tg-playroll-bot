@@ -157,7 +157,7 @@ class CalendarScreen extends ConsumerWidget {
                       month: month,
                       lessons: lessons,
                       onDayTap: onDayTap,
-                      enableAmbientMotion: true,
+                      enableAmbientMotion: !AppPlatform.liteGraphics,
                     ),
                   ),
                 ),

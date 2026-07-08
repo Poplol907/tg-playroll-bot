@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../core/platform/app_platform.dart';
 import '../../core/services/repaint_pulse.dart';
 import 'package:flutter/scheduler.dart';
 import '../../core/theme/nebula_colors.dart';
@@ -28,7 +29,7 @@ const int _kCellH = 13; // logical px per row
 // ripples; the tap "blip" + rings stay, so the signature effect still reads.
 const int _kCellWLite = 12;
 const int _kCellHLite = 18;
-final bool _kLiteMode = defaultTargetPlatform == TargetPlatform.android;
+bool get _kLiteMode => AppPlatform.liteGraphics;
 
 // ── Mutable wave state (shared between sim and painter via reference) ─────────
 class _WaveData {
