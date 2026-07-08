@@ -295,9 +295,10 @@ class _StudentCard extends ConsumerWidget {
                           const SizedBox(width: 8),
                           // Ambient shimmer draws the eye to recently-added
                           // students. Suppressed under reduce-motion / in
-                          // test bindings so it doesn't leave dangling
-                          // periodic timers when the tree unmounts.
-                          if (MediaQuery.of(context).disableAnimations)
+                          // test bindings (dangling periodic timers) / on
+                          // lite-graphics Android (perpetual repaints).
+                          if (MediaQuery.of(context).disableAnimations ||
+                              AppPlatform.liteGraphics)
                             const StatusBadge(
                               label: 'НОВЫЙ',
                               intent: SemanticIntent.success,

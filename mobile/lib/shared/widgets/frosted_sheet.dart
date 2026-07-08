@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/platform/app_platform.dart';
 import '../../core/services/repaint_pulse.dart';
 import '../../core/theme/nebula_alpha.dart';
 import '../../core/theme/nebula_tokens.dart';
@@ -93,7 +93,7 @@ Widget _frostBarrier(ModalRoute<dynamic> route, Widget barrier) {
   // switches on once, when the route is nearly open; dragging a sheet pulls
   // anim.value back under the threshold, so the interactive phase pays no
   // blur at all. iOS/desktop keep the animation-synced frost.
-  final lite = defaultTargetPlatform == TargetPlatform.android;
+  final lite = AppPlatform.liteGraphics;
   return AnimatedBuilder(
     animation: anim,
     builder: (context, child) {

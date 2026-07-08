@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/platform/app_platform.dart';
 import '../../core/theme/app_visual_mode.dart';
 import '../../core/theme/cosmo_theme_tokens.dart';
 import 'ascii_water_background.dart';
@@ -47,7 +48,9 @@ class AppBackgroundHost extends ConsumerWidget {
       // background. Reduce-motion freezes it via PathFieldBackground itself.
       AppVisualMode.lightLite => PathFieldBackground(
           tokens: CosmoThemeTokens.lightLite,
-          animated: true,
+          // Lite (Android): драйфующие полосы = вечная полноэкранная
+          // перерисовка; статичный кадр держит стиль без стоимости.
+          animated: !AppPlatform.liteGraphics,
           child: child,
         ),
     };

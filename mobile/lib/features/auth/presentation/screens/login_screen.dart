@@ -127,7 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         CosmoLoginSphere(
                           tokens: tokens,
                           size: 220,
-                          enableAmbientMotion: true,
+                          enableAmbientMotion: !AppPlatform.liteGraphics,
                         ),
                       ],
                     ),
