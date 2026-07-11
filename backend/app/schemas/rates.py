@@ -28,3 +28,14 @@ class CurrentRateOut(BaseModel):
     teacher_name: str | None
     rates: list[RateOut]
     default_rate: int  # ставка без инструмента (fallback)
+
+
+class RateConfigIn(BaseModel):
+    """Текущая ставка педагога без даты вступления (конфигуратор)."""
+    rate_per_lesson: int                        # базовая ставка (обязательна, > 0)
+    foreign_rate_per_lesson: int | None = None  # None/0 = иностранного тарифа нет
+
+
+class CurrentRatesOut(BaseModel):
+    rate_per_lesson: int                 # 0, если ставка не задана
+    foreign_rate_per_lesson: int | None  # None, если иностранный тариф не задан

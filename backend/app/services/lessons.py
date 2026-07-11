@@ -41,7 +41,7 @@ from backend.app.services.errors import (
 
 VALID_STATUSES = {"scheduled", "attended", "missed", "cancelled"}
 VALID_CANCELLED_BY = {"student", "teacher"}
-VALID_MAKEUP_STATUSES = {"scheduled", "done", "transferred"}
+VALID_MAKEUP_STATUSES = {"none", "scheduled", "done"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -382,11 +382,13 @@ async def update_lesson_status(
     """Move a lesson into a new lifecycle status, applying side-effects.
 
     Side-effects:
-      * Cancelled → record `cancelled_by`, reset makeup tracking.
-      * Reverting to scheduled → clear makeup tracking and DELETE pending
-        orphan makeup lessons (otherwise they'd linger on the calendar).
-      * Attended → flip `payment_counted`.
-      * If THIS is an attended makeup lesson, mark its original as 'done'.
+      * Cancelled → record `cancelled_by`.
+      * Attended → flip `payment_counted`; if THIS is an attended makeup, close
+        its original.
+      * EVERY transition runs `_sync_makeup`, which reconciles the lesson's
+        makeup rows + derived cache: makeups of a now-resolved original are
+        deleted (no orphans), a still-owed original keeps its makeup and mirrors
+        its state (no duplicates).
     """
     lesson, _st, student = await _load_lesson_with_st(session, lesson_id, user)
 
@@ -397,18 +399,8 @@ async def update_lesson_status(
         if cancelled_by not in VALID_CANCELLED_BY:
             raise ValidationError("cancelled_by must be 'student' or 'teacher'")
         lesson.cancelled_by = cancelled_by
-        lesson.makeup_status = "none"
     else:
         lesson.cancelled_by = None
-        if status == "scheduled":
-            lesson.makeup_status = "none"
-            lesson.makeup_date = None
-            await session.execute(
-                sa_delete(Lesson).where(
-                    Lesson.makeup_for_id == lesson.id,
-                    Lesson.status == "scheduled",
-                )
-            )
 
     lesson.status = status
 
@@ -418,20 +410,25 @@ async def update_lesson_status(
     if notes is not None:
         lesson.notes = notes
 
-    # Auto-close original lesson when its makeup is attended.
+    # Auto-close the original when THIS lesson is an attended makeup.
     if (
         lesson.lesson_type == "makeup"
         and status == "attended"
         and lesson.makeup_for_id
     ):
-        original_res = await session.execute(
-            select(Lesson).where(Lesson.id == lesson.makeup_for_id)
-        )
-        original = original_res.scalar_one_or_none()
+        original = (
+            await session.execute(
+                select(Lesson).where(Lesson.id == lesson.makeup_for_id)
+            )
+        ).scalar_one_or_none()
         if original:
-            original.makeup_status = "done"
-            original.makeup_date = lesson.scheduled_date
             original.payment_counted = True
+            await _sync_makeup(session, original)
+
+    # Reconcile THIS lesson's own makeup links for EVERY transition — not just
+    # →scheduled — so a corrected original can never orphan a makeup and a
+    # re-cancelled original can never spawn a duplicate.
+    await _sync_makeup(session, lesson)
 
     await session.commit()
     await session.refresh(lesson)
@@ -439,8 +436,46 @@ async def update_lesson_status(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Makeup scheduling
+#  Makeup lifecycle
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+async def _sync_makeup(session: AsyncSession, original: Lesson) -> None:
+    """Reconcile a lesson's makeup rows + its derived makeup cache to its status.
+
+    Invariant: the makeup `Lesson` row is the source of truth; the original's
+    `makeup_status`/`makeup_date` are a derived cache written ONLY here (and via
+    the attended-makeup auto-close, which delegates here).
+
+      * original resolved (attended / scheduled) → any makeup is spurious:
+        delete every makeup row and clear the cache.
+      * original still owes a makeup (missed / cancelled) → keep the rows and
+        derive the cache from the surviving row (done > scheduled > none).
+    """
+    rows = (
+        await session.execute(
+            select(Lesson).where(Lesson.makeup_for_id == original.id)
+        )
+    ).scalars().all()
+
+    if original.status not in ("missed", "cancelled"):
+        for makeup in rows:
+            await session.delete(makeup)
+        original.makeup_status = "none"
+        original.makeup_date = None
+        return
+
+    done = next((m for m in rows if m.status == "attended"), None)
+    pending = next((m for m in rows if m.status == "scheduled"), None)
+    if done is not None:
+        original.makeup_status = "done"
+        original.makeup_date = done.scheduled_date
+    elif pending is not None:
+        original.makeup_status = "scheduled"
+        original.makeup_date = pending.scheduled_date
+    else:
+        original.makeup_status = "none"
+        original.makeup_date = None
 
 
 async def schedule_makeup(
@@ -458,7 +493,17 @@ async def schedule_makeup(
             "makeup only available for missed or cancelled lessons"
         )
 
-    if original.makeup_status in ("scheduled", "done"):
+    # Guard on an existing makeup ROW, not the cached status field, so a stale
+    # cache can never let a duplicate makeup slip through.
+    existing = (
+        await session.execute(
+            select(Lesson).where(
+                Lesson.makeup_for_id == original.id,
+                Lesson.status.in_(("scheduled", "attended")),
+            )
+        )
+    ).scalars().first()
+    if existing is not None:
         raise BusinessRuleViolation(
             "lesson already has a pending or completed makeup"
         )

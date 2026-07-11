@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.auth import get_current_user
 from backend.app.database import get_session
 from backend.app.models import Payout, User
-from backend.app.schemas.payouts import PayoutCreateIn, PayoutOut
+from backend.app.schemas.payouts import PayoutCreateIn, PayoutOut, PayoutUpdateIn
 from backend.app.services.permissions import require_admin
 
 router = APIRouter(prefix="/payouts", tags=["payouts"])
@@ -61,6 +61,30 @@ async def create_payout(
         created_by=current_user.id,
     )
     session.add(payout)
+    await session.commit()
+    await session.refresh(payout)
+    return _to_out(payout)
+
+
+@router.patch("/{payout_id}", response_model=PayoutOut)
+async def update_payout(
+    payout_id: int,
+    payload: PayoutUpdateIn,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    require_admin(current_user)
+    payout = await session.get(Payout, payout_id)
+    if payout is None or payout.org_id != current_user.org_id:
+        raise HTTPException(status_code=404, detail="payout not found")
+    if payload.amount is not None:
+        if payload.amount <= 0:
+            raise HTTPException(status_code=400, detail="amount must be > 0")
+        payout.amount = payload.amount
+    if payload.paid_at is not None:
+        payout.paid_at = payload.paid_at
+    if payload.note is not None:
+        payout.note = payload.note
     await session.commit()
     await session.refresh(payout)
     return _to_out(payout)

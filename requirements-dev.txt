@@ -1,0 +1,5 @@
+# Test-only dependencies (not installed in the production image).
+# Run: .venv/bin/python -m pip install -r requirements-dev.txt
+pytest>=8
+pytest-asyncio>=1.0
+aiosqlite>=0.20

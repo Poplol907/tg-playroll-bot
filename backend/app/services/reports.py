@@ -34,6 +34,7 @@ from backend.app.services.rates import (
     build_rate_resolver,
     build_rate_resolvers_bulk,
 )
+from backend.app.services.payroll import aggregate
 from backend.app.services.salary import calculate_salary
 
 VALID_REPORT_TYPES = {"advance", "final"}
@@ -183,93 +184,45 @@ async def salary_v2(
         session, user.org_id, effective_teacher_id, date_from, date_to
     )
 
-    # ── Goal: sum of rates over REAL regular lessons in the schedule ─────
-    # Makeup lessons replace missed slots, so they don't add to the goal.
-    goal_amount = 0
-    total_subscribed = 0
-    for lesson, st in rows:
-        if getattr(lesson, "lesson_type", "regular") != "regular":
-            continue
-        goal_amount += rate_resolver.resolve(
-            lesson.scheduled_date,
-            instrument_id=st.instrument_id,
-            student_id=st.student_id,
-            is_foreign=foreign_map.get(st.student_id, False),
+    # ── Single source of truth ───────────────────────────────────────────
+    # Resolve a foreign-aware rate per lesson, then run the ONE accrual loop
+    # (payroll.aggregate). goal = gross value of REGULAR lessons; makeups replace
+    # missed slots and never add to goal — classify() enforces that. advance/final
+    # come from the SAME aggregate, so they can't drift from total.
+    items = [
+        (
+            lesson,
+            rate_resolver.resolve(
+                lesson.scheduled_date,
+                instrument_id=st.instrument_id,
+                student_id=st.student_id,
+                is_foreign=foreign_map.get(st.student_id, False),
+            ),
         )
-        total_subscribed += 1
+        for lesson, st in rows
+    ]
+    t = aggregate(items, midpoint=date_mid)
 
-    # ── Accruals ─────────────────────────────────────────────────────────
-    earned_amount = 0
-    pending_amount = 0
-    lessons_done = 0
-    lessons_missed = 0
-    lessons_debt = 0
-    lessons_makeup_done = 0
-
-    for lesson, st in rows:
-        rate = rate_resolver.resolve(
-            lesson.scheduled_date,
-            instrument_id=st.instrument_id,
-            student_id=st.student_id,
-            is_foreign=foreign_map.get(st.student_id, False),
-        )
-        lesson_type = getattr(lesson, "lesson_type", "regular")
-
-        if lesson.status == "attended":
-            if lesson_type == "makeup":
-                # Makeup lesson: counter only; money flows through the original.
-                lessons_makeup_done += 1
-            else:
-                lessons_done += 1
-                earned_amount += rate
-
-        elif lesson.status == "missed":
-            if lesson.makeup_status in ("done", "completed"):
-                # Makeup happened → counted as taught (makeup already counted).
-                earned_amount += rate
-            else:
-                # Real miss — paid at month end.
-                lessons_missed += 1
-                pending_amount += rate
-
-        elif lesson.status == "cancelled" and lesson.cancelled_by == "teacher":
-            if lesson.makeup_status in ("completed", "done"):
-                earned_amount += rate
-            else:
-                lessons_debt += 1
-
-    # ── Advance (days 1–15) ──────────────────────────────────────────────
-    advance_rows = [(l, st) for l, st in rows if l.scheduled_date <= date_mid]
-    advance = await calculate_salary(
-        session,
-        user.org_id,
-        effective_teacher_id,
-        advance_rows,
-        date_from,
-        date_mid,
-        "advance",
-        student_foreign_map=foreign_map,
-        rate_resolver=rate_resolver,
+    total_subscribed = sum(
+        1 for lesson, _ in rows
+        if getattr(lesson, "lesson_type", "regular") == "regular"
     )
-    advance_amount = advance.total_amount
-    total_current = earned_amount + pending_amount
-    final_amount = total_current - advance_amount
 
     return SalaryV2Result(
         period_start=date_from,
         period_end=date_to,
-        goal_amount=goal_amount,
+        goal_amount=t.goal_amount,
         total_subscribed=total_subscribed,
-        earned_amount=earned_amount,
-        pending_amount=pending_amount,
-        total_current=total_current,
-        lessons_done=lessons_done,
-        lessons_missed=lessons_missed,
-        lessons_debt=lessons_debt,
-        lessons_makeup_done=lessons_makeup_done,
-        advance_amount=advance_amount,
-        final_amount=max(0, final_amount),
-        total_amount=total_current,
+        earned_amount=t.earned,
+        pending_amount=t.pending,
+        total_current=t.total,
+        lessons_done=t.lessons_done,
+        lessons_missed=t.lessons_missed,
+        lessons_debt=t.lessons_debt,
+        lessons_makeup_done=t.lessons_makeup_done,
+        advance_amount=t.advance,
+        final_amount=t.final,          # total == advance + final by construction
+        total_amount=t.total,
     )
 
 
@@ -299,6 +252,10 @@ async def salary_report(
 
     rows = await _load_lessons(session, user.org_id, teacher_id, date_from, date_to)
     rate_resolver = await build_rate_resolver(session, user.org_id, teacher_id)
+    students_foreign = await session.execute(
+        select(Student.id, Student.is_foreign).where(Student.org_id == user.org_id)
+    )
+    foreign_map = {row[0]: row[1] for row in students_foreign.all()}
     salary = await calculate_salary(
         session,
         user.org_id,
@@ -307,6 +264,7 @@ async def salary_report(
         date_from,
         date_to,
         report_type,
+        student_foreign_map=foreign_map,
         rate_resolver=rate_resolver,
     )
 
@@ -370,6 +328,13 @@ async def studio_stats(
     # happened to have lessons in the selected month.
     active_teachers = len(teachers)
 
+    # is_foreign map (one query) — WITHOUT it studio priced foreign students at
+    # the base rate while the teacher's own screen used the foreign tariff.
+    students_foreign = await session.execute(
+        select(Student.id, Student.is_foreign).where(Student.org_id == user.org_id)
+    )
+    foreign_map: dict[int, bool] = {row[0]: row[1] for row in students_foreign.all()}
+
     # Load every teacher's rates in one query → no N+1.
     teacher_ids = [t.id for t in teachers]
     resolvers = await build_rate_resolvers_bulk(session, user.org_id, teacher_ids)
@@ -385,6 +350,7 @@ async def studio_stats(
             date_from,
             date_to,
             "final",
+            student_foreign_map=foreign_map,
             rate_resolver=resolvers.get(teacher.id),
         )
         teacher_salaries.append(
