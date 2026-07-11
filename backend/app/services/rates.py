@@ -14,7 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.models import TeacherRate
 
-DEFAULT_RATE = 20_000  # сум — используется только если ставки не заданы
+# Ставки не заданы ВОВСЕ → 0, а не выдуманная сумма (иначе 20 000 молча
+# «протекали» в зарплату). Урок раньше всей истории ставок берёт самую раннюю
+# ставку (см. RateResolver.resolve, фаза 2); до 0 доходит только при полном
+# отсутствии ставок у педагога — это подсвечивается как unrated_lessons.
+DEFAULT_RATE = 0
 
 
 async def get_rate(
@@ -26,76 +30,16 @@ async def get_rate(
     student_id: int | None = None,
     is_foreign: bool = False,
 ) -> int:
-    """Возвращает ставку за один урок в сумах."""
-
-    base_where = [
-        TeacherRate.org_id == org_id,
-        TeacherRate.teacher_user_id == teacher_user_id,
-        TeacherRate.effective_from <= lesson_date,
-    ]
-
-    # 1. Персональная ставка для конкретного ученика
-    if student_id is not None:
-        result = await session.execute(
-            select(TeacherRate.rate_per_lesson)
-            .where(*base_where, TeacherRate.student_id == student_id)
-            .order_by(TeacherRate.effective_from.desc())
-            .limit(1)
-        )
-        row = result.scalar_one_or_none()
-        if row is not None:
-            return row
-
-    # 2. Иностранный тариф (если ученик помечен is_foreign)
-    if is_foreign:
-        result = await session.execute(
-            select(TeacherRate.rate_per_lesson)
-            .where(
-                *base_where,
-                TeacherRate.student_id.is_(None),
-                TeacherRate.is_foreign.is_(True),
-            )
-            .order_by(TeacherRate.effective_from.desc())
-            .limit(1)
-        )
-        row = result.scalar_one_or_none()
-        if row is not None:
-            return row
-
-    # 3. Ставка по инструменту
-    if instrument_id is not None:
-        result = await session.execute(
-            select(TeacherRate.rate_per_lesson)
-            .where(
-                *base_where,
-                TeacherRate.student_id.is_(None),
-                TeacherRate.is_foreign.is_(False),
-                TeacherRate.instrument_id == instrument_id,
-            )
-            .order_by(TeacherRate.effective_from.desc())
-            .limit(1)
-        )
-        row = result.scalar_one_or_none()
-        if row is not None:
-            return row
-
-    # 4. Базовая ставка (без инструмента, без ученика, не иностранная)
-    result = await session.execute(
-        select(TeacherRate.rate_per_lesson)
-        .where(
-            *base_where,
-            TeacherRate.student_id.is_(None),
-            TeacherRate.is_foreign.is_(False),
-            TeacherRate.instrument_id.is_(None),
-        )
-        .order_by(TeacherRate.effective_from.desc())
-        .limit(1)
+    """Ставка за один урок. Делегирует в RateResolver, чтобы приоритеты и
+    backward-extension жили ровно в одном месте — одиночный лукап и пакетный
+    резолвер больше не могут разойтись."""
+    rates = await get_rates_for_teacher(session, org_id, teacher_user_id)
+    return RateResolver(rates).resolve(
+        lesson_date,
+        instrument_id=instrument_id,
+        student_id=student_id,
+        is_foreign=is_foreign,
     )
-    row = result.scalar_one_or_none()
-    if row is not None:
-        return row
-
-    return DEFAULT_RATE
 
 
 async def get_rates_for_teacher(
@@ -164,31 +108,63 @@ class RateResolver:
         student_id: int | None = None,
         is_foreign: bool = False,
     ) -> int:
-        """Возвращает ставку. Логика идентична get_rate()."""
-        # 1. Персональная ставка ученика
+        """Ставка за урок с приоритетами (персон. > иностр. > инструмент > база).
+
+        Фаза 1 — обычный date-valid поиск (effective_from <= дата урока).
+        Фаза 2 — если урок раньше ВСЕЙ истории ставок (ни одна не подошла ни в
+        одном тире), берём самую раннюю ставку по тем же приоритетам. Фаза 2
+        включается только когда фаза 1 не нашла НИЧЕГО, поэтому не может перебить
+        валидную историческую ставку. Иначе — DEFAULT_RATE (0)."""
+        hit = self._resolve_active(lesson_date, instrument_id, student_id, is_foreign)
+        if hit is not None:
+            return hit
+        hit = self._resolve_earliest(instrument_id, student_id, is_foreign)
+        if hit is not None:
+            return hit
+        return DEFAULT_RATE
+
+    def _resolve_active(
+        self,
+        lesson_date: date,
+        instrument_id: int | None,
+        student_id: int | None,
+        is_foreign: bool,
+    ) -> int | None:
+        """Фаза 1: старший по приоритету тир со ставкой effective_from <= дата."""
         if student_id is not None and student_id in self._personal:
             r = self._first_active(self._personal[student_id], lesson_date)
             if r is not None:
                 return r.rate_per_lesson
-
-        # 2. Иностранный тариф
         if is_foreign:
             r = self._first_active(self._foreign, lesson_date)
             if r is not None:
                 return r.rate_per_lesson
-
-        # 3. Ставка по инструменту
         if instrument_id is not None and instrument_id in self._by_instrument:
             r = self._first_active(self._by_instrument[instrument_id], lesson_date)
             if r is not None:
                 return r.rate_per_lesson
-
-        # 4. Базовая ставка
         r = self._first_active(self._base, lesson_date)
         if r is not None:
             return r.rate_per_lesson
+        return None
 
-        return DEFAULT_RATE
+    def _resolve_earliest(
+        self,
+        instrument_id: int | None,
+        student_id: int | None,
+        is_foreign: bool,
+    ) -> int | None:
+        """Фаза 2: самая ранняя ставка в старшем непустом тире. Списки
+        отсортированы по дате убыванию → earliest = последний элемент."""
+        if student_id is not None and self._personal.get(student_id):
+            return self._personal[student_id][-1].rate_per_lesson
+        if is_foreign and self._foreign:
+            return self._foreign[-1].rate_per_lesson
+        if instrument_id is not None and self._by_instrument.get(instrument_id):
+            return self._by_instrument[instrument_id][-1].rate_per_lesson
+        if self._base:
+            return self._base[-1].rate_per_lesson
+        return None
 
 
 async def build_rate_resolver(
@@ -221,3 +197,94 @@ async def build_rate_resolvers_bulk(
     for r in rates:
         grouped.setdefault(r.teacher_user_id, []).append(r)
     return {tid: RateResolver(rs) for tid, rs in grouped.items()}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Текущая ставка (без даты вступления): ровно одна запись на тариф
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+async def _upsert_current_tier(
+    session: AsyncSession,
+    org_id: int,
+    teacher_user_id: int,
+    created_by: int,
+    *,
+    is_foreign: bool,
+    rate: int | None,
+) -> None:
+    """Схлопывает базовый/иностранный тариф педагога в одну запись.
+
+    Все прочие записи этого тира (student_id и instrument_id = NULL) удаляются;
+    при rate > 0 создаётся ровно одна. effective_from неважен — одна запись плюс
+    backward-extension в resolve() покрывает уроки любой даты.
+    """
+    existing = (
+        await session.execute(
+            select(TeacherRate).where(
+                TeacherRate.org_id == org_id,
+                TeacherRate.teacher_user_id == teacher_user_id,
+                TeacherRate.student_id.is_(None),
+                TeacherRate.instrument_id.is_(None),
+                TeacherRate.is_foreign.is_(is_foreign),
+            )
+        )
+    ).scalars().all()
+    for r in existing:
+        await session.delete(r)
+
+    if rate and rate > 0:
+        session.add(TeacherRate(
+            org_id=org_id,
+            teacher_user_id=teacher_user_id,
+            instrument_id=None,
+            student_id=None,
+            is_foreign=is_foreign,
+            rate_per_lesson=rate,
+            effective_from=date.today(),
+            created_by=created_by,
+        ))
+
+
+async def set_current_rates(
+    session: AsyncSession,
+    org_id: int,
+    teacher_user_id: int,
+    created_by: int,
+    *,
+    base_rate: int,
+    foreign_rate: int | None = None,
+) -> None:
+    """Задаёт текущую ставку педагога (обычную + иностранную) без истории дат.
+
+    foreign_rate None/0 → иностранный тариф удаляется (иностранцы падают на базу).
+    """
+    await _upsert_current_tier(
+        session, org_id, teacher_user_id, created_by,
+        is_foreign=False, rate=base_rate,
+    )
+    await _upsert_current_tier(
+        session, org_id, teacher_user_id, created_by,
+        is_foreign=True, rate=foreign_rate,
+    )
+    await session.commit()
+
+
+async def get_current_rates(
+    session: AsyncSession,
+    org_id: int,
+    teacher_user_id: int,
+) -> tuple[int, int | None]:
+    """Текущая (base, foreign) ставка педагога. base=0 / foreign=None, если не задано."""
+    rates = await get_rates_for_teacher(session, org_id, teacher_user_id)
+    base = next(
+        (r.rate_per_lesson for r in rates
+         if r.student_id is None and r.instrument_id is None and not r.is_foreign),
+        0,
+    )
+    foreign = next(
+        (r.rate_per_lesson for r in rates
+         if r.student_id is None and r.instrument_id is None and r.is_foreign),
+        None,
+    )
+    return base, foreign

@@ -9,8 +9,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.auth import get_current_user
 from backend.app.database import get_session
 from backend.app.models import User, TeacherRate, Instrument, Student
-from backend.app.schemas.rates import RateCreateIn, RateOut, CurrentRateOut
-from backend.app.services.rates import get_rates_for_teacher, get_rate, DEFAULT_RATE
+from backend.app.schemas.rates import (
+    RateCreateIn,
+    RateOut,
+    CurrentRateOut,
+    RateConfigIn,
+    CurrentRatesOut,
+)
+from backend.app.services.rates import (
+    get_rates_for_teacher,
+    get_rate,
+    set_current_rates,
+    get_current_rates,
+    DEFAULT_RATE,
+)
 from backend.app.services.permissions import require_admin, require_teacher_self_or_admin
 
 router = APIRouter(prefix="/rates", tags=["rates"])
@@ -156,6 +168,47 @@ async def set_rate(
         effective_from=rate.effective_from,
         note=rate.note,
     )
+
+
+@router.get("/teacher/{teacher_id}/current", response_model=CurrentRatesOut)
+async def get_current_rate(
+    teacher_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Текущая ставка педагога (обычная + иностранная) для конфигуратора."""
+    require_teacher_self_or_admin(current_user, teacher_id)
+    teacher = await session.get(User, teacher_id)
+    if teacher is None or teacher.org_id != current_user.org_id:
+        raise HTTPException(status_code=404, detail="teacher not found")
+    base, foreign = await get_current_rates(session, current_user.org_id, teacher_id)
+    return CurrentRatesOut(rate_per_lesson=base, foreign_rate_per_lesson=foreign)
+
+
+@router.put("/teacher/{teacher_id}/current", response_model=CurrentRatesOut)
+async def set_current_rate(
+    teacher_id: int,
+    payload: RateConfigIn,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Задаёт текущую ставку без даты вступления — схлопывает историю тарифа."""
+    require_admin(current_user)
+    teacher = await session.get(User, teacher_id)
+    if teacher is None or teacher.org_id != current_user.org_id:
+        raise HTTPException(status_code=404, detail="teacher not found")
+    if payload.rate_per_lesson <= 0:
+        raise HTTPException(status_code=400, detail="rate_per_lesson must be > 0")
+    await set_current_rates(
+        session,
+        current_user.org_id,
+        teacher_id,
+        current_user.id,
+        base_rate=payload.rate_per_lesson,
+        foreign_rate=payload.foreign_rate_per_lesson,
+    )
+    base, foreign = await get_current_rates(session, current_user.org_id, teacher_id)
+    return CurrentRatesOut(rate_per_lesson=base, foreign_rate_per_lesson=foreign)
 
 
 @router.delete("/{rate_id}", status_code=204)
