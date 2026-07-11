@@ -9,13 +9,18 @@ class _MonthStats extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
-    // Makeup lessons are the SAME lesson rescheduled — exclude from counts
-    // so the total stays at 121, not 121 + number-of-makeups.
-    final regular = lessons.where((l) => !(l as LessonModel).isMakeup).toList();
+    final all = lessons.cast<LessonModel>();
+    // Makeup lessons are the SAME lesson rescheduled — exclude from the
+    // per-status chips so they aren't double-counted there.
+    final regular = all.where((l) => !l.isMakeup).toList();
     final attended = regular.where((l) => l.status == 'attended').length;
     final missed = regular.where((l) => l.status == 'missed').length;
     final cancelled = regular.where((l) => l.status == 'cancelled').length;
-    final total = regular.length;
+    // «Всего» = реальные уроки: всё, КРОМЕ пропусков и отмен. Пропущенный или
+    // отменённый слот не считается — учитывается лишь заменяющая его отработка.
+    final total = all
+        .where((l) => l.status != 'missed' && l.status != 'cancelled')
+        .length;
 
     final type = NebulaTypography.of(context);
     return NebulaSurface(

@@ -24,6 +24,7 @@ import '../../../../shared/widgets/orbit_loader.dart';
 import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../data/students_repository.dart';
 import '../providers/student_lessons_provider.dart';
+import '../providers/seen_students_provider.dart';
 import 'schedule_builder_modal.dart';
 
 part 'student_detail_content.dart';
@@ -84,6 +85,13 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     _sheetCtrl.addListener(_onSheetSize);
     _springCtrl = AnimationController.unbounded(vsync: this)
       ..addListener(_onSpring);
+    // Открытие карточки гасит бейдж «НОВЫЙ». Post-frame — чтобы не менять
+    // провайдер, который список учеников читает во время текущего build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(seenStudentsProvider.notifier).markSeen(widget.student.id);
+      }
+    });
   }
 
   void _onSheetSize() {

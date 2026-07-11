@@ -41,16 +41,18 @@ void main() {
     repo = PayoutsRepository(dio);
   });
 
-  test('getPaidSum sums the amounts from a GET list response', () async {
+  test('listPayouts parses the payouts from a GET list response', () async {
     adapter.onRequest = (_) => [
           {'id': 1, 'teacher_user_id': 7, 'month_year': '2026-06', 'amount': 10000, 'paid_at': '2026-06-01', 'note': null},
           {'id': 2, 'teacher_user_id': 7, 'month_year': '2026-06', 'amount': 5000, 'paid_at': '2026-06-15', 'note': null},
         ];
 
-    final sum = await repo.getPaidSum(7, '2026-06');
+    final list = await repo.listPayouts(7, '2026-06');
 
-    expect(sum, 15000);
-    expect(adapter.requests, hasLength(1));
+    expect(list, hasLength(2));
+    expect(list.first.id, 1);
+    expect(list.first.amount, 10000);
+    expect(list.first.paidAt, DateTime(2026, 6, 1));
     final req = adapter.requests.single;
     expect(req.method, 'GET');
     expect(req.path, '/payouts');
@@ -58,15 +60,15 @@ void main() {
     expect(req.queryParameters['teacher_id'], 7);
   });
 
-  test('getPaidSum returns 0 when the list is empty', () async {
+  test('listPayouts returns empty when the list is empty', () async {
     adapter.onRequest = (_) => [];
 
-    final sum = await repo.getPaidSum(7, '2026-06');
+    final list = await repo.listPayouts(7, '2026-06');
 
-    expect(sum, 0);
+    expect(list, isEmpty);
   });
 
-  test('addPayout POSTs amount, paid_at = today, teacher_user_id, month_year',
+  test('addPayout POSTs amount, paid_at, teacher_user_id, month_year',
       () async {
     await repo.addPayout(
       teacherId: 7,
@@ -86,5 +88,24 @@ void main() {
     expect(body['amount'], 12000);
     expect(body['paid_at'], '2026-06-29');
     expect(body['note'], null);
+  });
+
+  test('updatePayout PATCHes amount and paid_at', () async {
+    await repo.updatePayout(5, amount: 9000, paidAt: DateTime(2026, 6, 20));
+
+    final req = adapter.requests.single;
+    expect(req.method, 'PATCH');
+    expect(req.path, '/payouts/5');
+    final body = req.data as Map;
+    expect(body['amount'], 9000);
+    expect(body['paid_at'], '2026-06-20');
+  });
+
+  test('deletePayout DELETEs the payout by id', () async {
+    await repo.deletePayout(5);
+
+    final req = adapter.requests.single;
+    expect(req.method, 'DELETE');
+    expect(req.path, '/payouts/5');
   });
 }

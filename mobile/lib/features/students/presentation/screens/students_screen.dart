@@ -24,6 +24,7 @@ import '../../../../shared/widgets/primitives/primitives.dart';
 import '../../data/students_repository.dart';
 import '../widgets/student_detail_sheet.dart';
 import '../widgets/add_student_modal.dart';
+import '../providers/seen_students_provider.dart';
 
 class StudentsScreen extends ConsumerWidget {
   const StudentsScreen({super.key});
@@ -180,11 +181,6 @@ class _StudentCard extends ConsumerWidget {
 
   const _StudentCard({required this.student, this.index = 0});
 
-  bool get _isNew {
-    final diff = DateTime.now().difference(student.createdAt);
-    return diff.inDays <= 7;
-  }
-
   LinearGradient _avatarGradient() {
     final idx = student.id % 6;
     const gradients = [
@@ -212,6 +208,11 @@ class _StudentCard extends ConsumerWidget {
     final subColor = tokens.mutedText;
     final iconColor = tokens.mutedText.withValues(alpha: 0.72);
     final newBadgeBorder = isLight ? tokens.denseSurface : tokens.backgroundMid;
+    // «Новый» гаснет, как только карточку открыли (см. seenStudentsProvider):
+    // раньше бейдж висел все 7 дней независимо от того, заходил ли пользователь.
+    final seen = ref.watch(seenStudentsProvider);
+    final isNew = !seen.contains(student.id) &&
+        DateTime.now().difference(student.createdAt).inDays <= 7;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -258,7 +259,7 @@ class _StudentCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (_isNew)
+                  if (isNew)
                     Positioned(
                       top: 0,
                       right: 0,
@@ -291,7 +292,7 @@ class _StudentCard extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (_isNew) ...[
+                        if (isNew) ...[
                           const SizedBox(width: 8),
                           // Ambient shimmer draws the eye to recently-added
                           // students. Suppressed under reduce-motion / in
