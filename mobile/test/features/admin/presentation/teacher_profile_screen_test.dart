@@ -13,14 +13,16 @@ class _FakeRatesRepository extends RatesRepository {
   _FakeRatesRepository() : super(Dio());
 
   @override
-  Future<int> getDefaultRate(int teacherId) async => 60000;
+  Future<CurrentRates> getCurrentRates(int teacherId) async =>
+      const CurrentRates(base: 60000);
 }
 
 class _FakePayoutsRepository extends PayoutsRepository {
   _FakePayoutsRepository() : super(Dio());
 
   @override
-  Future<int> getPaidSum(int teacherId, String monthYear) async => 0;
+  Future<List<PayoutModel>> listPayouts(int teacherId, String monthYear) async =>
+      const <PayoutModel>[];
 }
 
 void main() {
@@ -125,7 +127,8 @@ void main() {
     await swipePager(tester);
     expect(find.text('К выплате'), findsOneWidget);
     expect(find.textContaining('48'), findsWidgets); // 48 000 owed
-    expect(find.text('Отметить выплату'), findsOneWidget);
+    expect(find.text('Отметить'), findsOneWidget);
+    expect(find.text('Список'), findsOneWidget);
 
     // Swipe → page 3: rate.
     await swipePager(tester);

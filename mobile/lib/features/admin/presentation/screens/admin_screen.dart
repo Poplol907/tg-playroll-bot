@@ -34,6 +34,7 @@ import '../../data/rates_repository.dart';
 import '../payout_summary.dart';
 import '../providers/view_as_teacher_provider.dart';
 import '../widgets/add_payout_sheet.dart';
+import '../widgets/payouts_list_sheet.dart';
 import '../widgets/create_user_sheet.dart';
 import '../widgets/set_password_sheet.dart';
 import '../widgets/set_rate_sheet.dart';
@@ -739,7 +740,7 @@ class _PayoutPage extends ConsumerWidget {
       final ok = await AddPayoutSheet.show(context, user.id, month, suggested);
       if (ok) {
         ref.invalidate(
-            teacherPaidProvider((teacherId: user.id, monthYear: month)));
+            teacherPayoutsProvider((teacherId: user.id, monthYear: month)));
       }
     }
 
@@ -818,14 +819,27 @@ class _PayoutPage extends ConsumerWidget {
             ],
           ),
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: NebulaTextButton(
-            label: 'Отметить выплату',
-            icon: Icons.add_circle_outline_rounded,
-            compact: true,
-            onPressed: markPayout,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            NebulaTextButton(
+              label: 'Список',
+              icon: Icons.receipt_long_outlined,
+              compact: true,
+              onPressed: () async {
+                await PayoutsListSheet.show(context, user.id, month, owed);
+                ref.invalidate(teacherPayoutsProvider(
+                    (teacherId: user.id, monthYear: month)));
+              },
+            ),
+            const SizedBox(width: NebulaTokens.sp8),
+            NebulaTextButton(
+              label: 'Отметить',
+              icon: Icons.add_circle_outline_rounded,
+              compact: true,
+              onPressed: markPayout,
+            ),
+          ],
         ),
       ],
     );
@@ -842,7 +856,7 @@ class _RatePage extends ConsumerWidget {
     final tokens = Theme.of(context).extension<CosmoThemeTokens>() ??
         CosmoThemeTokens.darkInternals;
     final type = NebulaTypography.of(context);
-    final rateAsync = ref.watch(teacherDefaultRateProvider(user.id));
+    final ratesAsync = ref.watch(teacherCurrentRatesProvider(user.id));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -853,13 +867,26 @@ class _RatePage extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                rateAsync.when(
+                ratesAsync.when(
                   skipLoadingOnRefresh: false,
-                  data: (rate) => Text(
-                    Money.format(rate),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: type.displayM.copyWith(color: tokens.primaryText),
+                  data: (rates) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        Money.format(rates.base),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            type.displayM.copyWith(color: tokens.primaryText),
+                      ),
+                      if (rates.foreign != null) ...[
+                        const SizedBox(height: NebulaTokens.sp4),
+                        Text(
+                          'Иностранный: ${Money.format(rates.foreign!)}',
+                          style: type.bodyS.copyWith(color: tokens.warning),
+                        ),
+                      ],
+                    ],
                   ),
                   loading: () => const Padding(
                     padding: EdgeInsets.symmetric(vertical: NebulaTokens.sp8),
@@ -882,10 +909,12 @@ class _RatePage extends ConsumerWidget {
             label: 'Изменить',
             compact: true,
             onPressed: () async {
-              final currentRate = rateAsync.valueOrNull ?? 0;
-              final ok = await SetRateSheet.show(context, user.id, currentRate);
+              final current =
+                  ratesAsync.valueOrNull ?? const CurrentRates(base: 0);
+              final ok = await RateConfigSheet.show(context, user.id, current);
               if (ok) {
-                ref.invalidate(teacherDefaultRateProvider(user.id));
+                // Ставка меняет и карточку, и зарплату, и сводку студии.
+                invalidateRateData(ref);
               }
             },
           ),

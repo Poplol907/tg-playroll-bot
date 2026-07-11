@@ -41,43 +41,55 @@ void main() {
     repo = RatesRepository(dio);
   });
 
-  test('getDefaultRate parses default_rate from GET response', () async {
-    adapter.onRequest = (_) => {'default_rate': 75000};
+  test('getCurrentRates parses base + foreign from GET /current', () async {
+    adapter.onRequest = (_) =>
+        {'rate_per_lesson': 75000, 'foreign_rate_per_lesson': 90000};
 
-    final rate = await repo.getDefaultRate(42);
+    final rates = await repo.getCurrentRates(42);
 
-    expect(rate, 75000);
+    expect(rates.base, 75000);
+    expect(rates.foreign, 90000);
     expect(adapter.requests, hasLength(1));
-    expect(adapter.requests.single.path, '/rates/teacher/42');
+    expect(adapter.requests.single.path, '/rates/teacher/42/current');
     expect(adapter.requests.single.method, 'GET');
   });
 
-  test('getDefaultRate returns 0 when default_rate is absent', () async {
-    adapter.onRequest = (_) => <String, dynamic>{};
+  test('getCurrentRates leaves foreign null when absent', () async {
+    adapter.onRequest = (_) =>
+        {'rate_per_lesson': 50000, 'foreign_rate_per_lesson': null};
 
-    final rate = await repo.getDefaultRate(42);
+    final rates = await repo.getCurrentRates(42);
 
-    expect(rate, 0);
+    expect(rates.base, 50000);
+    expect(rates.foreign, isNull);
   });
 
-  test('setDefaultRate POSTs rate_per_lesson and effective_from = today',
-      () async {
-    await repo.setDefaultRate(7, 60000);
+  test('setCurrentRates PUTs base + foreign to /current', () async {
+    adapter.onRequest = (_) =>
+        {'rate_per_lesson': 60000, 'foreign_rate_per_lesson': 80000};
+
+    await repo.setCurrentRates(7, baseRate: 60000, foreignRate: 80000);
 
     expect(adapter.requests, hasLength(1));
     final req = adapter.requests.single;
-    expect(req.method, 'POST');
-    expect(req.path, '/rates/teacher/7');
+    expect(req.method, 'PUT');
+    expect(req.path, '/rates/teacher/7/current');
 
     final body = req.data as Map;
-    expect(body['teacher_user_id'], 7);
-    expect(body['instrument_id'], null);
-    expect(body['is_foreign'], false);
     expect(body['rate_per_lesson'], 60000);
+    expect(body['foreign_rate_per_lesson'], 80000);
+  });
 
-    final today = DateTime.now();
-    final expectedYmd =
-        '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    expect(body['effective_from'], expectedYmd);
+  test('setCurrentRates sends null foreign to clear the foreign tariff',
+      () async {
+    adapter.onRequest = (_) =>
+        {'rate_per_lesson': 60000, 'foreign_rate_per_lesson': null};
+
+    await repo.setCurrentRates(7, baseRate: 60000);
+
+    final body = adapter.requests.single.data as Map;
+    expect(body['rate_per_lesson'], 60000);
+    expect(body.containsKey('foreign_rate_per_lesson'), true);
+    expect(body['foreign_rate_per_lesson'], null);
   });
 }

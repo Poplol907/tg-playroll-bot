@@ -10,57 +10,76 @@ import '../../../../core/utils/error_parser.dart';
 import '../../data/rates_repository.dart';
 import '../../../../shared/widgets/sheet_error_banner.dart';
 
-class SetRateSheet extends ConsumerStatefulWidget {
+/// Конфигуратор ставки педагога: базовая + (опционально) иностранный тариф.
+/// Без даты вступления — сервер держит одну текущую ставку на тариф.
+class RateConfigSheet extends ConsumerStatefulWidget {
   final int teacherId;
-  final int currentRate;
-  const SetRateSheet(
-      {super.key, required this.teacherId, required this.currentRate});
+  final CurrentRates current;
+  const RateConfigSheet({
+    super.key,
+    required this.teacherId,
+    required this.current,
+  });
 
   static Future<bool> show(
-      BuildContext context, int teacherId, int currentRate) async {
+      BuildContext context, int teacherId, CurrentRates current) async {
     final result = await MistModal.show<bool>(
       context: context,
-      builder: (_) =>
-          SetRateSheet(teacherId: teacherId, currentRate: currentRate),
+      builder: (_) => RateConfigSheet(teacherId: teacherId, current: current),
     );
     return result ?? false;
   }
 
   @override
-  ConsumerState<SetRateSheet> createState() => _SetRateSheetState();
+  ConsumerState<RateConfigSheet> createState() => _RateConfigSheetState();
 }
 
-class _SetRateSheetState extends ConsumerState<SetRateSheet> {
-  late final _ctrl = TextEditingController(text: widget.currentRate.toString());
+class _RateConfigSheetState extends ConsumerState<RateConfigSheet> {
+  late final _baseCtrl = TextEditingController(
+      text: widget.current.base > 0 ? widget.current.base.toString() : '');
+  late final _foreignCtrl =
+      TextEditingController(text: widget.current.foreign?.toString() ?? '');
   bool _loading = false;
   String? _error;
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _baseCtrl.dispose();
+    _foreignCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final rate = int.tryParse(_ctrl.text.trim());
-    if (rate == null || rate <= 0) {
-      setState(() => _error = 'Введите сумму больше нуля');
+    final base = int.tryParse(_baseCtrl.text.trim());
+    if (base == null || base <= 0) {
+      setState(() => _error = 'Введите ставку больше нуля');
       return;
+    }
+    final foreignText = _foreignCtrl.text.trim();
+    int? foreign;
+    if (foreignText.isNotEmpty) {
+      foreign = int.tryParse(foreignText);
+      if (foreign == null || foreign <= 0) {
+        setState(() => _error = 'Иностранный тариф должен быть больше нуля');
+        return;
+      }
     }
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      await ref
-          .read(ratesRepositoryProvider)
-          .setDefaultRate(widget.teacherId, rate);
+      await ref.read(ratesRepositoryProvider).setCurrentRates(
+            widget.teacherId,
+            baseRate: base,
+            foreignRate: foreign,
+          );
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.pop(context, true);
     } on Exception catch (e) {
       setState(() {
         _loading = false;
-        _error = parseApiError(e, fallback: 'Не удалось изменить ставку');
+        _error = parseApiError(e, fallback: 'Не удалось сохранить ставку');
       });
     }
   }
@@ -74,22 +93,34 @@ class _SetRateSheetState extends ConsumerState<SetRateSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Ставка за урок',
-          style: type.titleL.copyWith(color: tokens.primaryText),
-        ),
+        Text('Ставка за урок',
+            style: type.titleL.copyWith(color: tokens.primaryText)),
         const SizedBox(height: 20),
         NebulaInput(
-          controller: _ctrl,
+          controller: _baseCtrl,
           keyboardType: TextInputType.number,
           hintText: 'Сумма за урок',
           prefixIcon: const Icon(Icons.payments_outlined, size: 20),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 12),
+        NebulaInput(
+          controller: _foreignCtrl,
+          keyboardType: TextInputType.number,
+          hintText: 'Иностранный тариф (необязательно)',
+          prefixIcon: const Icon(Icons.translate_rounded, size: 20),
           textInputAction: TextInputAction.done,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Иностранный тариф применяется к ученикам с пометкой «иностранный». '
+          'Пусто — будет базовая ставка.',
+          style: type.labelS.copyWith(color: tokens.mutedText),
         ),
         const SizedBox(height: 20),
         SheetErrorBanner(error: _error),
         StellarButton(
-          label: 'Сохранить ставку',
+          label: 'Сохранить',
           loading: _loading,
           onPressed: _loading ? null : _submit,
           icon: Icons.payments_rounded,

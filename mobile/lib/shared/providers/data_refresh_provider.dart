@@ -42,6 +42,18 @@ void invalidateMonthDataContainer(ProviderContainer container) {
   container.invalidate(studentSubscriptionsProvider);
 }
 
+/// Ставка педагога изменилась → пересчитать всё, что от неё производно.
+///
+/// Раньше экран админа инвалидировал только карточку ставки
+/// ([teacherCurrentRatesProvider]), поэтому экран зарплаты и сводка студии
+/// показывали старые суммы, пока пользователь не уйдёт с экрана и не вернётся.
+void invalidateRateData(WidgetRef ref) {
+  ref.invalidate(teacherCurrentRatesProvider); // family целиком — карточка ставки
+  ref.invalidate(ratesProvider); // список ставок педагога
+  ref.invalidate(salaryProvider); // экран зарплаты
+  ref.invalidate(studioStatsProvider); // сводка студии у админа
+}
+
 /// Полный сброс всех user-scoped кэшей — граница смены личности.
 ///
 /// Вызывается при logout: без этого повторный вход под ДРУГИМ аккаунтом
@@ -59,8 +71,8 @@ void invalidateAllUserData(WidgetRef ref) {
   ref.invalidate(studentSubscriptionsProvider);
   ref.invalidate(orgUsersProvider);
   ref.invalidate(studioStatsProvider);
-  ref.invalidate(teacherPaidProvider);
-  ref.invalidate(teacherDefaultRateProvider);
+  ref.invalidate(teacherPayoutsProvider);
+  ref.invalidate(teacherCurrentRatesProvider);
   ref.invalidate(roomsProvider);
   ref.invalidate(roomBlocksForDateProvider);
 }
