@@ -13,14 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.database import get_session
 from backend.app.models import User
 
-# Secure by default: никогда не используем захардкоженный секрет.
-# Известный секрет позволяет подделать токен для любого user_id → полный обход auth.
 SECRET_KEY = os.getenv("JWT_SECRET")
 if not SECRET_KEY:
-    if os.getenv("DEV_MODE", "0") == "1":
-        SECRET_KEY = "dev-only-insecure-secret-not-for-production"
-    else:
-        raise RuntimeError("JWT_SECRET environment variable must be set in production")
+    raise RuntimeError("JWT_SECRET environment variable must be set")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
