@@ -10,6 +10,8 @@ __pycache__/
 
 # Environment variables
 .env
+.env.*
+!.env.prod.example
 
 # macOS мусор
 .DS_Store
@@ -20,6 +22,44 @@ __pycache__/
 
 # Logs
 *.log
+*.log.*
+
+# Signing material
+*.jks
+*.keystore
+*.keystore.properties
+key.properties
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+
+# Local databases and dumps
+*.db*
+*.sqlite
+*.sqlite3
+*.dump
+*.dump.gz
+*.sql.gz
+
+# Test coverage
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+coverage.lcov
+lcov.info
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
 # Python packaging
 build/
@@ -34,6 +74,7 @@ dist/
 .claude/
 .claude-flow/
 .codegraph/
+.swarm/
 .superpowers/
 .worktrees/
 AGENTS.md
