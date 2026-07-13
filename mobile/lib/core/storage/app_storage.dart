@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Platform-adaptive storage.
+/// Keychain/keystore-backed storage for app data, including auth tokens.
 ///
-/// macOS   → SharedPreferences (NSUserDefaults) — no Keychain prompt, no password dialog.
-/// iOS/Android → FlutterSecureStorage (encrypted Keychain / Android Keystore).
+/// macOS uses Keychain through [FlutterSecureStorage]; it never falls back to
+/// plaintext SharedPreferences.
 ///
 /// Call [AppStorage.init] once in main() before runApp().
 class AppStorage {
@@ -18,53 +17,51 @@ class AppStorage {
     return _instance!;
   }
 
-  final FlutterSecureStorage? _secure;
-  final SharedPreferences? _prefs;
+  final FlutterSecureStorage _secure;
 
-  AppStorage._({FlutterSecureStorage? secure, SharedPreferences? prefs})
-      : _secure = secure,
-        _prefs = prefs;
+  AppStorage._({required FlutterSecureStorage secure}) : _secure = secure;
 
   /// Initialise the singleton. Must be awaited before any [read]/[write]/[delete] call.
-  static Future<void> init() async {
-    if (!kIsWeb && Platform.isMacOS) {
-      // NSUserDefaults — no Keychain access dialog, works without code-signing.
-      final prefs = await SharedPreferences.getInstance();
-      _instance = AppStorage._(prefs: prefs);
-    } else {
-      // Encrypted Keychain (iOS) / EncryptedSharedPreferences (Android).
-      const secure = FlutterSecureStorage(
-        aOptions: AndroidOptions(
-          encryptedSharedPreferences: true,
-          // Keystore/encrypted-prefs corruption on Android throws on read;
-          // main() reads storage before runApp(), so without self-reset the
-          // app crash-loops at startup. Reset = forced re-login, not a brick.
-          resetOnError: true,
-        ),
-        iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-      );
-      _instance = AppStorage._(secure: secure);
-    }
+  static Future<void> init({bool Function()? isMacOS}) async {
+    final runsOnMacOS = isMacOS?.call() ?? (!kIsWeb && Platform.isMacOS);
+    _instance = createForPlatform(isMacOS: runsOnMacOS);
   }
 
+  /// Kept injectable to verify macOS never regresses to plaintext storage.
+  @visibleForTesting
+  static AppStorage createForPlatform({required bool isMacOS}) {
+    return AppStorage._(secure: isMacOS ? _macOsSecureStorage : _secureStorage);
+  }
+
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      // Keystore/encrypted-prefs corruption on Android throws on read;
+      // main() reads storage before runApp(), so without self-reset the
+      // app crash-loops at startup. Reset = forced re-login, not a brick.
+      resetOnError: true,
+    ),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+  static const _macOsSecureStorage = FlutterSecureStorage(
+    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
+  @visibleForTesting
+  bool get usesSecureStorage => true;
+
+  @visibleForTesting
+  bool get usesSharedPreferences => false;
+
   Future<String?> read(String key) async {
-    if (_prefs != null) return _prefs.getString(key);
-    return _secure?.read(key: key);
+    return _secure.read(key: key);
   }
 
   Future<void> write(String key, String value) async {
-    if (_prefs != null) {
-      await _prefs.setString(key, value);
-    } else {
-      await _secure?.write(key: key, value: value);
-    }
+    await _secure.write(key: key, value: value);
   }
 
   Future<void> delete(String key) async {
-    if (_prefs != null) {
-      await _prefs.remove(key);
-    } else {
-      await _secure?.delete(key: key);
-    }
+    await _secure.delete(key: key);
   }
 }

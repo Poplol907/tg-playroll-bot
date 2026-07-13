@@ -49,6 +49,7 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
   late TextEditingController _ctrl;
   bool _saving = false;
   bool _saved = false;
+  String? _validationError;
 
   @override
   void initState() {
@@ -65,10 +66,16 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
   Future<void> _save() async {
     final url = _ctrl.text.trim();
     if (url.isEmpty) return;
+    final validationError = ServerUrlPolicy.validate(url);
+    if (validationError != null) {
+      setState(() => _validationError = validationError);
+      return;
+    }
     HapticFeedback.lightImpact();
     setState(() {
       _saving = true;
       _saved = false;
+      _validationError = null;
     });
     await ref.read(serverUrlProvider.notifier).setUrl(url);
     if (mounted) {
@@ -165,6 +172,15 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _save(),
             ),
+            if (_validationError != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _validationError!,
+                style: NebulaTypography.of(context)
+                    .labelS
+                    .copyWith(color: NebulaColors.errorRose),
+              ),
+            ],
             const SizedBox(height: 12),
 
             // ── Hint ──────────────────────────────────────────────────────
