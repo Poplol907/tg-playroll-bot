@@ -48,10 +48,7 @@ async def admin_create_user(
     require_admin(current_user)
 
     uq = await session.execute(
-        select(User).where(
-            User.org_id == current_user.org_id,
-            User.login == payload.login,
-        )
+        select(User).where(User.login == payload.login)
     )
     if uq.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="login already exists")
@@ -77,7 +74,12 @@ async def admin_set_role(
 ):
     require_admin(current_user)
 
-    uq = await session.execute(select(User).where(User.login == payload.login))
+    uq = await session.execute(
+        select(User).where(
+            User.login == payload.login,
+            User.org_id == current_user.org_id,
+        )
+    )
     u = uq.scalar_one_or_none()
 
     if u is None:
@@ -97,7 +99,12 @@ async def admin_set_login(
 ):
     require_admin(current_user)
 
-    uq = await session.execute(select(User).where(User.login == payload.login))
+    uq = await session.execute(
+        select(User).where(
+            User.login == payload.login,
+            User.org_id == current_user.org_id,
+        )
+    )
     user = uq.scalar_one_or_none()
 
     if user is None:

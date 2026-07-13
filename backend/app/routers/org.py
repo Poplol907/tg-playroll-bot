@@ -76,15 +76,12 @@ async def create_org_user(
     if payload.role not in ("ADMIN", "TEACHER"):
         raise HTTPException(status_code=422, detail="role must be ADMIN or TEACHER")
 
-    # Check for duplicate login in this org
+    # Logins are global because the login endpoint has no organization selector.
     existing = await session.execute(
-        select(User).where(
-            User.org_id == current_user.org_id,
-            User.login == payload.login,
-        )
+        select(User).where(User.login == payload.login)
     )
     if existing.scalar_one_or_none() is not None:
-        raise HTTPException(status_code=409, detail="login already exists in this org")
+        raise HTTPException(status_code=409, detail="login already exists")
 
     u = User(
         org_id=current_user.org_id,

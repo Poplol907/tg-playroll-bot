@@ -36,7 +36,7 @@ class Org(Base):
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        UniqueConstraint("org_id", "login", name="uq_users_org_login"),
+        UniqueConstraint("login", name="uq_users_login"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

@@ -51,7 +51,12 @@ async def set_password(
 ):
     """Только ADMIN может устанавливать пароль любому пользователю.
     Или пользователь может сменить пароль себе."""
-    result = await session.execute(select(User).where(User.login == payload.login))
+    result = await session.execute(
+        select(User).where(
+            User.login == payload.login,
+            User.org_id == current_user.org_id,
+        )
+    )
     target = result.scalar_one_or_none()
 
     if target is None:

@@ -29,12 +29,7 @@ def get_dev_router(dev_mode: bool, dev_key: str | None) -> APIRouter:
         payload: CreateUserIn,
         session: AsyncSession = Depends(get_session),
     ):
-        q = await session.execute(
-            select(User).where(
-                User.org_id == DEFAULT_ORG_ID,
-                User.login == payload.login,
-            )
-        )
+        q = await session.execute(select(User).where(User.login == payload.login))
         if q.scalar_one_or_none() is not None:
             return {"ok": False, "error": "login exists"}
 
