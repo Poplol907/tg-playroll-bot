@@ -1,6 +1,7 @@
 """Authorization boundaries for user-management mutations."""
 
 import os
+from pathlib import Path
 
 from types import SimpleNamespace
 
@@ -13,6 +14,13 @@ from backend.app.auth import get_current_user
 from backend.app.database import get_session
 from backend.app.main import app
 from backend.app.models import Org, User
+from backend.app.routers.dev import get_dev_router
+from backend.app.schemas.dev import CreateUserIn
+
+
+MIGRATION_PATH = (
+    Path(__file__).resolve().parents[2] / "migrations" / "008_global_user_login.sql"
+)
 
 
 @pytest.fixture
@@ -96,3 +104,40 @@ async def test_admin_cannot_create_login_already_owned_by_another_organization(
     )
 
     assert response.status_code == 409
+
+
+async def test_org_admin_cannot_create_login_owned_by_another_organization(
+    api_client,
+):
+    response = await api_client.post(
+        "/org/users",
+        json={"login": "user-b", "role": "TEACHER"},
+    )
+
+    assert response.status_code == 409
+
+
+async def test_dev_create_user_rejects_login_owned_by_another_organization(
+    session,
+    tenant_users,
+):
+    router = get_dev_router(dev_mode=True, dev_key="test-dev-key")
+    endpoint = next(route.endpoint for route in router.routes if route.path == "/dev/create-user")
+
+    result = await endpoint(
+        CreateUserIn(login=tenant_users.user_b.login, role="TEACHER"),
+        session,
+    )
+
+    assert result == {"ok": False, "error": "login exists"}
+
+
+def test_global_login_migration_runs_all_constraint_changes_transactionally():
+    migration = MIGRATION_PATH.read_text()
+
+    assert "\\set ON_ERROR_STOP on" in migration
+    assert migration.index("BEGIN;") < migration.index("DO $$")
+    assert migration.index("DO $$") < migration.index(
+        "ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_org_login;"
+    )
+    assert migration.rstrip().endswith("COMMIT;")

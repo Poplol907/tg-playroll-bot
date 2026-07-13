@@ -5,7 +5,11 @@
 -- This migration stops safely when historic duplicates exist; resolve and
 -- document those records before retrying rather than choosing an owner here.
 --
--- Run: psql $DATABASE_URL -f migrations/008_global_user_login.sql
+-- Run: psql -X -v ON_ERROR_STOP=1 "$DATABASE_URL" -f migrations/008_global_user_login.sql
+
+\set ON_ERROR_STOP on
+
+BEGIN;
 
 DO $$
 BEGIN
@@ -33,3 +37,5 @@ BEGIN
         ALTER TABLE users ADD CONSTRAINT uq_users_login UNIQUE (login);
     END IF;
 END $$;
+
+COMMIT;
