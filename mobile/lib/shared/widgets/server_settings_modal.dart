@@ -66,7 +66,8 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
   Future<void> _save() async {
     final url = _ctrl.text.trim();
     if (url.isEmpty) return;
-    final validationError = ServerUrlPolicy.validate(url);
+    final validationError =
+        await ref.read(serverUrlProvider.notifier).setUrl(url);
     if (validationError != null) {
       setState(() => _validationError = validationError);
       return;
@@ -77,7 +78,6 @@ class _ServerSettingsModalState extends ConsumerState<ServerSettingsModal> {
       _saved = false;
       _validationError = null;
     });
-    await ref.read(serverUrlProvider.notifier).setUrl(url);
     if (mounted) {
       HapticFeedback.mediumImpact();
       setState(() {

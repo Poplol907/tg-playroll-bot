@@ -33,6 +33,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _saving = false;
   bool _saved = false;
   bool _themeChanging = false;
+  String? _serverValidationError;
 
   @override
   void initState() {
@@ -49,12 +50,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _save() async {
     final url = _ctrl.text.trim();
     if (url.isEmpty) return;
+    final validationError =
+        await ref.read(serverUrlProvider.notifier).setUrl(url);
+    if (validationError != null) {
+      if (mounted) setState(() => _serverValidationError = validationError);
+      return;
+    }
     HapticFeedback.lightImpact();
     setState(() {
       _saving = true;
       _saved = false;
+      _serverValidationError = null;
     });
-    await ref.read(serverUrlProvider.notifier).setUrl(url);
     if (mounted) {
       HapticFeedback.mediumImpact();
       setState(() {
@@ -159,6 +166,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _save(),
                     ),
+                    if (_serverValidationError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _serverValidationError!,
+                        style:
+                            type.labelS.copyWith(color: NebulaColors.errorRose),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     GestureDetector(
                       onTap: _saving ? null : _save,

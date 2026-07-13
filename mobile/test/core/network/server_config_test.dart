@@ -24,5 +24,19 @@ void main() {
         isNotNull,
       );
     });
+
+    test('accepts private LAN HTTP endpoints in debug mode', () {
+      expect(
+        ServerUrlPolicy.validate('http://192.168.1.25:8000', isDebugMode: true),
+        isNull,
+      );
+    });
+
+    test('accepts loopback HTTP endpoints in debug mode', () {
+      expect(
+        ServerUrlPolicy.validate('http://127.0.0.1:8000', isDebugMode: true),
+        isNull,
+      );
+    });
   });
 }

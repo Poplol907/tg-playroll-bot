@@ -79,11 +79,13 @@ class ServerUrlNotifier extends Notifier<String> {
     }
   }
 
-  Future<void> setUrl(String url) async {
+  Future<String?> setUrl(String url) async {
     final clean = url.trimRight().replaceAll(RegExp(r'/+$'), '');
-    if (ServerUrlPolicy.validate(clean) != null) return;
+    final validationError = ServerUrlPolicy.validate(clean);
+    if (validationError != null) return validationError;
     state = clean;
     await AppStorage.instance.write(_kServerUrlKey, clean);
+    return null;
   }
 
   Future<void> reset() async {

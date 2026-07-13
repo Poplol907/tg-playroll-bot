@@ -29,8 +29,16 @@ class AppStorage {
 
   /// Kept injectable to verify macOS never regresses to plaintext storage.
   @visibleForTesting
-  static AppStorage createForPlatform({required bool isMacOS}) {
-    return AppStorage._(secure: isMacOS ? _macOsSecureStorage : _secureStorage);
+  static AppStorage createForPlatform({
+    required bool isMacOS,
+    FlutterSecureStorage? macOsSecureStorage,
+    FlutterSecureStorage? standardSecureStorage,
+  }) {
+    return AppStorage._(
+      secure: isMacOS
+          ? macOsSecureStorage ?? _macOsSecureStorage
+          : standardSecureStorage ?? _secureStorage,
+    );
   }
 
   static const _secureStorage = FlutterSecureStorage(
@@ -48,10 +56,7 @@ class AppStorage {
   );
 
   @visibleForTesting
-  bool get usesSecureStorage => true;
-
-  @visibleForTesting
-  bool get usesSharedPreferences => false;
+  FlutterSecureStorage get secureStorage => _secure;
 
   Future<String?> read(String key) async {
     return _secure.read(key: key);
