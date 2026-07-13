@@ -40,7 +40,9 @@ key.properties
 # Local databases and dumps
 *.db*
 *.sqlite
+*.sqlite-*
 *.sqlite3
+*.sqlite3-*
 *.dump
 *.dump.gz
 *.sql.gz

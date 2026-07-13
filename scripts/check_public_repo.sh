@@ -15,13 +15,13 @@ while IFS= read -r -d '' path; do
     .env|.env.*|*/.env|*/.env.*)
       violations+=("$path")
       ;;
-    *.db|*.db-*|*.sqlite|*.sqlite3)
+    *.db|*.db-*|*.sqlite|*.sqlite-*|*.sqlite3|*.sqlite3-*)
       violations+=("$path")
       ;;
     *.pem|*.key|*.p12|*.pfx|*.crt|*.cer|*.der)
       violations+=("$path")
       ;;
-    *.jks|*.keystore|*.keystore.properties|key.properties)
+    *.jks|*.keystore|*.keystore.properties|key.properties|*/key.properties)
       violations+=("$path")
       ;;
     *.dump|*.dump.gz|*.sql.gz)

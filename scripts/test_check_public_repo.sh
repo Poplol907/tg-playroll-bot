@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+test_index="$(mktemp)"
+trap 'rm -f "$test_index"' EXIT
+
+GIT_INDEX_FILE="$test_index" git read-tree HEAD
+
+candidates=(
+  android/key.properties
+  local/cache.sqlite-wal
+  local/cache.sqlite-shm
+  local/cache.sqlite3-wal
+  local/cache.sqlite3-shm
+)
+
+for candidate in "${candidates[@]}"; do
+  GIT_INDEX_FILE="$test_index" git update-index --add --cacheinfo \
+    "100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,$candidate"
+done
+
+if output="$(GIT_INDEX_FILE="$test_index" bash scripts/check_public_repo.sh 2>&1)"; then
+  printf 'Expected hygiene check to reject nested signing and SQLite sidecar paths.\n' >&2
+  exit 1
+fi
+
+for candidate in "${candidates[@]}"; do
+  case "$output" in
+    *"$candidate"*) ;;
+    *)
+      printf 'Hygiene output omitted expected violation: %s\n' "$candidate" >&2
+      exit 1
+      ;;
+  esac
+done
+
+printf 'Nested signing and SQLite sidecar paths are rejected.\n'
