@@ -12,6 +12,15 @@ val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use(keystoreProperties::load)
 }
+val requiredReleaseSigningProperties = listOf(
+    "storeFile",
+    "storePassword",
+    "keyAlias",
+    "keyPassword",
+)
+val missingReleaseSigningProperties = requiredReleaseSigningProperties.filter {
+    !keystorePropertiesFile.isFile || keystoreProperties.getProperty(it).isNullOrBlank()
+}
 
 android {
     namespace = "com.kosmostudio.cosmo_studio"
@@ -42,7 +51,7 @@ android {
 
     signingConfigs {
         create("release") {
-            if (keystorePropertiesFile.exists()) {
+            if (missingReleaseSigningProperties.isEmpty()) {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
@@ -62,9 +71,14 @@ gradle.taskGraph.whenReady {
     val requestsRelease = allTasks.any { task ->
         task.name.contains("Release", ignoreCase = true)
     }
-    check(!requestsRelease || keystorePropertiesFile.exists()) {
-        "Release signing requires ignored local mobile/android/key.properties. " +
-            "Create it with storeFile, storePassword, keyAlias, and keyPassword."
+    check(!requestsRelease || missingReleaseSigningProperties.isEmpty()) {
+        if (!keystorePropertiesFile.isFile) {
+            "Release signing requires ignored local mobile/android/key.properties. " +
+                "Create it with storeFile, storePassword, keyAlias, and keyPassword."
+        } else {
+            "Release signing key.properties is incomplete. " +
+                "Missing values: ${missingReleaseSigningProperties.joinToString()}"
+        }
     }
 }
 

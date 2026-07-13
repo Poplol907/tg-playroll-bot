@@ -48,6 +48,30 @@ Screenshots will be added before the public product release.
 4. Start the local database with `docker compose up -d db`.
 5. Run the backend and Flutter client using their respective development workflows.
 
+## Database migrations and pre-deploy
+
+Migrations are ordered files in `migrations/`. Apply only migrations that the target database has not already received, one at a time and in numeric order; do not run a blind glob over an unknown production database.
+
+Before any production migration:
+
+1. Schedule a maintenance window, record the target revision, and take a backup that has been verified restorable. Keep backup artifacts outside the repository.
+2. Restore that backup to staging and rehearse the same pending migrations there.
+3. For migration 008, preflight global login uniqueness:
+
+   ```sh
+   psql -X -v ON_ERROR_STOP=1 "$DATABASE_URL" -c \
+     'SELECT login, COUNT(*) FROM users GROUP BY login HAVING COUNT(*) > 1;'
+   ```
+
+4. If the preflight returns any duplicate login, or migration 008 raises its duplicate-login error, STOP. Do not auto-delete or merge accounts. Report the duplicate logins and their organization/account context to the owner, agree on explicit corrections, take a fresh backup, and rerun the preflight.
+5. When the preflight is empty, apply 008 with this exact command:
+
+   ```sh
+   psql -X -v ON_ERROR_STOP=1 "$DATABASE_URL" -f migrations/008_global_user_login.sql
+   ```
+
+6. Confirm the command succeeds, record the applied revision, and verify the expected constraint before resuming application traffic.
+
 ## Environment variables
 
 Use `.env.prod.example` as the production configuration template; do not commit a populated `.env` file. Important values include `DATABASE_URL`, `JWT_SECRET`, `ALLOWED_ORIGINS`, `DEV_MODE`, and the organization bootstrap settings. Local Compose also requires `POSTGRES_PASSWORD`; `POSTGRES_DB` and `POSTGRES_USER` have local defaults.
