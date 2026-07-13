@@ -39,3 +39,51 @@ for candidate in "${candidates[@]}"; do
 done
 
 printf 'Nested signing and SQLite sidecar paths are rejected.\n'
+
+fixture_root="$(mktemp -d)"
+trap 'rm -f "$test_index"; rm -rf "$fixture_root"' EXIT
+
+git -C "$fixture_root" init -q
+mkdir -p "$fixture_root/scripts" "$fixture_root/mobile/android/app"
+cp scripts/check_public_repo.sh "$fixture_root/scripts/check_public_repo.sh"
+
+cat > "$fixture_root/docker-compose.yml" <<'EOF'
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: fixture-password-not-a-secret
+    ports:
+      - "5432:5432"
+EOF
+
+cat > "$fixture_root/mobile/android/app/build.gradle.kts" <<'EOF'
+android {
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+EOF
+
+git -C "$fixture_root" add .
+
+if output="$(cd "$fixture_root" && bash scripts/check_public_repo.sh 2>&1)"; then
+  printf 'Expected hygiene check to reject unsafe release configuration.\n' >&2
+  exit 1
+fi
+
+for violation in \
+  'docker-compose.yml: literal POSTGRES_PASSWORD' \
+  'docker-compose.yml: PostgreSQL port must bind to 127.0.0.1' \
+  'mobile/android/app/build.gradle.kts: release build must not use debug signing'; do
+  case "$output" in
+    *"$violation"*) ;;
+    *)
+      printf 'Hygiene output omitted expected configuration violation: %s\n' "$violation" >&2
+      exit 1
+      ;;
+  esac
+done
+
+printf 'Unsafe release configuration is rejected.\n'

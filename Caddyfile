@@ -1,11 +1,4 @@
-# ── Прод HTTPS ───────────────────────────────────────────────────────────────
-# Caddy сам получит и будет автоматически продлевать TLS-сертификат Let's Encrypt
-# для домена ниже. Условие: A-запись api.cosmo-studio.com → 5.223.55.57 уже
-# резолвится (проверь: dig +short api.cosmo-studio.com). HTTP (:80) Caddy
-# автоматически редиректит на HTTPS.
-#
-# ВАЖНО: деплоить этот Caddyfile ТОЛЬКО после того как DNS расходится, иначе
-# Caddy не сможет выпустить сертификат (ACME-челлендж не пройдёт).
+# Caddy manages TLS for the configured domain.
 api.cosmo-studio.com {
     reverse_proxy backend:8000
     encode gzip
