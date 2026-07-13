@@ -87,3 +87,41 @@ for violation in \
 done
 
 printf 'Unsafe release configuration is rejected.\n'
+
+debug_fixture_root="$(mktemp -d)"
+trap 'rm -f "$test_index"; rm -rf "$fixture_root" "$debug_fixture_root"' EXIT
+
+git -C "$debug_fixture_root" init -q
+mkdir -p "$debug_fixture_root/scripts" "$debug_fixture_root/mobile/android/app"
+cp scripts/check_public_repo.sh "$debug_fixture_root/scripts/check_public_repo.sh"
+
+cat > "$debug_fixture_root/docker-compose.yml" <<'EOF'
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    ports:
+      - "127.0.0.1:5432:5432"
+EOF
+
+cat > "$debug_fixture_root/mobile/android/app/build.gradle.kts" <<'EOF'
+android {
+    buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        release {
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}
+EOF
+
+git -C "$debug_fixture_root" add .
+
+if ! (cd "$debug_fixture_root" && bash scripts/check_public_repo.sh); then
+  printf 'Expected hygiene check to allow debug build signing.\n' >&2
+  exit 1
+fi
+
+printf 'Debug build signing is allowed.\n'

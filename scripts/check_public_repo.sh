@@ -45,7 +45,12 @@ if grep -Eq '^[[:space:]]*-[[:space:]]*"?[^[:space:]]*5432:5432"?[[:space:]]*$' 
   violations+=("docker-compose.yml: PostgreSQL port must bind to 127.0.0.1")
 fi
 
-if grep -Eq 'signingConfig[[:space:]]*=[[:space:]]*signingConfigs\.getByName\("debug"\)' mobile/android/app/build.gradle.kts; then
+if awk '
+  /^[[:space:]]*release[[:space:]]*\{/ { in_release = 1; next }
+  in_release && /^[[:space:]]*\}/ { in_release = 0; next }
+  in_release && /signingConfig[[:space:]]*=[[:space:]]*signingConfigs\.getByName\("debug"\)/ { found = 1 }
+  END { exit !found }
+' mobile/android/app/build.gradle.kts; then
   violations+=("mobile/android/app/build.gradle.kts: release build must not use debug signing")
 fi
 
